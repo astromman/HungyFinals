@@ -41,7 +41,7 @@
     <div class="row mt-5">
         <h3>Canteens</h3>
         @foreach($canteens as $canteen)
-        <div class="col-md-3 mb-4">
+        <div class="col-md-3 mb-4 ">
             <div class="card h-100 shadow" style="width: 100%;">
                 <!-- Background Image Container -->
                 @if(is_null($canteen->building_image))

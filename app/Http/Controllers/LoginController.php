@@ -11,8 +11,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
+
 
 class LoginController extends Controller
 {
@@ -73,8 +80,8 @@ class LoginController extends Controller
             $validator = Validator::make($request->all(), [
                 'first_name' => 'required',
                 'last_name' => 'required',
-                'email' => 'required|email|unique:user_profiles,email',
-                'contact_num' => 'required|min:11|max:11|starts_with:09|unique:user_profiles,contact_num',
+                'email' => 'required|email|unique:user_profiles,email,NULL,id',
+                'contact_num' => 'required|numeric|digits:11|starts_with:09|unique:user_profiles,contact_num,NULL,id',
                 'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*[\W_]).+$/'],
                 'confirm_password' => 'required|same:password',
             ], [
@@ -111,8 +118,14 @@ class LoginController extends Controller
             $user->email = $request->email;
             $user->username = $request->email;
             $user->contact_num = $request->contact_num;
-            $user->created_at = date('Y-m-d H:i:s');
-            $user->updated_at = date('Y-m-d H:i:s');
+            $user->created_at = now();
+            $user->updated_at = now();
+
+            // Generate the OTP and set its expiry
+            $otpCode = rand(100000, 999999); // 6-digit random OTP
+            $user->otp_code = $otpCode;
+            $user->otp_expires_at = Carbon::now()->addMinutes(10); // OTP expires in 10 minutes
+
             $user->save();
 
             $credentials = new Credential();
@@ -123,32 +136,190 @@ class LoginController extends Controller
             $credentials->updated_at = date('Y-m-d H:i:s');
             $credentials->save();
 
+            // Send OTP email
+            Mail::send('main.buyer.otp', ['user' => $user, 'otp' => $otpCode], function ($message) use ($user) {
+                $message->to($user->email)
+                    ->subject('Verify your email address with OTP');
+            });
+
             DB::commit();
 
-            $middleware = new CustomAuthMiddleware();
+            // Automatically log the user in
+            $request->session()->put('user', $user);
+            $request->session()->put('loginId', $user->id);
+            $request->session()->put('username', $user->username);
+            $request->session()->put('email', $user->email);
 
-            $response = $middleware->handle($request, function ($request) {
-                $username = $request->session()->get('username'); // username of the user who logged in
-                $loginId = $request->session()->get('loginId');
+            // Redirect to OTP verification page
+            return redirect()->route('verify.otp')->with('success', 'Registration successful! Please verify your email using the OTP sent.');
+        } catch (Exception $e) {
+            dd($e);
+            DB::rollBack();
+            return redirect()->route('login.form')->with('error', 'An error occured. Please try again.');
+        }
+    }
 
-                $userType = UserProfile::where('username', $username)
-                    ->where('id', $loginId)
-                    ->value('user_type_id');
+    public function showOtpForm()
+    {
+        // Get the logged-in user from session
+        $userId = session()->get('loginId');
+
+        // Fetch the user from the database
+        $user = UserProfile::findOrFail($userId);
+
+        return view('main.buyer.otp-form', compact('user'));
+    }
+
+    public function verifyOtp(Request $request)
+    {
+        // Get the logged-in user from session
+        $userId = session()->get('loginId');
+
+        // Fetch the user from the database
+        $user = UserProfile::findOrFail($userId);
+
+        if (Carbon::now()->gt(Carbon::parse($user->otp_expires_at))) {
+            $user->otp_code = null;
+            $user->otp_expires_at = null;
+            $user->save();
+
+            return redirect()->back()->withErrors(['otp' => 'The OTP has expired. Please request a new one.']);
+        }
+
+        // Check if OTP is correct and not expired
+        if ($user->otp_code === $request->otp) {
+            // Mark email as verified
+            $user->email_verified_at = now();
+            $user->otp_code = null; // Clear OTP after successful verification
+            $user->otp_expires_at = null;
+            $user->save();
+
+            return redirect()->route('landing.page')->with('success', 'Email verified successfully!');
+        } else {
+            return redirect()->back()->withErrors(['otp' => 'Invalid or expired OTP.']);
+        }
+    }
+
+    public function resendOtp(Request $request)
+    {
+        // Get the logged-in user from the session
+        $userId = session()->get('loginId');
+        $user = UserProfile::findOrFail($userId);
+
+        if ($user->email_verified_at) {
+            return redirect()->back()->with('error', 'Your email is already verified.');
+        }
+
+        // Generate a new OTP and update the expiry time
+        $otpCode = rand(100000, 999999); // Generate a new 6-digit OTP
+        $user->otp_code = $otpCode;
+        $user->otp_expires_at = Carbon::now()->addMinutes(10); // Set the expiry for another 10 minutes
+        $user->save();
+
+        // Send the new OTP email
+        Mail::send('main.buyer.otp', ['user' => $user, 'otp' => $otpCode], function ($message) use ($user) {
+            $message->to($user->email)
+                ->subject('Verify your email address with OTP');
+        });
+
+        return redirect()->back()->with('success', 'A new OTP has been sent to your email.');
+    }
+
+    public function googleRedirect()
+    {
+        return Socialite::driver("google")->redirect();
+    }
+
+    public function googleCallback(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $googleUser = Socialite::driver("google")->user();
+
+            // Check if account doesn't have last name
+            $lname = $googleUser->user['family_name'] ?? " ";
+
+            // Check if user already exists with the Google ID
+            $existingUser = UserProfile::where('google_id', $googleUser->id)
+                ->orWhere('email', $googleUser->email)
+                ->first();
+
+            // $googlePicUrl = $googleUser->user['picture'];
+
+            // Download the image from the URL
+            // $response = Http::get($googlePicUrl);
+            // if ($response->successful()) {
+            //     $imageContent = $response->body();
+            //     $imageName = time() . '_' . Str::random(10) . '.jpg'; // Generate a unique image name
+            //     Storage::disk('public')->put('uploads/' . $imageName, $imageContent);
+            // }
+
+            if ($existingUser) {
+
+                $user = UserProfile::findOrFail($existingUser->id);
+                $user->google_id = $googleUser->id;
+                $user->save();
+
+                // User exists, log them in
+                $request->session()->put('user', $existingUser);
+                $request->session()->put('loginId', $existingUser->id);
+                $request->session()->put('username', $existingUser->username);
+
+                $userType = $existingUser->user_type_id;
+
+                DB::commit();
 
                 switch ($userType) {
                     case 1:
-                        return redirect()->route('landing.page');
-                        break;
+                        return redirect()->route('landing.page')->with('success', 'Registration successful! You are now logged in.');
                     default:
                         return redirect()->route('login.form')->with('error', 'Unauthorized Access!');
-                        break;
                 }
-            });
+            } else {
+                // Create new user
+                $user = UserProfile::UpdateOrCreate([
+                    'google_id' => $googleUser->id,
+                    // 'picture' => $imageName,
+                    'first_name' => $googleUser->user['given_name'],
+                    'last_name' => $lname,
+                    'email' => $googleUser->email,
+                    'username' => $googleUser->email,
+                    'contact_num' => " ",
+                    // 'password' => bcrypt(Str::random(12)), // Hash password before saving
+                    'user_type_id' => 1,
+                    'email_verified_at' => now(),
+                ]);
 
-            return $response;
+                $credential = new Credential();
+                $credential->user_id = $user->id;
+                $credential->password = Hash::make('klasmeyt123');
+                $credential->created_at = date('Y-m-d H:i:s');
+                $credential->updated_at = date('Y-m-d H:i:s');
+                $credential->save();
+
+                DB::commit();
+
+                $request->session()->put('user', $user);
+                $request->session()->put('loginId', $user->id);
+                $request->session()->put('username', $user->username);
+
+                $userType = UserProfile::where('id', $user->id)->first();
+                $userType = $userType->user_type_id;
+
+                switch ($userType) {
+                    case 1:
+                        return redirect()->route('landing.page')->with('success', 'Registration successful! You are now logged in.');
+                    default:
+                        return redirect()->route('login.form')->with('error', 'Unauthorized Access!');
+                }
+            }
         } catch (Exception $e) {
             DB::rollBack();
-            return redirect()->route('login.form')->with('error', 'An error occured. Please try again.');
+            return redirect()->route('login.form')->with('error', 'Something went wrong. Please try again.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            return redirect()->route('login.form')->with('error', 'Something went wrong. Please try again.');
         }
     }
 

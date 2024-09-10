@@ -47,7 +47,7 @@
 
                             <!-- Submit button -->
                             <div class="mb-1 text-center">
-                                <button type="submit" class="btn btn-success btn-rounded w-100 mb-3">Save</button>
+                                <button type="submit" class="btn btn-primary rounded-pill py-2 w-100 mb-2">Save</button>
                             </div>
 
                             <div class="alert alert-primary">

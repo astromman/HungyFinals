@@ -6,6 +6,17 @@
     <div class="py-2">
         <h2>Add Products</h2>
     </div>
+    @if (session('success'))
+    <div class="alert alert-primary" role="alert" onclick="location.reload();">
+        {{ session('success') }}
+    </div>
+    @endif
+
+    @if (session('error'))
+    <div class="alert alert-danger" role="alert" onclick="location.reload();">
+        {{ session('error') }}
+    </div>
+    @endif
     <div class="row">
         <div class="d-flex justify-content-between align-items-start">
             <div class="col-lg-2 pt-1">
@@ -71,10 +82,17 @@
                     </button>
                 </div>
 
+                @if(is_null($displayProduct->image))
+                <!-- Image Container -->
+                <div class="product-tumb w-100" style="height: 200px;">
+                    <img src="{{ asset('images/bg/default_shop_image.png') }}" alt="{{ $displayProduct->product_name }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                </div>
+                @else
                 <!-- Image Container -->
                 <div class="product-tumb w-100" style="height: 200px;">
                     <img src="{{ asset('storage/products/' . $displayProduct->image) }}" alt="{{ $displayProduct->product_name }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
                 </div>
+                @endif
 
                 <div class="product-details p-3">
                     <span class="product-catagory d-block">{{ $displayProduct->category_name }}</span>

@@ -10,14 +10,19 @@
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
+
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" class="href">
+
+    <!-- DataTables CSS
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css"> -->
 
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     <style>
         body {
             font-family: "Nunito", sans-serif;
-            background-color: #D4DFE8;
+            background-color: #f6f6f9;
             margin: 0;
             padding: 0;
         }
@@ -52,7 +57,8 @@
 
         .sidebar {
             height: 100vh;
-            width: 0px; /* 250px if want to open by default*/
+            width: 0px;
+            /* 250px if want to open by default*/
             position: fixed;
             top: 0;
             left: 0;
@@ -85,8 +91,10 @@
         }
 
         .navbar {
-            margin-left: 0px; /* 250px if want to change open by default */
-            width: 100%; /* calc(100% - 250px) if want open by defaut */
+            margin-left: 0px;
+            /* 250px if want to change open by default */
+            width: 100%;
+            /* calc(100% - 250px) if want open by defaut */
             background-color: #050144;
             padding: 10px 20px;
             z-index: 1000;
@@ -104,7 +112,8 @@
         }
 
         .content-area {
-            margin-left: 0px; /* Adjusted for closed sidebar 250px if want open by default */
+            margin-left: 0px;
+            /* Adjusted for closed sidebar 250px if want open by default */
             padding: 80px 20px 20px 20px;
             transition: margin-left 0.3s;
         }
@@ -113,7 +122,8 @@
             font-size: 20px;
             cursor: pointer;
             color: white;
-            display: inline; /* change to none if want open by default */
+            display: inline;
+            /* change to none if want open by default */
             margin-right: 15px;
         }
 

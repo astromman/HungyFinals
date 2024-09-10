@@ -13,9 +13,9 @@
         <!-- Responsive Multi-Step Progress Bar -->
         <div class="progress-container mb-4">
             <ul class="progressbar">
-                <li class="active">Order</li>
-                <li class="active">Processing</li>
-                <li>Finish</li>
+                <li class="active">Make Order</li>
+                <li class="active">Preparing</li>
+                <li>Ready</li>
             </ul>
         </div>
 

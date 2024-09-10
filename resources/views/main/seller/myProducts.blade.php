@@ -33,7 +33,7 @@
                 <td>{{ $displayMyProduct->product_name }}</td>
                 <td>{{ $displayMyProduct->product_description }}</td>
                 <td class="text-center">{{ $displayMyProduct->sold }}</td>
-                <td class="text-center">{{ $displayMyProduct->price }}</td>
+                <td class="text-center">{{ '₱ ' . $displayMyProduct->price }}</td>
                 <td class="text-center">{{ $displayMyProduct->status }}</td>
                 <td class="text-center">
                     <form action="{{ route('delete.products', $displayMyProduct->id) }}" method="POST">

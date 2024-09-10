@@ -26,10 +26,14 @@
                 </li>
             </ul>
             <div class="d-flex align-items-center nav-icons">
-                <a  class="nav-link position-relative" href="{{ route('shop.cart') }}">
+                @php
+                $userId = session()->get('loginId');
+                $sumInCart = App\Models\Order::where('user_id', $userId)->where('at_cart', true)->count();
+                @endphp
+                <a class="nav-link position-relative" href="{{ route('shop.cart') }}">
                     <i class="fas fa-shopping-cart"></i>
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        0
+                        {{ $sumInCart }}
                     </span>
                 </a>
                 <a href="{{ route('my.profile') }}" class="nav-link">

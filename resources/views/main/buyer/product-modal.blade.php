@@ -3,7 +3,7 @@
     @csrf
     <input type="hidden" name="product_id" class="product_id">
     <input type="hidden" name="product_price" class="product_price">
-    <input type="hidden" name="product_qty" class="product_qty">
+    <!-- <input type="hidden" name="shopId" value=" shops->id "> -->
 
     <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -18,13 +18,13 @@
                             <img src="" alt="" class="img bg-secondary-subtle">
                         </div>
                         <div class="col-md-6">
-                            <h6 class="category"></h6>
-                            <h3 class="modal-title"></h3>
+                            <h6 class="category pt-2"></h6>
+                            <h3 class="modal-title text-uppercase"></h3>
                             <br>
-                            <h4><strong class="price highlight-text"></strong></h4>
+                            <h1><strong name="price" class="price highlight-text"></strong></h1>
                             <div class="d-flex">
                                 <button type="button" class="btn btn-outline-danger btn-decrease">_</button>
-                                <input type="text" class="form-control mx-2 w-100 text-center qty-input" style="width: 50px;" value="1" max="10">
+                                <input type="text" name="product_qty" class="form-control mx-2 w-100 text-center qty-input" style="width: 50px;" value="1" max="10">
                                 <button type="button" class="btn btn-outline-success btn-increase">+</button>
                             </div>
                             <button type="submit" class="btn btn-primary mt-2 w-100"><i class="fa fa-shopping-cart"></i> Add to cart</button>
@@ -164,53 +164,61 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const modalElement = document.getElementById('productModal');
-        const qtyInput = modalElement.querySelector('.qty-input');
-        const decreaseBtn = modalElement.querySelector('.btn-decrease');
-        const increaseBtn = modalElement.querySelector('.btn-increase');
-        const productQtyInput = modalElement.querySelector('.product_qty');
+        const productModal = document.getElementById('productModal');
+        const productForm = document.getElementById('productForm');
+        const qtyInput = productForm.querySelector('.qty-input');
 
-        decreaseBtn.addEventListener('click', function() {
-            let currentQty = parseInt(qtyInput.value);
-            if (currentQty > 1) {
-                qtyInput.value = currentQty - 1;
-                productQtyInput.value = qtyInput.value; // Update hidden field
+        // Event listener for when the modal is shown
+        productModal.addEventListener('show.bs.modal', function(event) {
+            // Button that triggered the modal
+            const button = event.relatedTarget;
+
+            // Extract info from data-* attributes
+            const productId = button.getAttribute('data-id');
+            const productName = button.getAttribute('data-name');
+            const productDescription = button.getAttribute('data-description');
+            const productPrice = button.getAttribute('data-price');
+            const productCategory = button.getAttribute('data-category');
+            const productImage = button.getAttribute('data-image');
+
+            // Update the modal's content
+            productModal.querySelector('.modal-title').textContent = productName;
+            productModal.querySelector('.price').textContent = '₱' + productPrice;
+            productModal.querySelector('.description').textContent = productDescription;
+            productModal.querySelector('.category').textContent = productCategory;
+            productModal.querySelector('img').setAttribute('src', productImage);
+            productModal.querySelector('img').setAttribute('alt', productName);
+
+            // Update the hidden input fields in the form
+            productForm.querySelector('.product_id').value = productId;
+            productForm.querySelector('.product_price').value = productPrice;
+
+            // Reset the quantity input to 1
+            qtyInput.value = 1;
+        });
+
+        // Event listener for when the modal is hidden
+        productModal.addEventListener('hidden.bs.modal', function() {
+            // Reset the quantity input to 1
+            qtyInput.value = 1;
+        });
+
+        // Handle quantity increase
+        document.querySelector('.btn-increase').addEventListener('click', function() {
+            let qty = parseInt(qtyInput.value);
+            qty = isNaN(qty) ? 1 : qty;
+            if (qty < 10) {
+                qtyInput.value = qty + 1;
             }
         });
 
-        increaseBtn.addEventListener('click', function() {
-            let currentQty = parseInt(qtyInput.value);
-            qtyInput.value = currentQty + 1;
-            productQtyInput.value = qtyInput.value; // Update hidden field
-        });
-
-        modalElement.addEventListener('hidden.bs.modal', function() {
-            qtyInput.value = 1;
-            productQtyInput.value = 1; // Reset hidden field to 1 when modal is closed
-        });
-
-        // Update the hidden qty field before submitting the form
-        const form = document.getElementById('productForm');
-        form.addEventListener('submit', function() {
-            productQtyInput.value = qtyInput.value;
-        });
-
-        // Populate Modal with Product Data
-        document.querySelectorAll('.product-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const modal = document.querySelector('#productModal');
-
-                // Populate the visible modal content
-                modal.querySelector('.modal-title').textContent = this.getAttribute('data-name');
-                modal.querySelector('.modal-body .img').src = this.getAttribute('data-image');
-                modal.querySelector('.modal-body .category').textContent = this.getAttribute('data-category');
-                modal.querySelector('.modal-body .description').textContent = this.getAttribute('data-description');
-                modal.querySelector('.modal-body .price').textContent = '₱' + this.getAttribute('data-price');
-
-                modal.querySelector('.product_id').value = this.getAttribute('data-id');
-                modal.querySelector('.product_price').value = this.getAttribute('data-price');
-                productQtyInput.value = qtyInput.value; // Initialize hidden qty input
-            });
+        // Handle quantity decrease
+        document.querySelector('.btn-decrease').addEventListener('click', function() {
+            let qty = parseInt(qtyInput.value);
+            qty = isNaN(qty) ? 1 : qty;
+            if (qty > 1) {
+                qtyInput.value = qty - 1;
+            }
         });
     });
 </script>

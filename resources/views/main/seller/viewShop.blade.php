@@ -60,11 +60,18 @@
                     </div>
                     @endif
 
+                    @if(is_null($product->image))
+                    <!-- Image Container -->
+                    <div class="product-tumb w-100" style="height: 200px;">
+                        <img src="{{ asset('images/bg/default_shop_image.png') }}" alt="{{ $product->product_name }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
+                    </div>
+                    @else
                     <!-- Image Container -->
                     <div class="product-tumb w-100" style="height: 200px;">
                         <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->product_name }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
                     </div>
-                    
+                    @endif
+
                     <div class="product-details p-3">
                         <span class="product-catagory d-block">{{ $product->category_name }}</span>
                         <h4 class="mt-2">{{ $product->product_name }}</h4>

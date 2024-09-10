@@ -351,7 +351,7 @@
 
       .mobile-buttons {
         position: absolute;
-        bottom: 20px;
+        bottom: 55px;
         left: 50%;
         transform: translateX(-50%);
         display: flex;
@@ -384,7 +384,7 @@
       }
 
       .form-container {
-        padding: 20px;
+        padding: 15px;
       }
 
       .form-container form {
@@ -461,7 +461,7 @@
         <small class="text-danger">{{ $message }}</small>
         @enderror
 
-        <input name="contact_num" type="text" placeholder="Mobile Number" value="{{ old('contact_num') }}">
+        <input name="contact_num" type="number" placeholder="Mobile Number" value="{{ old('contact_num') }}">
         @error('contact_num')
         <small class="text-danger">{{ $message }}</small>
         @enderror
@@ -479,7 +479,7 @@
         <button type="submit">Register</button>
         <span>or use your account</span>
         <div class="social-container">
-          <a href="#" class="social"><i class="lni lni-google"></i></a>
+          <a href="{{ route('google.redirect') }}" class="social"><i class="lni lni-google"></i></a>
         </div>
       </form>
     </div>
@@ -516,7 +516,7 @@
         <button type="submit">Login</button>
         <span>or use your account</span>
         <div class="social-container">
-          <a href="#" class="social"><i class="lni lni-google"></i></a>
+          <a href="{{ route('google.redirect') }}" class="social"><i class="lni lni-google"></i></a>
         </div>
       </form>
     </div>

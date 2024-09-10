@@ -7,7 +7,7 @@
         <a href="{{ route('audit.logs') }}"><i class="bi bi-card-list"></i> Audit Trail</a>
         <a href="{{ route('manage.building') }}"><i class="bi bi-pin-map-fill"></i> Canteen Control</a>
         <a href="{{ route('manager.account') }}"><i class="bi bi-person-circle"></i> Manager's Accounts</a>
-        <a href="{{ route('buyers.account') }}"><i class="bi bi-person-circle"></i> Buyer Accounts</a>
+        <a href="{{ route('buyers.account') }}"><i class="bi bi-person-circle"></i> Buyer's Accounts</a>
     </div>
 
     <!-- Navbar -->

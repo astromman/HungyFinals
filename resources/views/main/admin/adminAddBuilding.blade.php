@@ -111,7 +111,7 @@
 
         <!-- Buildings Table -->
         <div class="col-lg-8">
-            <div class="card shadow-lg rounded-4">
+            <div class="card shadow rounded-4">
                 <div class="pt-3 text-center">
                     <h3>Canteen List</h3>
                 </div>

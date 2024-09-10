@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class ManagerController extends Controller
 {
@@ -181,9 +182,16 @@ class ManagerController extends Controller
     {
         $managerBuilding = $request->session()->get('user');
 
+        $managerBuildingId = $managerBuilding->manager_building_id;
+
         try {
             $validator = Validator::make($request->all(), [
-                'username' => 'required|unique:user_profiles,username',
+                'username' => [
+                    'required',
+                    Rule::unique('user_profiles')->where(function ($query) use ($managerBuildingId) {
+                        return $query->where('seller_building_id', $managerBuildingId);
+                    }),
+                ],
             ], [
                 'first_name.required' => 'First name is required.',
                 'last_name.required' => 'Last name is required.',
@@ -217,8 +225,6 @@ class ManagerController extends Controller
             $shop->shop_name = 'Not Available';
             $shop->shop_image = 'Not Available';
             $shop->user_id = $user->id;
-            $shop->email = 'Not Available';
-            $shop->contact_num = 'Not Available';
             $shop->status = 'Unverified';
             $shop->building_id = $user->seller_building_id;
             $shop->created_at = date('Y-m-d H:i:s');
@@ -352,7 +358,7 @@ class ManagerController extends Controller
             ->where('permits.status', 'Pending')
             ->orderBy('permits.created_at', 'desc')
             ->get();
-            
+
         return view('main.manager.applications', compact('application'));
     }
 

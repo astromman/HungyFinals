@@ -21,7 +21,7 @@ use Symfony\Component\Translation\Loader\CsvFileLoader;
 */
 
 Route::get('/test', function () {
-    return view('main.buyer.product-modal');
+    return view('main.buyer.otp');
 });
 
 Route::get('/logout', [LoginController::class, 'logout'])->name('user.logout');
@@ -39,12 +39,16 @@ Route::group([
     Route::get('/register', [LoginController::class, 'register_form'])->name('register.form');
     Route::post('/register', [LoginController::class, 'register_post'])->name('register.post');
 
+    Route::get('/verify-otp', [LoginController::class, 'showOtpForm'])->name('verify.otp');
+    Route::post('/verify-otp', [LoginController::class, 'verifyOtp'])->name('verify.otp.post');
+    Route::get('/resend-otp', [LoginController::class, 'resendOtp'])->name('resend.otp');
+
     Route::get('/forgot-password', [LoginController::class, 'forgot_pass_form'])->name('forgot.pass.form');
     Route::get('/forgot-password/verifiaction', [LoginController::class, 'forgot_pass_verification_form'])->name('forgot.pass.verification.form');
     Route::get('/forgot-password/new-password', [LoginController::class, 'forgot_pass_new_pass_form'])->name('forgot.pass.new.pass.form');
 
-    Route::get('/auth/google/redirect', []);
-    Route::get('/auth/google/callback', []);
+    Route::get('/auth/google/redirect', [LoginController::class, 'googleRedirect'])->name('google.redirect');
+    Route::get('/auth/google/callback', [LoginController::class, 'googleCallback'])->name('google.callback');
 });
 
 Route::group([
@@ -60,19 +64,27 @@ Route::group([
 
     Route::get('/about-us', [BuyerController::class, 'about_us_page'])->name('about.us.page');
 
-    Route::get('/my-cart', [BuyerController::class, 'shop_cart'])->name('shop.cart');
-
     Route::get('/my-favorites', [BuyerController::class, 'my_favorites'])->name('my.favorites');
 
     Route::get('/my-profile', [BuyerController::class, 'my_profile'])->name('my.profile');
-    
+
     Route::get('/canteen/visit/{id}/{building_name}', [BuyerController::class, 'visit_canteen'])->name('visit.canteen');
-    
+
     Route::get('/shops', [BuyerController::class, 'shops_list'])->name('shops.list');
 
     Route::get('/shops/visit/{id}/{shop_name}', [BuyerController::class, 'visit_shop'])->name('visit.shop');
 
+    Route::get('/my-cart', [BuyerController::class, 'shop_cart'])->name('shop.cart');
     Route::post('/cart/add', [BuyerController::class, 'addToCart'])->name('cart.add');
+    Route::patch('/cart/update-quantity/{orderId}', [BuyerController::class, 'updateQuantity'])->name('update.quantity');
+    Route::delete('/cart/remove/{orderId}', [BuyerController::class, 'removeItem'])->name('remove.item');
+    Route::delete('/cart/remove-items/{shopId}', [BuyerController::class, 'removeItems'])->name('remove.items');
+
+    Route::get('/checkout/{shopId}', [BuyerController::class, 'checkoutOrders'])->name('checkout.orders');
+    Route::post('/checkout/place-order/{shopId}', [BuyerController::class, 'placeOrder'])->name('place.order');
+    Route::get('/payment/success', [BuyerController::class, 'paymentSuccess'])->name('payment.success');
+    Route::get('/payment/failed', [BuyerController::class, 'paymentFailed'])->name('payment.failed');
+    
 });
 
 Route::group([

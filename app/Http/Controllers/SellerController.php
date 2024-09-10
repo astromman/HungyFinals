@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Credential;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\Shop;
 use App\Models\UserProfile;
@@ -19,10 +20,50 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class SellerController extends Controller
 {
-    public function seller_dashboard()
+    public function seller_dashboard(Request $request)
     {
-        return view('main.seller.seller');
+        $sellerId = $request->session()->get('loginId'); // Assuming seller is logged in and you get their ID
+        // dd($sellerId);
+        $shopId = Shop::where('user_id', $sellerId)->first();
+
+        // Yesterday's date range
+        // $yesterdayStart = now()->subDay()->startOfDay();
+        // $yesterdayEnd = now()->subDay()->endOfDay();
+
+        // Fetch Yesterday's Total Sales
+        $pending = DB::table('orders')
+            ->join('products', 'orders.product_id', '=', 'products.id')
+            ->join('shops', 'products.shop_id', '=', 'shops.id')
+            ->join('user_profiles', 'shops.user_id', '=', 'user_profiles.id')
+            ->where('orders.order_status', 'Pending')
+            ->where('shops.user_id', $sellerId) // Ensure it filters by the logged-in seller's shop
+            ->distinct()  // Ensure only unique order references are counted
+            ->count('orders.order_reference');  // Count unique order references
+
+
+        // Fetch Total Number of Orders (for the seller)
+        $totalNumberOfOrders = DB::table('orders')
+            ->join('products', 'orders.product_id', '=', 'products.id')
+            ->join('shops', 'products.shop_id', '=', 'shops.id')
+            ->where('orders.order_status', 'Complete')
+            ->where('shops.user_id', $sellerId) // Ensure it matches the logged-in seller
+            ->count();
+
+        // Fetch Total Income (All Time Sales)
+        $totalIncome = DB::table('orders')
+            ->join('products', 'orders.product_id', '=', 'products.id')
+            ->join('shops', 'products.shop_id', '=', 'shops.id')
+            ->where('shops.user_id', $sellerId) // Ensure it matches the logged-in seller
+            ->where('orders.order_status', 'Completed')
+            ->sum('orders.total');
+
+        return view('main.seller.seller', [
+            'pending' => $pending,
+            'totalNumberOfOrders' => $totalNumberOfOrders,
+            'totalIncome' => $totalIncome
+        ]);
     }
+
 
     // PASSWORD
     public function seller_change_password()
@@ -167,7 +208,12 @@ class SellerController extends Controller
                 $request->all(),
                 [
                     'username' => 'required|unique:user_profiles,username,' . $userId,
-                    'shop_name' => 'required|unique:shops,shop_name,' . $shop->id,
+                    'shop_name' => [
+                        'required',
+                        Rule::unique('shops')->ignore($shop->id)->where(function ($query) use ($shop) {
+                            return $query->where('building_id', $shop->building_id);
+                        }),
+                    ],
                     'email' => 'required|email|unique:user_profiles,email,' . $userId,
                     'contact_num' => 'required|numeric|digits:11|starts_with:09|unique:user_profiles,contact_num,' . $userId,
                     'shop_image' => 'nullable|file|mimes:jpg,jpeg,png|max:51200',
@@ -294,15 +340,18 @@ class SellerController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 
-            $image = time() . '_' . $shop->shop_name . '_' . $request->image->getClientOriginalName();
-            $request->file('image')->storeAs('products', $image, 'public');
-
             DB::beginTransaction();
 
             $products = new Product();
+
+            if ($request->hasFile('image')) {
+                $image = time() . '_' . $shop->shop_name . '_' . $request->image->getClientOriginalName();
+                $request->file('image')->storeAs('products', $image, 'public');
+                $products->image = $image;
+            }
+
             $products->product_name = $request->product_name;
             $products->product_description = $request->description;
-            $products->image = $image;
             $products->price = $request->price;
             $products->sold = 0;
             $products->category_id = $request->category_id;
@@ -413,11 +462,17 @@ class SellerController extends Controller
 
             $product->delete();
             return redirect()->route('my.products.table')->with('success', 'Product deleted successfully.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            $errorInfo = $e->errorInfo[1];
+
+            if ($errorInfo == 1451) {
+                return redirect()->back()->with('error', 'Cannot Delete Product. Existing order(s) found.');
+            }
         } catch (Exception $e) {
-            return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An unexpected error occurred.');
         }
     }
-
 
     public function my_products_table(Request $request)
     {
@@ -549,16 +604,58 @@ class SellerController extends Controller
             $categories = Category::findOrFail($id);
             $categories->delete();
             return redirect()->back()->with('success', 'Category deleted successfully');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            $errorInfo = $e->errorInfo[1];
+
+            if ($errorInfo == 1451) {
+                return redirect()->back()->with('error', 'Cannot delete category. Existing products found.');
+            }
         } catch (Exception $e) {
-            return redirect()->back()->withErrors(['error' => 'Failed to delete category.']);
+            return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
 
     // ORDERS
-    public function my_orders()
+    public function my_orders(Request $request)
     {
-        return view('main.seller.myOrders');
+        $userId = $request->session()->get('loginId');
+
+        // Fetch the shop ID for the logged-in seller
+        $shopId = Shop::where('user_id', $userId)->first()->id;
+
+        // Get all unique orders for this seller's shop
+        $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
+            ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
+            ->select(
+                'orders.id',
+                'orders.order_reference',
+                'orders.created_at',
+                'orders.total',
+                'orders.quantity',
+                'orders.order_status',
+                'user_profiles.first_name',
+                'user_profiles.last_name',
+                'user_profiles.contact_num'
+            )
+            // Filter orders by the shop_id
+            ->where('products.shop_id', $shopId)
+            ->where('orders.at_cart', false)
+            ->where('orders.order_status', 'Pending')
+            ->groupBy('orders.order_reference') // Group by the unique order_reference
+            ->get();
+
+        foreach ($orders as $order) {
+            // Fetch products for each order
+            $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
+                ->select('products.id', 'products.product_name', 'products.price', 'orders.quantity', 'orders.total')
+                ->where('orders.order_reference', $order->order_reference)
+                ->get();
+        }
+
+        return view('main.seller.myOrders', compact('orders'));
     }
+
 
     // VERIFICATION
     public function verified(Request $request)

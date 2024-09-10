@@ -15,8 +15,9 @@
                 <h3><strong style="color: grey;">Personal info</strong> <br><span style="font-size: small;">See your personal information on this page</span></h3>
             </div>
             <div class="button-group">
-                <button type="button" class="edit-button" onclick="enableEditing()">Edit</button>
-                <button type="submit" class="save-button" id="saveButton">Save</button>
+                <button type="button" class="edit-button" id="editButton" onclick="enableEditing()">Edit</button>
+                <button type="button" class="save-button" id="saveButton" onclick="submitForm()" style="display:none;">Save</button>
+                <button type="button" class="cancel-button" id="cancelButton" onclick="disableEditing()" style="display:none;">Cancel</button>
             </div>
         </div>
         <hr class="divider">
@@ -58,109 +59,43 @@
                 <strong style="color: grey;">Change Password</strong> <br><span style="font-size: small;">Click this to change your password</span>
             </div>
             <a href="{{ route('admin.change.password') }}" class="change-password-button">Change Password</a>
-            <!-- <button type="submit" class="change-password-button">Change Password</button> -->
         </div>
     </div>
 </div>
 
 <script>
     function enableEditing() {
+        // Enable all input fields
         var inputs = document.querySelectorAll('#profileForm input');
         inputs.forEach(function(input) {
             input.disabled = false;
         });
-        var editButton = document.querySelector('.edit-button');
-        editButton.textContent = 'Cancel';
-        editButton.setAttribute('type', 'submit');
-        editButton.setAttribute('onclick', 'disableEditing()');
+
+        // Change Edit button to Save and Cancel
+        document.getElementById('editButton').style.display = 'none';
+        document.getElementById('saveButton').style.display = 'inline-block';
+        document.getElementById('cancelButton').style.display = 'inline-block';
     }
 
     function disableEditing() {
+        // Disable all input fields
         var inputs = document.querySelectorAll('#profileForm input');
         inputs.forEach(function(input) {
             input.disabled = true;
         });
 
-        var editButton = document.querySelector('.edit-button');
-        editButton.textContent = 'Edit';
-        editButton.setAttribute('type', 'button');
-        editButton.setAttribute('onclick', 'enableEditing()');
+        // Revert buttons to only show Edit
+        document.getElementById('editButton').style.display = 'inline-block';
+        document.getElementById('saveButton').style.display = 'none';
+        document.getElementById('cancelButton').style.display = 'none';
     }
 
     // Submit the form when the Save button is clicked
-    document.getElementById('saveButton').addEventListener('click', function() {
+    function submitForm() {
         document.getElementById('profileForm').submit();
-    });
+    }
 </script>
 
-<!-- <div class="container-fluid pt-5">
-    <div class="text-center py-2">
-        <h2>My Profile</h2>
-    </div>
-    @if (session('error'))
-    <div class="alert alert-danger" role="alert">
-        {{ session('error') }}
-    </div>
-    @endif
-    <div class="row pt-3 justify-content-center">
-        <div class="col-lg-4">
-            <div class="card shadow-lg rounded-4 mb-4">
-                <div class="pt-3 text-center">
-                    <h3>Edit Profile</h3>
-                </div>
-                <div class="pt-4 d-flex justify-content-center align-items-center">
-                    <div class="col-lg-11">
-                        @if (session('success'))
-                        <div class="alert alert-info" role="alert">
-                            <strong>{{ session('success') }}</strong>
-                        </div>
-                        @endif
-                        <form method="POST" action="{{ route('admin.update.profile') }}">
-                            @csrf
-                            <div class="row mb-2">
-                                <div class="col-lg-6">
-                                    <label for="first_name" class="form-label">First Name</label>
-                                    <input name="first_name" class="form-control @error('first_name') is-invalid @enderror" value="{{ old('first_name', $userProfile->first_name) }}" type="text" id="first_name">
-                                    @error('first_name')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                                <div class="col-lg-6">
-                                    <label for="last_name" class="form-label">Last Name</label>
-                                    <input name="last_name" class="form-control @error('last_name') is-invalid @enderror" value="{{ old('last_name', $userProfile->last_name) }}" type="text" id="last_name">
-                                    @error('last_name')
-                                    <span class="invalid-feedback">{{ $message }}</span>
-                                    @enderror
-                                </div>
-                            </div>
-
-                            <div class="mb-2">
-                                <label for="username" class="form-label">Username</label>
-                                <input name="username" class="form-control @error('username') is-invalid @enderror" value="{{ old('username', $userProfile->username) }}" type="text" id="username">
-                                @error('username')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email address</label>
-                                <input name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $userProfile->email) }}" type="email" id="email">
-                                @error('email')
-                                <span class="invalid-feedback">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="mb-4 text-center">
-                                <button type="submit" class="btn btn-success btn-rounded w-100 mb-3">Save</button>
-                                <a href="{{ route('admin.change.password') }}" class="btn btn-primary w-100 mb-3">Change Password</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div> -->
 <style>
     .form-control {
         border-color: #5479f7;
@@ -240,13 +175,19 @@
     }
 
     .edit-button,
-    .save-button {
+    .save-button,
+    .cancel-button {
         padding: 10px 20px;
         border: none;
         border-radius: 20px;
         cursor: pointer;
         font-size: 14px;
         width: 120px;
+    }
+
+    .cancel-button {
+        background-color: #555;
+        color: white;
     }
 
     .edit-button {

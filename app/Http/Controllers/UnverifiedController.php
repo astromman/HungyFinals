@@ -19,10 +19,35 @@ class UnverifiedController extends Controller
     public function resubmission_form(Request $request)
     {
         $userId = $request->session()->get('loginId');
-        $shopDetails = Shop::where('user_id', $userId)->first();
+        $shopDetails = Shop::join('user_profiles', 'shops.user_id', 'user_profiles.id')
+            ->select(
+                'shops.*',
+                'user_profiles.email',
+                'user_profiles.contact_num',
+            )
+            ->where('user_id', $userId)
+            ->first();
         $applicationId = $shopDetails ? Permit::where('shop_id', $shopDetails->id)
             ->orderByDesc('created_at')
             ->first() : null;
+
+        if ($applicationId && $applicationId->status == 'Approved') {
+            $user = UserProfile::find($userId);
+
+            // Automatically log the user in
+            $request->session()->put('user', $user);
+            $request->session()->put('loginId', $user->id);
+            $request->session()->put('username', $user->username);
+            $request->session()->put('email', $user->email);
+
+            // Redirect the user based on their user type
+            switch ($user->user_type_id) {
+                case 3:
+                    return redirect()->route('seller.dashboard')->with('success', 'Registration successful! You are now logged in.');
+                default:
+                    return redirect()->route('login.form')->with('error', 'Unauthorized Access!');
+            }
+        }
 
         return view('main.unverified.unverified', compact('applicationId', 'shopDetails'));
     }
@@ -35,8 +60,8 @@ class UnverifiedController extends Controller
         try {
             $validator = Validator::make(request()->all(), [
                 'shop_name' => 'required|unique:shops,shop_name',
-                'email' => 'required|email|unique:shops,email',
-                'contact_num' => 'required|numeric|min:11|max:11|starts_with:09|unique:shops,contact_num',
+                'email' => 'required|email|unique:user_profiles,email',
+                'contact_num' => 'required|numeric|digits:11|starts_with:09|unique:user_profiles,contact_num',
                 'mayors' => 'required|file|mimes:jpeg,png,pdf|max:51200',
                 'bir' => 'required|file|mimes:jpeg,png,pdf|max:51200',
                 'dti' => 'required|file|mimes:jpeg,png,pdf|max:51200',
@@ -113,12 +138,15 @@ class UnverifiedController extends Controller
             DB::commit();
             return redirect()->route('resubmission.form')->with('success', 'Resubmission Success');
         } catch (QueryException $e) {
+            dd($e);
             DB::rollBack();
             return redirect()->back()->with('error', 'Database error: ' . $e->getMessage());
         } catch (FileException $e) {
+            dd($e);
             DB::rollBack();
             return redirect()->back()->with('error', 'File upload error: ' . $e->getMessage());
         } catch (Exception $e) {
+            dd($e);
             DB::rollBack();
             return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }

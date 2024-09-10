@@ -1,7 +1,27 @@
 @extends('layouts.buyer.buyermaster')
 
 @section('content')
-<div class="container my-4 ">
+<!-- Success Modal -->
+@if(session('success'))
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Success</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{ session('qty') > 1 ? 'Items' : 'Item' }} added to cart!
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+<div class="container my-4">
     <div class="row">
         <div class="mb-2">
             <a href="javascript:history.back()">
@@ -58,7 +78,7 @@
     </div>
     <!-- <h3 class="pt-2 highlight-text">Available Foods</h3> -->
     @forelse($groupedProducts as $categoryName => $products)
-    <div class="category-section mt-5">
+    <div class="category-section my-5">
         <h2 class="text-secondary">
             {{ $categoryName }}
             <hr>
@@ -68,13 +88,12 @@
             @foreach($products as $product)
             <!--PRODUCT CARD PART--->
             <div class="col-md-6 col-lg-3 mb-4">
-                <div class="product-card h-100 position-relative border shadow" data-bs-toggle="modal" data-bs-target="#productModal"
+                <div class="product-card position-relative border shadow" data-bs-toggle="modal" data-bs-target="#productModal"
                     data-id="{{ $product->id }}"
                     data-name="{{ $product->product_name }}"
                     data-description="{{ $product->product_description }}"
                     data-price="{{ $product->price }}"
                     data-category="{{ $product->category_name }}"
-                    data-status="{{ $product->status }}"
                     data-image="{{ asset('storage/products/' . $product->image) }}">
 
                     @if(!$product->is_deleted)
@@ -106,6 +125,7 @@
                     </div>
                 </div>
             </div>
+
             @endforeach
         </div>
     </div>
@@ -115,12 +135,15 @@
     </h3>
     @endforelse
 
+    @include('main.buyer.product-modal')
+
 </div>
 
-@include('main.buyer.product-modal')
-
 <script>
-    
+    document.addEventListener('DOMContentLoaded', function() {
+        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+    });
 </script>
 
 @endsection
