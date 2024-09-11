@@ -110,9 +110,9 @@
                 <div class="col-12">Payment method</div>
             </div>
             <div class="row">
-                <select class="form-select">
-                    <option value="cash">💵 Cash</option>
-                    <option value="paypal">💳 Cashless</option>
+                <select name="" class="form-select">
+                    <option value="gcash">💵 GCash</option>
+                    <option value="paypal">💳 PayPal</option>
                 </select>
             </div>
         </div>
@@ -126,7 +126,7 @@
                 </div>
                 <form action="{{ route('place.order', Crypt::encrypt($shop->id)) }}" method="POST">
                     @csrf
-                    <input type="hidden" name="payment_method" value="cashless">
+                    <input type="hidden" name="payment_type" value="gcash">
                     <button type="submit" class="btn btn-primary w-100">Place Order</button>
                 </form>
             </div>

@@ -185,4 +185,7 @@ return [
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 
+    'paymongo_public_key' => env('PAYMONGO_PUBLIC_KEY'),
+    'paymongo_secret_key' => env('PAYMONGO_SECRET_KEY'),
+
 ];

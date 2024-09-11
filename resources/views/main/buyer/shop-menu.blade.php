@@ -67,6 +67,7 @@
                                 <div class="px-1 rounded-2 shadow bg-success">
                                     <span>{{ $shops->designated_canteen }}</span>
                                 </div>
+                                ‎
                             </td>
                         </tr>
                     </tbody>

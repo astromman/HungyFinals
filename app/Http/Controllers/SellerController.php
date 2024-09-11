@@ -331,7 +331,7 @@ class SellerController extends Controller
             $validator = Validator::make(request()->all(), [
                 'product_name' => 'required|string|max:255',
                 'image' => 'nullable|image|mimes:jpg,jpeg,png,JPG,JPEG,PNG|max:5000',
-                'description' => 'required|string|max:1000',
+                'description' => 'nullable|string|max:1000',
                 'price' => 'required|numeric|min:0',
                 'category_id' => 'required',
             ]);
@@ -627,6 +627,7 @@ class SellerController extends Controller
         // Get all unique orders for this seller's shop
         $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
             ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
+            ->join('payments', 'orders.payment_id', 'payments.id')
             ->select(
                 'orders.id',
                 'orders.order_reference',
@@ -636,24 +637,40 @@ class SellerController extends Controller
                 'orders.order_status',
                 'user_profiles.first_name',
                 'user_profiles.last_name',
-                'user_profiles.contact_num'
+                'user_profiles.contact_num',
+                'payments.payment_status',
+                'payments.payment_type',
             )
             // Filter orders by the shop_id
             ->where('products.shop_id', $shopId)
             ->where('orders.at_cart', false)
             ->where('orders.order_status', 'Pending')
+            ->orderBy('orders.created_at', 'desc')
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
 
         foreach ($orders as $order) {
             // Fetch products for each order
             $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
-                ->select('products.id', 'products.product_name', 'products.price', 'orders.quantity', 'orders.total')
+                ->join('categories', 'products.category_id', 'categories.id')
+                ->select(
+                    'products.id', 
+                    'products.product_name', 
+                    'products.price', 
+                    'orders.quantity', 
+                    'orders.total',
+                    'categories.type_name'
+                )
                 ->where('orders.order_reference', $order->order_reference)
                 ->get();
         }
 
         return view('main.seller.myOrders', compact('orders'));
+    }
+
+    public function updateOrder()
+    {
+        
     }
 
 

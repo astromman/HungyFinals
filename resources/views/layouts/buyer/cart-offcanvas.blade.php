@@ -1,29 +1,51 @@
 <!-- resources/views/partials/cart-offcanvas.blade.php -->
 <div class="offcanvas offcanvas-end" tabindex="-1" id="shoppingCartCanvas" aria-labelledby="shoppingCartLabel">
-    <div class="offcanvas-header">
-        <div class="col-1 d-flex justify-content-center">
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="col-11">
-            <h5 class="offcanvas-title" id="shoppingCartLabel">Cart Ni Klasmeyt</h5>
+    <div class="container py-1">
+        <div class="row align-items-center">
+            <div class="col-md-2 col-2 py-2">
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="col-md-8 col-8 py-2 text-center">
+                <h5>Orders ni Klasmeyt</h5>
+            </div>
+            <div class="col-md-2 col-2 py-2"></div>
+            <hr class="shadow">
         </div>
     </div>
 
-    <div class="offcanvas-body">
-        <!-- Responsive Multi-Step Progress Bar -->
-        <div class="progress-container mb-4">
-            <ul class="progressbar">
-                <li class="active">Make Order</li>
-                <li class="active">Preparing</li>
-                <li>Ready</li>
-            </ul>
+    <div class="offcanvas-body justify-content-center">
+        @php
+        $userId = session()->get('loginId');
+        $orders = App\Models\Order::where('user_id', $userId)
+        ->where('order_status', 'Pending')
+        ->where('at_cart', false)
+        ->groupBy('order_reference')
+        ->get();
+        @endphp
+
+        @forelse($orders as $order)
+        <div class="card w-100 my-2">
+            <div class="py-2 justify-content-start align-items-start">
+                <h5>Order Ref. <small>{{ $order->order_reference }}</small></h5>
+            </div>
+            <!-- Responsive Multi-Step Progress Bar -->
+            <div class="progress-container my-4">
+                <ul class="progressbar">
+                    <li class="active">Order</li>
+                    <li>Preparing</li>
+                    <li>Pick-up</li>
+                </ul>
+            </div>
         </div>
+        @empty
+
+        @endforelse
 
         <!-- Order Cart Title -->
-        <h4 class="mb-4">Order Cart</h4>
+        <!-- <h4 class="mb-4">Order Cart</h4> -->
 
         <!-- Cart Items Table -->
-        <table class="table">
+        <!-- <table class="table">
             <tbody>
                 <tr>
                     <td>
@@ -46,7 +68,6 @@
                     <td class="text-center">₱55.00</td>
                 </tr>
 
-                <!-- Subtotal Row -->
                 <tr>
                     <td colspan="2">
                         <div>Subtotal</div>
@@ -55,7 +76,7 @@
                     <td class="text-center border-top">₱55.00</td>
                 </tr>
             </tbody>
-        </table>
+        </table> -->
     </div>
 
     <div class="offcanvas-footer p-3">
@@ -83,7 +104,8 @@
         background-color: #003366;
     }
 
-    .table td, .table th {
+    .table td,
+    .table th {
         border-top: none;
     }
 
@@ -162,8 +184,10 @@
     }
 
     .offcanvas-body {
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        scrollbar-width: none;
+        /* Firefox */
     }
 </style>
 

@@ -114,11 +114,11 @@ class BuyerController extends Controller
         $userId = $request->session()->get('loginId');
 
         $orders = Order::join('products', 'orders.product_id', 'products.id')
+            ->join('categories', 'products.category_id', 'categories.id')
             ->join('shops', 'products.shop_id', 'shops.id')
             ->join('buildings', 'shops.building_id', 'buildings.id')
             ->select(
                 'orders.*',
-                'products.*',
                 'products.product_name',
                 'products.product_description',
                 'products.image',
@@ -127,6 +127,7 @@ class BuyerController extends Controller
                 'products.shop_id',
                 'products.status',
                 'products.is_deleted',
+                'categories.type_name',
                 'shops.shop_name',
                 'buildings.building_name as designated_canteen'
             )
@@ -154,67 +155,6 @@ class BuyerController extends Controller
 
         return view('main.buyer.protocart', compact('orders', 'groupedOrders', 'shopDetails'));
     }
-
-    // public function shop_cart(Request $request)
-    // {
-    //     $userId = $request->session()->get('loginId');
-
-    //     // Fetch orders for the logged-in user, with related products, shop, and building data
-    //     $orders = Order::join('products', 'orders.product_id', 'products.id')
-    //         ->join('shops', 'products.shop_id', 'shops.id')
-    //         ->join('buildings', 'shops.building_id', 'buildings.id')
-    //         ->select(
-    //             'orders.*',
-    //             'products.*',
-    //             'products.product_name',
-    //             'products.product_description',
-    //             'products.image',
-    //             'products.price',
-    //             'products.category_id',
-    //             'products.shop_id',
-    //             'products.status',
-    //             'products.is_deleted',
-    //             'shops.shop_name',
-    //             'buildings.building_name as designated_canteen'
-    //         )
-    //         ->where('products.status', 'Available')
-    //         ->where('is_deleted', false)
-    //         ->where('orders.user_id', $userId)
-    //         ->where('orders.at_cart', true)
-    //         ->where('orders.order_status', 'At Cart')
-    //         ->orderBy('orders.updated_at',  'desc')
-    //         ->get();
-
-    //     // Group orders by shop_id
-    //     $groupedOrders = $orders->groupBy('products.shop_id');
-
-    //     // Get all shop details for shops present in the cart
-    //     $shopDetails = Shop::whereIn('id', $groupedOrders->keys())->get()->keyBy('id');
-
-    //     return view('main.buyer.protocart', compact('orders', 'groupedOrders', 'shopDetails'));
-    // }
-
-
-    // public function shop_cart(Request $request)
-    // {
-    //     $userId = $request->session()->get('loginId'); // Make sure loginId is properly stored in session.
-
-    //     // Fetch orders for the logged-in user, with product, shop, and building relationships
-    //     $orders = Order::with(['product.shop.building'])
-    //         ->where('orders.user_id', $userId)
-    //         ->where('orders.at_cart', true)
-    //         ->where('orders.order_status', 'At Cart')
-    //         ->orderBy('orders.updated_at', 'desc')
-    //         ->get();
-
-    //     // Group orders by shop_id
-    //     $groupedOrders = $orders->groupBy('product.shop_id');
-
-    //     // Get all shop details for shops present in the cart
-    //     $shopDetails = Shop::whereIn('id', $groupedOrders->keys())->get()->keyBy('id');
-
-    //     return view('main.buyer.protocart', compact('orders', 'groupedOrders', 'shopDetails'));
-    // }
 
     public function addToCart(Request $request)
     {
@@ -283,7 +223,7 @@ class BuyerController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'newSubtotal' => $order->total,
+                    'newSubtotal' => $order->total, // return the updated subtotal
                 ]);
             }
         }
@@ -293,7 +233,9 @@ class BuyerController extends Controller
 
     public function removeItem($orderId)
     {
-        $order = Order::findOrFail($orderId);
+        $order = Order::where('order_status', 'At Cart')
+            ->where('at_cart', false)
+            ->findOrFail($orderId);
         $order->delete();
 
         return response()->json(['success' => true]);
@@ -306,6 +248,8 @@ class BuyerController extends Controller
         Order::join('products', 'orders.product_id', '=', 'products.id')
             ->where('orders.user_id', $userId)
             ->where('products.shop_id', $shopId)
+            ->where('order_status', 'At Cart')
+            ->where('at_cart', false)
             ->delete();
 
         return response()->json(['success' => true]);
@@ -380,7 +324,7 @@ class BuyerController extends Controller
             $randomNumber = mt_rand(1000, 9999);
 
             $exists = Order::where('order_reference', strtoupper($shopCode) . '-' . 'ORD-' . $randomNumber)
-                ->where('created_at', now())
+                // ->where('created_at', now())
                 ->exists();
         } while ($exists);
 
@@ -422,11 +366,14 @@ class BuyerController extends Controller
                 return redirect()->back()->with('error', 'Minimum transaction amount is ₱20.00.');
             }
 
+            $paymentType = $request->payment_type;
+
             $payment = new Payment;
             $payment->payment_id = null;
             $payment->payer_email = $user->email;
             $payment->amount = $totalAmount;
             $payment->currency = 'PHP';
+            $payment->payment_type = $paymentType;
             $payment->payment_status = 'Pending';
             $payment->created_at = now();
             $payment->updated_at = now();
@@ -435,7 +382,7 @@ class BuyerController extends Controller
             // Make a request to PayMongo to create a GCash payment source
             $client = new Client();
             $response = $client->post('https://api.paymongo.com/v1/sources', [
-                'auth' => [env('PAYMONGO_SECRET_KEY'), ''],
+                'auth' => [config('app.paymongo_secret_key'), ''],
                 'json' => [
                     'data' => [
                         'attributes' => [
@@ -444,8 +391,8 @@ class BuyerController extends Controller
                                 'success' => route('payment.success'),
                                 'failed' => route('payment.failed'),
                             ],
-                            'type' => 'gcash',
-                            'currency' => 'PHP'
+                            'type' => $paymentType,
+                            'currency' => $payment->currency,
                         ]
                     ]
                 ]
