@@ -84,7 +84,7 @@ Route::group([
     Route::post('/checkout/place-order/{shopId}', [BuyerController::class, 'placeOrder'])->name('place.order');
     Route::get('/payment/success', [BuyerController::class, 'paymentSuccess'])->name('payment.success');
     Route::get('/payment/failed', [BuyerController::class, 'paymentFailed'])->name('payment.failed');
-    
+
 });
 
 Route::group([
@@ -137,6 +137,7 @@ Route::group([
     Route::delete('/my-shop/delete-categories/{id}', [SellerController::class, 'delete_category'])->name('delete.category');
 
     Route::get('/my-shop/orders', [SellerController::class, 'my_orders'])->name('my.orders');
+    Route::post('/my-shop/update-order/{orderRef}', [SellerController::class, 'updateOrder'])->name('update.order');
 
     Route::get('/my-shop/verification', [SellerController::class, 'verified'])->name('verified');
 });

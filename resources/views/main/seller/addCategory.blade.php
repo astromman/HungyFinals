@@ -3,11 +3,8 @@
 @section('content')
 <div class="container-fluid pt-3">
     <div class="py-2">
-        <h2>Add Categories</h2>
+        <h2>Custom Categories</h2>
     </div>
-    <!-- <div class="alert alert-primary" role="alert" onclick="location.reload();">
-        {{ session('success') }}
-    </div> -->
     <div class="row justify-content-center">
         <!-- Categories Form Card -->
         <div class="col-lg-4">
@@ -35,18 +32,26 @@
                             @csrf
                             <div class="mb-3">
                                 <label for="type_name" class="form-label">Category Name</label>
-                                <input name="type_name" class="form-control @error('type_name') is-invalid @enderror" value="{{ old('type_name') }}" type="text" id="type_name">
+                                <input
+                                    name="type_name"
+                                    class="form-control @error('type_name') is-invalid @enderror"
+                                    value="{{ old('type_name') }}"
+                                    type="text"
+                                    id="type_name"
+                                    {{ $shopDetails->is_reopen ? 'readonly' : '' }}>
                                 @error('type_name')
                                 <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
 
+                            @if(!$shopDetails->is_reopen)
                             <!-- Submit button -->
                             <div class="mb-2 row text-center">
                                 <div class="col-lg-12">
-                                    <button type="submit" class="btn btn-primary btn-rounded mb-3 w-100">Add</button>
+                                    <button type="submit" class="btn btn-primary btn-rounded mb-3 w-100" {{ $shopDetails->is_reopen ? 'disabled' : '' }}>Add</button>
                                 </div>
                             </div>
+                            @endif
                         </form>
 
                         @elseif($categoryId)
@@ -54,7 +59,13 @@
                             @csrf
                             <div class="mb-3">
                                 <label for="type_name" class="form-label">Category Name</label>
-                                <input name="type_name" class="form-control @error('type_name') is-invalid @enderror" value="{{ $categoryId->type_name }}" type="text" id="type_name">
+                                <input
+                                    name="type_name"
+                                    class="form-control @error('type_name') is-invalid @enderror"
+                                    value="{{ $categoryId->type_name }}"
+                                    type="text"
+                                    id="type_name"
+                                    {{ $shopDetails->is_reopen ? 'readonly' : '' }}>
                                 @error('type_name')
                                 <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
@@ -63,7 +74,7 @@
                             <!-- Submit button -->
                             <div class="mb-4 row text-center">
                                 <div class="col-lg-6">
-                                    <button type="submit" class="btn btn-success btn-rounded mb-3 w-100">Save</button>
+                                    <button type="submit" class="btn btn-success btn-rounded mb-3 w-100" {{ $shopDetails->is_reopen ? 'disabled' : '' }}>Save</button>
                                 </div>
                                 <div class="col-lg-6">
                                     <a href="{{ route('product.categories') }}" class="btn btn-secondary btn-rounded mb-3 w-100">Cancel</a>
@@ -76,7 +87,7 @@
             </div>
         </div>
 
-        <!-- Buildings Table -->
+        <!-- Categories Table -->
         <div class="col-lg-8">
             <div class="card shadow-lg rounded-4">
                 <div class="pt-3 text-center">
@@ -90,7 +101,9 @@
                                     <th>Name</th>
                                     <th>Date Created</th>
                                     <th>Date Updated</th>
+                                    @if(!$shopDetails->is_reopen)
                                     <th>Actions</th>
+                                    @endif
                                 </tr>
                             </thead>
                             <tbody class="borderless">
@@ -99,10 +112,15 @@
                                     <td>{{ $category->type_name }}</td>
                                     <td>{{ $category->created_at }}</td>
                                     <td>{{ $category->updated_at }}</td>
+                                    @if(!$shopDetails->is_reopen)
                                     <td>
                                         <div class="row">
                                             <div class="col-lg-6 d-flex align-items-center">
-                                                <a href="{{ route('edit.button.category', $category->id) }}" class="btn btn-sm btn-edit w-100" title="Edit">
+                                                <a
+                                                    href="{{ route('edit.button.category', $category->id) }}"
+                                                    class="btn btn-sm w-100"
+                                                    title="Edit"
+                                                    {{ $shopDetails->is_reopen ? 'style=pointer-events:none;opacity:0.5;' : '' }}>
                                                     <i class="bi bi-pencil-fill"></i>
                                                 </a>
                                             </div>
@@ -110,13 +128,19 @@
                                                 <form action="{{ route('delete.category', $category->id) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm w-100" title="Delete" onclick="return confirm('Are you sure you want to delete this canteen?')">
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-sm w-100"
+                                                        title="Delete"
+                                                        onclick="return confirm('Are you sure you want to delete this category?')"
+                                                        {{ $shopDetails->is_reopen ? 'style=pointer-events:none;opacity:0.5;' : '' }}>
                                                         <i class="bi bi-trash-fill"></i>
                                                     </button>
                                                 </form>
                                             </div>
                                         </div>
                                     </td>
+                                    @endif
                                 </tr>
                                 @empty
                                 <tr class="text-center">

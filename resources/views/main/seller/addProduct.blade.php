@@ -4,7 +4,7 @@
 <!-- Add products button -->
 <div class="container-fluid pt-3">
     <div class="py-2">
-        <h2>Add Products</h2>
+        <h2>My Products</h2>
     </div>
     @if (session('success'))
     <div class="alert alert-primary" role="alert" onclick="location.reload();">
@@ -31,6 +31,7 @@
                     </select>
                 </form>
             </div>
+            @if(!$shopDetails->is_reopen)
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
                 <div class="row">
                     <div class="col-lg-2">
@@ -41,6 +42,7 @@
                     </div>
                 </div>
             </button>
+            @endif
         </div>
     </div>
 
@@ -69,6 +71,7 @@
                 </div>
                 @endif
 
+                @if(!$shopDetails->is_reopen)
                 <div class="edit position-absolute">
                     <button class="btn editProductBtn" data-bs-toggle="modal" data-bs-target="#editProductModal"
                         data-id="{{ $displayProduct->id }}"
@@ -81,6 +84,8 @@
                         <i class="bi bi-pencil-square"></i>
                     </button>
                 </div>
+                @else
+                @endif
 
                 @if(is_null($displayProduct->image))
                 <!-- Image Container -->

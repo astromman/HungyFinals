@@ -508,11 +508,11 @@ class SellerController extends Controller
     {
         $userId = $request->session()->get('loginId');
 
-        $shop = Shop::where('user_id', $userId)->first();
+        $shopDetails = Shop::where('user_id', $userId)->first();
 
-        $categories = Category::where('shop_id', $shop->id)->get();
+        $categories = Category::where('shop_id', $shopDetails->id)->get();
 
-        return view('main.seller.addCategory', compact('categories'));
+        return view('main.seller.addCategory', compact('categories', 'shopDetails'));
     }
 
     public function add_category(Request $request)
@@ -621,6 +621,8 @@ class SellerController extends Controller
     {
         $userId = $request->session()->get('loginId');
 
+        $shopDetails = Shop::where('user_id', $userId)->first();
+
         // Fetch the shop ID for the logged-in seller
         $shopId = Shop::where('user_id', $userId)->first()->id;
 
@@ -638,13 +640,15 @@ class SellerController extends Controller
                 'user_profiles.first_name',
                 'user_profiles.last_name',
                 'user_profiles.contact_num',
+                'payments.payment_id',
                 'payments.payment_status',
                 'payments.payment_type',
             )
             // Filter orders by the shop_id
             ->where('products.shop_id', $shopId)
             ->where('orders.at_cart', false)
-            ->where('orders.order_status', 'Pending')
+            ->where('orders.order_status', '!=', 'At Cart')
+            ->where('orders.order_status', '!=', 'Completed')
             ->orderBy('orders.created_at', 'desc')
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
@@ -654,10 +658,10 @@ class SellerController extends Controller
             $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
                 ->join('categories', 'products.category_id', 'categories.id')
                 ->select(
-                    'products.id', 
-                    'products.product_name', 
-                    'products.price', 
-                    'orders.quantity', 
+                    'products.id',
+                    'products.product_name',
+                    'products.price',
+                    'orders.quantity',
                     'orders.total',
                     'categories.type_name'
                 )
@@ -665,12 +669,37 @@ class SellerController extends Controller
                 ->get();
         }
 
-        return view('main.seller.myOrders', compact('orders'));
+        return view('main.seller.myOrders', compact('orders', 'shopDetails'));
     }
 
-    public function updateOrder()
+    public function updateOrder(Request $request, $orderRef)
     {
-        
+        try {
+            DB::beginTransaction();
+
+            $orderReference = Order::where('order_reference', $orderRef)->get();
+
+            foreach ($orderReference as $order) {
+
+                if ($order->order_status == 'Ready') {
+                    $orderStatus = $request->order_status1;
+                    dd($orderStatus);
+                } else {
+                    $orderStatus = $request->order_status;
+                    dd($orderStatus);
+                }
+
+                $order->order_status = $orderStatus;
+                $order->save();
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Order status updated for all matching records.');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Something went wrong while updating the order.');
+        }
     }
 
 

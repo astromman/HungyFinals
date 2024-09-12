@@ -3,7 +3,7 @@
 @section('content')
 <div class="container-fluid pt-3"> <!-- Adding margin-top to create separation -->
     <div class="py-2">
-        <h2>My Products</h2>
+        <h2>Products Table</h2>
     </div>
     @if (session('success'))
     <div class="alert alert-primary" role="alert" onclick="location.reload();">
@@ -24,26 +24,42 @@
                 <th class="text-center" scope="col">Sold</th>
                 <th class="text-center" scope="col">Price</th>
                 <th class="text-center" scope="col">Status</th>
+                @if(!$shopDetails->is_reopen)
                 <th class="text-center" scope="col">Action</th>
+                @endif
             </tr>
         </thead>
         <tbody class="borderless">
             @forelse($products as $displayMyProduct)
             <tr class="text-justify">
-                <td>{{ $displayMyProduct->product_name }}</td>
-                <td>{{ $displayMyProduct->product_description }}</td>
-                <td class="text-center">{{ $displayMyProduct->sold }}</td>
-                <td class="text-center">{{ '₱ ' . $displayMyProduct->price }}</td>
-                <td class="text-center">{{ $displayMyProduct->status }}</td>
+                <td>
+                    {{ $displayMyProduct->product_name }}
+                </td>
+                <td>
+                    {{ $displayMyProduct->product_description }}
+                </td>
                 <td class="text-center">
+                    {{ $displayMyProduct->sold }}
+                </td>
+                <td class="text-center">
+                    {{ '₱ ' . $displayMyProduct->price }}
+                </td>
+                <td class="text-center">
+                    {{ $displayMyProduct->status }}
+                </td>
+                @if(!$shopDetails->is_reopen)
+                <td class="justify-content-center align-items-center">
                     <form action="{{ route('delete.products', $displayMyProduct->id) }}" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-side py-1 w-100 rounded-pill" title="Delete" onclick="return confirm('Are you sure you want to delete this canteen?')">
-                            <i class="bi bi-trash-fill" style="color: #050144;"></i>
-                        </button>
+                        <div class="d-flex justify-content-center align-items-center">
+                            <button type="submit" class="btn btn-side rounded-pill" title="Delete" onclick="return confirm('Are you sure you want to delete this canteen?')">
+                                <i class="bi bi-trash-fill" style="color: #050144;"></i>
+                            </button>
+                        </div>
                     </form>
                 </td>
+                @endif
             </tr>
             @empty
             <tr>

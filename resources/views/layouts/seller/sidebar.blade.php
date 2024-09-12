@@ -11,9 +11,9 @@
         </button>
         <div class="collapse show ps-3" id="product-collapse">
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1">
-                <li class="li-sub"><a href="{{ route('my.products.table') }}" class="li-a">My Products</a></li>
-                <li class="li-sub"><a href="{{ route('my.products') }}" class="li-a">Add Products</a></li>
-                <li class="li-sub"><a href="{{ route('product.categories') }}" class="li-a">Add Categories</a></li>
+                <li class="li-sub"><a href="{{ route('my.products.table') }}" class="li-a">Products Table</a></li>
+                <li class="li-sub"><a href="{{ route('my.products') }}" class="li-a">My Products</a></li>
+                <li class="li-sub"><a href="{{ route('product.categories') }}" class="li-a">Custom Categories</a></li>
             </ul>
         </div>
 
@@ -36,6 +36,7 @@
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1">
                 <li class="li-sub"><a href="{{ route('shop.view.mode') }}" class="li-a">View Mode</a></li>
                 <li class="li-sub"><a href="{{ route('shop.update.details') }}" class="li-a">Shop Details</a></li>
+                <!-- <li class="li-sub"><a href="" class="li-a">Payment Method</a></li> -->
             </ul>
         </div>
 
@@ -87,17 +88,28 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title" id="statusModalLabel">Store Update</h3>
+                <h3 class="modal-title" id="statusModalLabel">Shop Update</h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="location.reload();"></button>
             </div>
             @if($shop->is_reopen)
             <div class="modal-body">
-                You have temporarily closed your shop. You can re-open it again anytime soon.
-                You will not be recieving orders for the mean time.
+                <h4>
+                    <strong>Shop temporarily closed.</strong>
+                </h4>
+                <div class="alert alert-primary">
+                    You can re-open it again anytime soon. Updating exsisting orders are disabled as well.
+                    Shop will not be recieving orders for the mean time.
+                </div>
             </div>
             @else
             <div class="modal-body">
-                You have re-opened your shop. You can now recieve orders.
+                <h4>
+                    <strong>Shop is now open.</strong>
+                </h4>
+                <div class="alert alert-primary">
+                    Editing products, categories, and shop details are disabled while your shop is open.
+                    You can now recieve orders.
+                </div>
             </div>
             @endif
             <div class="modal-footer">

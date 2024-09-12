@@ -2,6 +2,9 @@
 
 @section('content')
 <div class="container py-3">
+    <div class="alert alert-primary my-2">
+        <i class="bi bi-info-circle"></i> <strong>You are in View Mode! This feature allows you to experience your shop exactly as your buyers see it. You can browse through your shop's products and categories.</strong>
+    </div>
     <div class="row">
         <div class="container position-relative" style="height: 350px; overflow: hidden;">
             <!-- Blurred Background Image -->

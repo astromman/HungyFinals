@@ -391,7 +391,7 @@ class BuyerController extends Controller
                                 'success' => route('payment.success'),
                                 'failed' => route('payment.failed'),
                             ],
-                            'type' => $paymentType,
+                            'type' => 'maya',
                             'currency' => $payment->currency,
                         ]
                     ]

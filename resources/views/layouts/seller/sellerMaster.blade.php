@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Hungry Falcons</title>
 
@@ -727,6 +728,8 @@
 
         .borderless tr,
         .borderless td {
+            padding-top: 15px;
+            padding-bottom: 15px;
             border: none;
         }
 
@@ -751,7 +754,7 @@
         }
 
         .order-table th {
-            background-color: #324960;
+            background-color: #050144;
             color: #ffffff;
             font-weight: bold;
         }
