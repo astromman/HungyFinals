@@ -11,10 +11,9 @@
                 <tr>
                     <th class="text-center">Expand</th>
                     <th class="text-center">Reference</th>
-                    <th class="text-center">Created</th>
                     <th class="text-center">Customer</th>
-                    <th class="text-center">Payment Reference</th>
-                    <th class="text-center">Status</th>
+                    <th class="text-center">Created</th>
+                    <th class="text-center">Payment Status</th>
                     <th class="text-center">Mode</th>
                     @if($shopDetails->is_reopen)
                     <th class="text-center">Status</th>
@@ -30,7 +29,7 @@
                         data-bs-target="#orderDetails{{ $order->id }}"
                         aria-expanded="false"
                         aria-controls="orderDetails{{ $order->id }}">
-                        <i class="bi bi-caret-down-fill font-bold" style="font-size: 20px; "></i>
+                        <i class="bi bi-caret-down-fill font-bold" id="icon-{{ $order->id }}" style="font-size: 20px;"></i>
                     </td>
                     <td class="text-center"
                         data-label="Order Id"
@@ -39,14 +38,6 @@
                         aria-expanded="false"
                         aria-controls="orderDetails{{ $order->id }}">
                         {{ $order->order_reference }}
-                    </td>
-                    <td class="text-center"
-                        data-label="Created"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#orderDetails{{ $order->id }}"
-                        aria-expanded="false"
-                        aria-controls="orderDetails{{ $order->id }}">
-                        {{ $order->created_at->diffForHumans() }}
                     </td>
                     <td class="text-center text-uppercase"
                         data-label="Customer"
@@ -57,12 +48,12 @@
                         {{ $order->first_name . ' ' . $order->last_name }}
                     </td>
                     <td class="text-center"
-                        data-label="Payment Id"
+                        data-label="Created"
                         data-bs-toggle="collapse"
                         data-bs-target="#orderDetails{{ $order->id }}"
                         aria-expanded="false"
                         aria-controls="orderDetails{{ $order->id }}">
-                        {{ $order->payment_id }}
+                        {{ $order->updated_at->diffForHumans() }}
                     </td>
                     <td class="text-center" data-label="Payment"
                         data-bs-toggle="collapse"
@@ -84,21 +75,21 @@
                         <form id="orderStatusForm{{ $order->order_reference }}" method="POST" action="{{ route('update.order', $order->order_reference) }}">
                             @csrf
                             @if($order->order_status == 'Ready')
-                            <input name="order_status1" type="hidden" value="Completed">
+                            <input name="order_status" type="hidden" value="Completed">
                             @endif
-                            <select name="order_status" class="status-dropdown">
-                                <option value="Processing"
+                            <select name="order_status" class="status-dropdown rounded-pill" {{ $order->order_status == 'Ready' ? 'disabled' : '' }}>
+                                <option value="Processing" class="text-start"
                                     {{ $order->order_status == 'Pending' ? 'selected' : '' }}
                                     {{ $order->order_status == 'Preparing' ? 'disabled' : '' }}
                                     {{ $order->order_status == 'Ready' ? 'disabled' : '' }}>
                                     Pending
                                 </option>
-                                <option value="Preparing"
+                                <option value="Preparing" class="text-start"
                                     {{ $order->order_status == 'Preparing' ? 'selected' : '' }}
                                     {{ $order->order_status == 'Ready' ? 'disabled' : '' }}>
                                     Preparing
                                 </option>
-                                <option value="Ready"
+                                <option value="Ready" class="text-start"
                                     {{ $order->order_status == 'Pending' ? 'disabled' : '' }}
                                     {{ $order->order_status == 'Preparing' ? 'able' : '' }}
                                     {{ $order->order_status == 'Ready' ? 'selected' : '' }}>
@@ -217,14 +208,23 @@
                 if (collapseElement.classList.contains('show')) {
                     // Row is open, close it
                     bootstrap.Collapse.getInstance(collapseElement).hide();
+                    // Change icon to down
+                    document.getElementById('icon-' + row.getAttribute('data-bs-target').replace('#orderDetails', '')).classList.remove('bi-caret-up-fill');
+                    document.getElementById('icon-' + row.getAttribute('data-bs-target').replace('#orderDetails', '')).classList.add('bi-caret-down-fill');
                     openRow = null; // No row is open anymore
                 } else {
                     // Close any previously open row
                     if (openRow && openRow !== collapseElement) {
                         bootstrap.Collapse.getInstance(openRow).hide();
+                        // Change previously open row's icon to down
+                        document.getElementById('icon-' + openRow.id.replace('orderDetails', '')).classList.remove('bi-caret-up-fill');
+                        document.getElementById('icon-' + openRow.id.replace('orderDetails', '')).classList.add('bi-caret-down-fill');
                     }
                     // Open the clicked row
                     bootstrap.Collapse.getOrCreateInstance(collapseElement).show();
+                    // Change icon to up
+                    document.getElementById('icon-' + row.getAttribute('data-bs-target').replace('#orderDetails', '')).classList.remove('bi-caret-down-fill');
+                    document.getElementById('icon-' + row.getAttribute('data-bs-target').replace('#orderDetails', '')).classList.add('bi-caret-up-fill');
                     openRow = collapseElement; // Set the new open row
                 }
             });
@@ -237,11 +237,11 @@
             });
         });
 
+        // Trigger success modal if session contains success message
         @if(session('success'))
         var successModal = new bootstrap.Modal(document.getElementById('successModal'), {});
         successModal.show();
         @endif
-
     });
 </script>
 @endsection

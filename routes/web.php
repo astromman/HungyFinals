@@ -21,7 +21,7 @@ use Symfony\Component\Translation\Loader\CsvFileLoader;
 */
 
 Route::get('/test', function () {
-    return view('main.buyer.otp');
+    return view('main.buyer.trackorder');
 });
 
 Route::get('/logout', [LoginController::class, 'logout'])->name('user.logout');
@@ -85,6 +85,7 @@ Route::group([
     Route::get('/payment/success', [BuyerController::class, 'paymentSuccess'])->name('payment.success');
     Route::get('/payment/failed', [BuyerController::class, 'paymentFailed'])->name('payment.failed');
 
+    Route::get('/track-order', [BuyerController::class, 'track_order'])->name('track.order');
 });
 
 Route::group([
@@ -124,20 +125,22 @@ Route::group([
     Route::get('/my-shop/edit-detials', [SellerController::class, 'shop_update_details'])->name('shop.update.details');
     Route::post('/my-shop/edit-detials', [SellerController::class, 'update_details'])->name('shop.updated.details');
 
-    Route::get('my-shop/my-products', [SellerController::class, 'my_products_table'])->name('my.products.table');
-    Route::get('/my-shop/add-products', [SellerController::class, 'my_products'])->name('my.products');
-    Route::post('/my-shop/add-products', [SellerController::class, 'add_products'])->name('add.products');
-    Route::post('/my-shop/edit-products', [SellerController::class, 'edit_products'])->name('edit.products');
-    Route::delete('/my-shop/delete-products/{id}', [SellerController::class, 'delete_products'])->name('delete.products');
+    Route::get('/my-products', [SellerController::class, 'my_products_table'])->name('my.products.table');
+    Route::get('/add-products', [SellerController::class, 'my_products'])->name('my.products');
+    Route::post('/add-products', [SellerController::class, 'add_products'])->name('add.products');
+    Route::post('/edit-products', [SellerController::class, 'edit_products'])->name('edit.products');
+    Route::delete('/delete-products/{id}', [SellerController::class, 'delete_products'])->name('delete.products');
 
-    Route::get('/my-shop/add-categories', [SellerController::class, 'product_categories'])->name('product.categories');
-    Route::post('/my-shop/add-categories', [SellerController::class, 'add_category'])->name('add.category');
-    Route::get('/my-shop/edit-categories/{id}', [SellerController::class, 'edit_button_category'])->name('edit.button.category');
-    Route::post('/my-shop/edit-categories/{id}', [SellerController::class, 'edit_category'])->name('edit.category');
-    Route::delete('/my-shop/delete-categories/{id}', [SellerController::class, 'delete_category'])->name('delete.category');
+    Route::get('/add-categories', [SellerController::class, 'product_categories'])->name('product.categories');
+    Route::post('/add-categories', [SellerController::class, 'add_category'])->name('add.category');
+    Route::get('/edit-categories/{id}', [SellerController::class, 'edit_button_category'])->name('edit.button.category');
+    Route::post('/edit-categories/{id}', [SellerController::class, 'edit_category'])->name('edit.category');
+    Route::delete('/delete-categories/{id}', [SellerController::class, 'delete_category'])->name('delete.category');
 
-    Route::get('/my-shop/orders', [SellerController::class, 'my_orders'])->name('my.orders');
-    Route::post('/my-shop/update-order/{orderRef}', [SellerController::class, 'updateOrder'])->name('update.order');
+    Route::get('/my-orders', [SellerController::class, 'my_orders'])->name('my.orders');
+    Route::post('/update-order/{orderRef}', [SellerController::class, 'updateOrder'])->name('update.order');
+
+    Route::get('/order-history', [SellerController::class, 'order_history'])->name('order.history');
 
     Route::get('/my-shop/verification', [SellerController::class, 'verified'])->name('verified');
 });

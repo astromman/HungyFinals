@@ -45,9 +45,10 @@ class SellerController extends Controller
         $totalNumberOfOrders = DB::table('orders')
             ->join('products', 'orders.product_id', '=', 'products.id')
             ->join('shops', 'products.shop_id', '=', 'shops.id')
-            ->where('orders.order_status', 'Complete')
+            ->where('orders.order_status', 'Completed')
             ->where('shops.user_id', $sellerId) // Ensure it matches the logged-in seller
-            ->count();
+            ->distinct()  // Ensure only unique order references are counted
+            ->count('orders.order_reference');  // Count unique order references
 
         // Fetch Total Income (All Time Sales)
         $totalIncome = DB::table('orders')
@@ -63,7 +64,6 @@ class SellerController extends Controller
             'totalIncome' => $totalIncome
         ]);
     }
-
 
     // PASSWORD
     public function seller_change_password()
@@ -634,6 +634,7 @@ class SellerController extends Controller
                 'orders.id',
                 'orders.order_reference',
                 'orders.created_at',
+                'orders.updated_at',
                 'orders.total',
                 'orders.quantity',
                 'orders.order_status',
@@ -649,7 +650,7 @@ class SellerController extends Controller
             ->where('orders.at_cart', false)
             ->where('orders.order_status', '!=', 'At Cart')
             ->where('orders.order_status', '!=', 'Completed')
-            ->orderBy('orders.created_at', 'desc')
+            ->orderBy('orders.updated_at', 'desc')
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
 
@@ -682,11 +683,9 @@ class SellerController extends Controller
             foreach ($orderReference as $order) {
 
                 if ($order->order_status == 'Ready') {
-                    $orderStatus = $request->order_status1;
-                    dd($orderStatus);
+                    $orderStatus = $request->order_status;
                 } else {
                     $orderStatus = $request->order_status;
-                    dd($orderStatus);
                 }
 
                 $order->order_status = $orderStatus;
@@ -700,6 +699,61 @@ class SellerController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'Something went wrong while updating the order.');
         }
+    }
+
+    public function order_history(Request $request)
+    {
+        $userId = $request->session()->get('loginId');
+
+        $shopDetails = Shop::where('user_id', $userId)->first();
+
+        // Fetch the shop ID for the logged-in seller
+        $shopId = Shop::where('user_id', $userId)->first()->id;
+
+        // Get all unique orders for this seller's shop
+        $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
+            ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
+            ->join('payments', 'orders.payment_id', 'payments.id')
+            ->select(
+                'orders.id',
+                'orders.order_reference',
+                'orders.created_at',
+                'orders.updated_at',
+                'orders.total',
+                'orders.quantity',
+                'orders.order_status',
+                'user_profiles.first_name',
+                'user_profiles.last_name',
+                'user_profiles.contact_num',
+                'payments.payment_id',
+                'payments.payment_status',
+                'payments.payment_type',
+            )
+            // Filter orders by the shop_id
+            ->where('products.shop_id', $shopId)
+            ->where('orders.at_cart', false)
+            ->where('orders.order_status', 'Completed')
+            ->orderBy('orders.updated_at', 'desc')
+            ->groupBy('orders.order_reference') // Group by the unique order_reference
+            ->get();
+
+        foreach ($orders as $order) {
+            // Fetch products for each order
+            $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
+                ->join('categories', 'products.category_id', 'categories.id')
+                ->select(
+                    'products.id',
+                    'products.product_name',
+                    'products.price',
+                    'orders.quantity',
+                    'orders.total',
+                    'categories.type_name'
+                )
+                ->where('orders.order_reference', $order->order_reference)
+                ->get();
+        }
+
+        return view('main.seller.orderHistory', compact('orders', 'shopDetails'));
     }
 
 

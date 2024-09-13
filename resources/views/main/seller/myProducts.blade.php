@@ -21,6 +21,7 @@
             <tr>
                 <th scope="col">Product name</th>
                 <th scope="col">Description</th>
+                <th scope="col">Category</th>
                 <th class="text-center" scope="col">Sold</th>
                 <th class="text-center" scope="col">Price</th>
                 <th class="text-center" scope="col">Status</th>
@@ -30,26 +31,29 @@
             </tr>
         </thead>
         <tbody class="borderless">
-            @forelse($products as $displayMyProduct)
+            @forelse($products as $product)
             <tr class="text-justify">
                 <td>
-                    {{ $displayMyProduct->product_name }}
+                    {{ $product->product_name }}
                 </td>
                 <td>
-                    {{ $displayMyProduct->product_description }}
+                    {{ $product->product_description }}
+                </td>
+                <td>
+                    {{ $product->category_name }}
                 </td>
                 <td class="text-center">
-                    {{ $displayMyProduct->sold }}
+                    {{ $product->sold }}
                 </td>
                 <td class="text-center">
-                    {{ '₱ ' . $displayMyProduct->price }}
+                    {{ '₱ ' . $product->price }}
                 </td>
                 <td class="text-center">
-                    {{ $displayMyProduct->status }}
+                    {{ $product->status }}
                 </td>
                 @if(!$shopDetails->is_reopen)
                 <td class="justify-content-center align-items-center">
-                    <form action="{{ route('delete.products', $displayMyProduct->id) }}" method="POST">
+                    <form action="{{ route('delete.products', $product->id) }}" method="POST">
                         @csrf
                         @method('DELETE')
                         <div class="d-flex justify-content-center align-items-center">

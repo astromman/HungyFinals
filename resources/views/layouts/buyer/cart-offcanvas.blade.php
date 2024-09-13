@@ -17,6 +17,7 @@
         @php
         $userId = session()->get('loginId');
         $orders = App\Models\Order::where('user_id', $userId)
+        ->where('order_status', '!=', 'Completed')
         ->where('order_status', 'Pending')
         ->where('at_cart', false)
         ->groupBy('order_reference')

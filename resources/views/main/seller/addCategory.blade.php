@@ -38,7 +38,7 @@
                                     value="{{ old('type_name') }}"
                                     type="text"
                                     id="type_name"
-                                    {{ $shopDetails->is_reopen ? 'readonly' : '' }}>
+                                    {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
                                 @error('type_name')
                                 <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
@@ -65,7 +65,7 @@
                                     value="{{ $categoryId->type_name }}"
                                     type="text"
                                     id="type_name"
-                                    {{ $shopDetails->is_reopen ? 'readonly' : '' }}>
+                                    {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
                                 @error('type_name')
                                 <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror

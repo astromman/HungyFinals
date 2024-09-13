@@ -172,31 +172,37 @@ class LoginController extends Controller
 
     public function verifyOtp(Request $request)
     {
-        // Get the logged-in user from session
-        $userId = session()->get('loginId');
+        try {
+            // Get the logged-in user from session
+            $userId = session()->get('loginId');
 
-        // Fetch the user from the database
-        $user = UserProfile::findOrFail($userId);
+            // Fetch the user from the database
+            $user = UserProfile::findOrFail($userId);
 
-        if (Carbon::now()->gt(Carbon::parse($user->otp_expires_at))) {
-            $user->otp_code = null;
-            $user->otp_expires_at = null;
-            $user->save();
+            if (Carbon::now()->gt(Carbon::parse($user->otp_expires_at))) {
+                $user->otp_code = null;
+                $user->otp_expires_at = null;
+                $user->save();
 
-            return redirect()->back()->withErrors(['otp' => 'The OTP has expired. Please request a new one.']);
-        }
+                return redirect()->back()->withErrors(['otp' => 'The OTP has expired. Please request a new one.']);
 
-        // Check if OTP is correct and not expired
-        if ($user->otp_code === $request->otp) {
-            // Mark email as verified
-            $user->email_verified_at = now();
-            $user->otp_code = null; // Clear OTP after successful verification
-            $user->otp_expires_at = null;
-            $user->save();
+                // return $this->logout();
+            }
 
-            return redirect()->route('landing.page')->with('success', 'Email verified successfully!');
-        } else {
-            return redirect()->back()->withErrors(['otp' => 'Invalid or expired OTP.']);
+            // Check if OTP is correct and not expired
+            if ($user->otp_code === $request->otp) {
+                // Mark email as verified
+                $user->email_verified_at = now();
+                $user->otp_code = null; // Clear OTP after successful verification
+                $user->otp_expires_at = null;
+                $user->save();
+
+                return redirect()->route('landing.page')->with('success', 'Email verified successfully!');
+            } else {
+                return redirect()->back()->withErrors(['otp' => 'Invalid or expired OTP.']);
+            }
+        } catch (Exception $e) {
+            return redirect()->back()->with('error', 'Something went wrong. Please try again.');
         }
     }
 

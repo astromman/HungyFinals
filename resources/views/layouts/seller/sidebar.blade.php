@@ -24,7 +24,7 @@
         <div class="collapse show ps-3" id="orders-collapse">
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1">
                 <li class="li-sub"><a href="{{ route('my.orders') }}" class="li-a">My Orders</a></li>
-                <li class="li-sub"><a href="" class="li-a">Order History</a></li>
+                <li class="li-sub"><a href="{{ route('order.history') }}" class="li-a">Order History</a></li>
             </ul>
         </div>
 

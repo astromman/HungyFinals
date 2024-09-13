@@ -259,10 +259,11 @@ class BuyerController extends Controller
     {
         $userId = $request->session()->get('loginId');
 
+        // Decrypt shopId
         $shopId = Crypt::decrypt($shopId);
 
+        // Fetch the shop and its canteen (building)
         $shop = Shop::where('id', $shopId)->first();
-
         $canteen = Building::where('id', $shop->building_id)->first();
 
         if (!$shopId) {
@@ -294,6 +295,13 @@ class BuyerController extends Controller
             ->where('orders.order_status', 'At Cart')
             ->get();
 
+        // Check if no orders exist for the user in the cart
+        if ($orders->isEmpty()) {
+            // Redirect to my.cart if no orders are found
+            return redirect()->route('shop.cart')->with('error', 'Your cart is empty.');
+        }
+
+        // Return the checkout view if there are orders
         return view('main.buyer.checkout', compact('orders', 'shop', 'canteen'));
     }
 
@@ -366,6 +374,12 @@ class BuyerController extends Controller
                 return redirect()->back()->with('error', 'Minimum transaction amount is ₱20.00.');
             }
 
+            foreach ($orders as $order) {
+                $product = Product::where('id', $order->product_id)->first();
+                $product->sold += $order->quantity;
+                $product->save();
+            }
+
             $paymentType = $request->payment_type;
 
             $payment = new Payment;
@@ -391,7 +405,7 @@ class BuyerController extends Controller
                                 'success' => route('payment.success'),
                                 'failed' => route('payment.failed'),
                             ],
-                            'type' => 'maya',
+                            'type' => $paymentType,
                             'currency' => $payment->currency,
                         ]
                     ]
@@ -438,11 +452,66 @@ class BuyerController extends Controller
 
     public function paymentSuccess(Request $request)
     {
-        return redirect()->route('shop.cart')->with('success', 'Payment successful! Your order has been placed.');
+        return redirect()->route('track.order')->with('success', 'Payment successful! Your order has been placed.');
     }
 
     public function paymentFailed(Request $request)
     {
         return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
+    }
+
+    public function track_order(Request $request)
+    {
+        $userId = $request->session()->get('loginId');
+
+        // Get all unique orders for this seller's shop
+        $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
+            ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
+            ->join('payments', 'orders.payment_id', 'payments.id')
+            ->join('shops', 'products.shop_id', 'shops.id')
+            ->join('buildings', 'shops.building_id', 'buildings.id')
+            ->select(
+                'orders.id',
+                'orders.order_reference',
+                'orders.created_at',
+                'orders.updated_at',
+                'orders.total',
+                'orders.quantity',
+                'orders.order_status',
+                'user_profiles.first_name',
+                'user_profiles.last_name',
+                'user_profiles.contact_num',
+                'payments.payment_id',
+                'payments.payment_status',
+                'payments.payment_type',
+                'shops.shop_name',
+                'buildings.building_name as designated_canteen'
+            )
+            // Filter orders by the shop_id
+            // ->where('products.shop_id', $shopId) 
+            ->where('orders.at_cart', false)
+            ->where('orders.order_status', '!=', 'At Cart')
+            ->where('orders.order_status', '!=', 'Completed')
+            ->orderBy('orders.updated_at', 'desc')
+            ->groupBy('orders.order_reference') // Group by the unique order_reference
+            ->get();
+
+        foreach ($orders as $order) {
+            // Fetch products for each order
+            $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
+                ->join('categories', 'products.category_id', 'categories.id')
+                ->select(
+                    'products.id',
+                    'products.product_name',
+                    'products.price',
+                    'orders.quantity',
+                    'orders.total',
+                    'categories.type_name'
+                )
+                ->where('orders.order_reference', $order->order_reference)
+                ->get();
+        }
+
+        return view('main.buyer.trackorder', compact('orders'));
     }
 }

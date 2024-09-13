@@ -21,7 +21,7 @@
                             <h6 class="category pt-2"></h6>
                             <h3 class="modal-title text-uppercase"></h3>
                             <br>
-                            <h1><strong name="price" class="price highlight-text"></strong></h1>
+                            <h2><strong name="price" class="price highlight-text"></strong></h2>
                             <div class="d-flex">
                                 <button type="button" class="btn btn-outline-danger btn-decrease">_</button>
                                 <input type="text" name="product_qty" class="form-control mx-2 w-100 text-center qty-input" style="width: 50px;" value="1" max="10">

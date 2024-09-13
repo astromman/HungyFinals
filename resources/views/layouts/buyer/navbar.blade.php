@@ -40,7 +40,7 @@
                     <i class="fas fa-user"></i>
                 </a>
                 <a href="#" class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#shoppingCartCanvas" aria-controls="shoppingCartCanvas">
-                    <i class="fa-solid fa-shield"></i>
+                    <i class="fa fa-list" aria-hidden="true"></i>
                 </a>
             </div>
         </div>

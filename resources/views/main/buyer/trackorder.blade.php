@@ -14,36 +14,50 @@
         <p>Pick-up klasmeyt: <strong>Lebron James</strong></p>
     </div>
 
-    <div class="order-progress" style="border-radius: 10px; background-color: #f8f9fa; border: 2px solid black; padding: 15px; margin-bottom: 5px">
-        <h4>Gene Special</h4>
-        @include('partials.protobar', ['allActive' => true])
+    @foreach($orders as $order)
+    <div class="order-progress shadow-sm rounded" style="border-radius: 10px; background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 5px">
+        <div class="mb-2 d-flex justify-content-between align-items center">
+            <h5>
+                {{ $order->shop_name }}
+                <br>
+                <small class="text-muted">
+                    {{ $order->designated_canteen }}
+                </small>
+            </h5>
+            <h5>Order Ref: <strong>{{ $order->order_reference }}</strong></h5>
+        </div>
 
+        <div class="py-3">
+            @include('main.buyer.protobar', ['order' => $order])
+        </div>
 
         <!-- Order Items -->
-        <div class="order-items mb-5">
-            <div class="order-item p-3 mb-3 shadow-sm rounded">
-                <div class="progress-bar-container mb-5">
-                    <!-- Empty for now -->
-                </div>
+        @foreach($order->products as $product)
+        <div class="order-items mb-3">
+            <div class="order-item p-3 mb-2 shadow-sm rounded">
+                <!-- <div class="progress-bar-container mb-5"> -->
+                <!-- Empty for now -->
+                <!-- </div> -->
                 <div class="row align-items-center">
                     <div class="col-4 col-md-2">
-                        <img src="path_to_image" alt="Tapsilog" class="img-fluid rounded">
+                        <img src="path_to_image" alt="{{ $product->product_name }}" class="img-fluid rounded">
                     </div>
                     <div class="col-8 col-md-8">
-                        <h5 class="mb-0">Tapsilogan - Tapsilog</h5>
-                        <p class="text-muted mb-0">Category: FRC canteen</p>
-                        <p class="text-muted mb-0">Quantity: 1</p>
+                        <h5 class="mb-0">{{ $product->product_name }}</h5>
+                        <p class="text-muted mb-0">Quantity: {{ $product->quantity }}</p>
                     </div>
                     <div class="col-12 col-md-2 text-end mt-2 mt-md-0">
-                        <h4 class="text-primary">₱ 55.00</h4>
+                        <h4 class="text-primary">₱ {{ number_format($product->total, 2) }}</h4>
                     </div>
                 </div>
             </div>
         </div>
+        @endforeach
     </div>
-    <div class="text-end">
+    @endforeach
+    <!-- <div class="text-end">
         <h4 class="btn btn-primary">TOTAL AMOUNT : ₱ 55.00</h4>
-    </div>
+    </div> -->
 </div>
 
 <style>
@@ -56,7 +70,7 @@
     /* Order Items */
     .order-item {
         background-color: #e9f5ff;
-        border: 1px solid #007bff;
+        /* border: 1px solid #007bff; */
     }
 
     /* Progress Bar Container */

@@ -37,7 +37,7 @@
                 <div class="middle">
                     <div class="left">
                         <h3>Total Income</h3>
-                        <h1>P{{ number_format($totalIncome, 2) }}</h1>
+                        <h1>₱ {{ number_format($totalIncome, 2) }}</h1>
                     </div>
                 </div>
                 <small>All Time</small>
@@ -62,7 +62,6 @@
                         <td>4563</td>
                         <td>Due</td>
                         <td class="warning">Pending</td>
-                        <td class="primary">Details</td>
                     </tr>
                     <!-- Repeat rows as needed -->
                 </tbody>
