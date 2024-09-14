@@ -10,7 +10,7 @@
         </li>
         <li class="{{ isset($order) && $order->order_status == 'Ready' ? 'active' : '' }}">
             <small>
-                Ready to Pick-up
+                For Pick-up
             </small>
             
         </li>

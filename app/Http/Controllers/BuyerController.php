@@ -317,12 +317,10 @@ class BuyerController extends Controller
 
         // Get the length of the shop name
         $length = strlen($shopName);
-
         // Extract the first, middle, and last letters
         $firstLetter = $shopName[0];
         $middleLetter = $shopName[(int)floor($length / 2)];
         $lastLetter = $shopName[$length - 1];
-
         // Concatenate the letters
         $shopCode = $firstLetter . $middleLetter . $lastLetter;
 
@@ -333,12 +331,14 @@ class BuyerController extends Controller
             $randomNumber = mt_rand(1000, 9999);
 
             $exists = Order::where('order_reference', strtoupper($shopCode) . '-' . 'ORD-' . $randomNumber)
-                // ->where('created_at', now())
+                ->where('created_at', now())
                 ->exists();
         } while ($exists);
 
         // Generate unique order reference (this can be any unique string)
         $orderReference = strtoupper($shopCode) . '-' . 'ORD-' . $randomNumber;
+
+        $orderRef = Crypt::encrypt($orderReference);
 
         try {
             DB::beginTransaction();
@@ -371,6 +371,7 @@ class BuyerController extends Controller
             $totalAmount = $orders->sum('total');
 
             $totalAmountInCentavos = $totalAmount * 100;
+            // dd($totalAmountInCentavos);
             if ($totalAmountInCentavos < 2000) {
                 return redirect()->back()->with('error', 'Minimum transaction amount is ₱20.00.');
             }
@@ -403,7 +404,7 @@ class BuyerController extends Controller
                         'attributes' => [
                             'amount' => $totalAmountInCentavos, // Amount in centavos
                             'redirect' => [
-                                'success' => route('payment.success'),
+                                'success' => route('payment.success', ['orderRef' => $orderRef]),
                                 'failed' => route('payment.failed'),
                             ],
                             'type' => $paymentType,
@@ -451,9 +452,9 @@ class BuyerController extends Controller
         }
     }
 
-    public function paymentSuccess(Request $request)
+    public function paymentSuccess($orderRef)
     {
-        return redirect()->route('track.order')->with('success', 'Payment successful! Your order has been placed.');
+        return redirect()->route('track.order', ['orderRef' => $orderRef])->with('success', 'Payment successful! Your order has been placed.');
     }
 
     public function paymentFailed(Request $request)
@@ -461,11 +462,18 @@ class BuyerController extends Controller
         return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
     }
 
-    public function track_order(Request $request)
+    public function track_this_order($orderRef)
+    {
+        return redirect()->route('track.order', ['orderRef' => $orderRef]);
+    }
+
+    public function track_order(Request $request, $orderRef)
     {
         $userId = $request->session()->get('loginId');
 
         $user = UserProfile::where('id', $userId)->first();
+
+        $orderRef = Crypt::decrypt($orderRef);
 
         // Get all unique orders for this seller's shop
         $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
@@ -495,6 +503,7 @@ class BuyerController extends Controller
             ->where('orders.at_cart', false)
             ->where('orders.order_status', '!=', 'At Cart')
             ->where('orders.order_status', '!=', 'Completed')
+            ->where('orders.order_reference', $orderRef)
             ->orderBy('orders.updated_at', 'desc')
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();

@@ -29,6 +29,25 @@
         margin-bottom: 1rem;
     }
 </style>
+<!-- Success Modal -->
+@if(session('error'))
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Unable to checkout!</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {{ session('error')}}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <div class="container">
     <!-- 1st Div -->
@@ -50,7 +69,7 @@
     @if($orders->isNotEmpty())
     @include('main.buyer.protobar', ['order' => $orders->first()])
     @endif
-    
+
     <!-- Content Div with Gray Background -->
     <div style="background-color: lightgray; width: 100%; padding: 15px;">
         <!-- 2nd Div -->
@@ -126,14 +145,23 @@
                     <div>Total</div>
                     <div class="fw-bold">{{ '₱ ' . number_format($shopTotal, 2) }}</div>
                 </div>
+                @if($orders->isNotEmpty())
                 <form action="{{ route('place.order', Crypt::encrypt($shop->id)) }}" method="POST">
                     @csrf
                     <input type="hidden" name="payment_type" value="gcash">
                     <button type="submit" class="btn btn-primary w-100">Place Order</button>
                 </form>
+                @endif
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+    });
+</script>
 
 @endsection

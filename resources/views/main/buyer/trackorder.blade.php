@@ -8,14 +8,18 @@
     <p class="text-center">This will help to manage your time and observe your order</p>
 
     <!-- Order Card -->
-    <div class="order-card p-4 shadow-sm rounded mb-5">
+    <div class="order-card p-4 shadow-sm rounded mb-3">
         <h5>We were processing your order klasmeyt</h5>
         <p>Thank you for being patient, we appreciated it</p>
         <p>Pick-up klasmeyt: <strong class="text-uppercase">{{ $user->first_name . ' ' . $user->last_name }}</strong></p>
     </div>
 
     @foreach($orders as $order)
-    <div class="order-progress shadow-sm rounded" style="border-radius: 10px; background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 5px">
+    <div class="py-2">
+        @include('main.buyer.protobar', ['order' => $order])
+    </div>
+    
+    <div class="order-progress shadow-sm rounded mb-4" style="border-radius: 10px; background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 5px">
         <div class="mb-2 d-flex justify-content-between align-items center">
             <h5>
                 {{ $order->shop_name }}
@@ -27,12 +31,10 @@
             <h5>Order Ref: <strong>{{ $order->order_reference }}</strong></h5>
         </div>
 
-        <div class="py-3">
-            @include('main.buyer.protobar', ['order' => $order])
-        </div>
-
         <!-- Order Items -->
+        @php $shopTotal = 0; @endphp
         @foreach($order->products as $product)
+        @php $shopTotal += $product->total; @endphp
         <div class="order-items mb-3">
             <div class="order-item p-3 mb-2 shadow-sm rounded">
                 <!-- <div class="progress-bar-container mb-5"> -->
@@ -44,6 +46,7 @@
                     </div>
                     <div class="col-8 col-md-8">
                         <h5 class="mb-0">{{ $product->product_name }}</h5>
+                        <p class="text-muted">{{ $product->type_name }}</p>
                         <p class="text-muted mb-0">Quantity: {{ $product->quantity }}</p>
                     </div>
                     <div class="col-2 col-md-2 text-end mt-2 mt-md-0">
@@ -53,6 +56,10 @@
             </div>
         </div>
         @endforeach
+        <div class="d-flex justify-content-between align-items center">
+            <div>Total </div>
+            <div>₱ {{ number_format($shopTotal, 2) }}</div>
+        </div>
     </div>
     @endforeach
     <!-- <div class="text-end">

@@ -82,10 +82,11 @@ Route::group([
 
     Route::get('/checkout/{shopId}', [BuyerController::class, 'checkoutOrders'])->name('checkout.orders');
     Route::post('/checkout/place-order/{shopId}', [BuyerController::class, 'placeOrder'])->name('place.order');
-    Route::get('/payment/success', [BuyerController::class, 'paymentSuccess'])->name('payment.success');
+    Route::get('/payment/success/{orderRef}', [BuyerController::class, 'paymentSuccess'])->name('payment.success');
     Route::get('/payment/failed', [BuyerController::class, 'paymentFailed'])->name('payment.failed');
 
-    Route::get('/track-order', [BuyerController::class, 'track_order'])->name('track.order');
+    Route::get('/track-order/{orderRef}', [BuyerController::class, 'track_order'])->name('track.order');
+    Route::post('/track-order/{orderRef}', [BuyerController::class, 'track_this_order'])->name('track.this.order');
 });
 
 Route::group([

@@ -18,6 +18,7 @@
         $userId = session()->get('loginId');
         $orders = App\Models\Order::where('user_id', $userId)
         ->where('order_status', '!=', 'Completed')
+        ->where('order_status', '!=', 'At Cart')
         ->where('order_status', 'Pending')
         ->where('at_cart', false)
         ->groupBy('order_reference')
@@ -25,20 +26,23 @@
         @endphp
 
         @forelse($orders as $order)
-        <div class="card w-100 my-2">
-            <div class="py-2 justify-content-start align-items-start">
-                <h5>Order Ref. <small>{{ $order->order_reference }}</small></h5>
+        <form id="trackOrderForm{{ $order->order_reference }}" action="{{ route('track.this.order', ['orderRef' => Crypt::encrypt($order->order_reference)]) }}" method="POST">
+            @csrf
+            <div class="card w-100 mb-3" onclick="submitForm('trackOrderForm{{ $order->order_reference }}')">
+                <div class="py-2 justify-content-start align-items-start">
+                    <h5>Order Ref. <small>{{ $order->order_reference }}</small></h5>
+                </div>
+                <!-- Responsive Multi-Step Progress Bar -->
+                @include('main.buyer.protobar', ['order' => $orders->first()])
+                <!-- <div class="progress-container my-4">
+                    <ul class="progressbar">
+                        <li class="active">Order</li>
+                        <li>Preparing</li>
+                        <li>Pick-up</li>
+                    </ul>
+                </div> -->
             </div>
-            <!-- Responsive Multi-Step Progress Bar -->
-            @include('main.buyer.protobar', ['order' => $orders->first()])
-            <!-- <div class="progress-container my-4">
-                <ul class="progressbar">
-                    <li class="active">Order</li>
-                    <li>Preparing</li>
-                    <li>Pick-up</li>
-                </ul>
-            </div> -->
-        </div>
+        </form>
         @empty
 
         @endforelse
@@ -196,28 +200,7 @@
 
 <!-- Add the required JavaScript for the Progress Bar -->
 <script>
-    let step = 'step1';
-
-    const step1 = document.getElementById('step-1');
-    const step2 = document.getElementById('step-2');
-    const step3 = document.getElementById('step-3');
-
-    function next() {
-        if (step === 'step1') {
-            step = 'step2';
-            step1.classList.remove("is-active");
-            $(step1).find('.progress-bar__bar').css('transform', 'translateX(100%)');
-            $(step1).find('.progress-bar__bar').css('-webkit-transform', 'translateX(100%)');
-            step2.classList.add("is-active");
-        } else if (step === 'step2') {
-            step = 'step3';
-            step2.classList.remove("is-active");
-            $(step2).find('.progress-bar__bar').css('transform', 'translateX(100%)');
-            $(step2).find('.progress-bar__bar').css('-webkit-transform', 'translateX(100%)');
-            step3.classList.add("is-active");
-        } else if (step === 'step3') {
-            step = 'complete';
-            step3.classList.remove("is-active");
-        }
+    function submitForm(formId) {
+        document.getElementById(formId).submit();
     }
 </script>
