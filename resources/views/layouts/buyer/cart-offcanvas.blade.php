@@ -30,13 +30,14 @@
                 <h5>Order Ref. <small>{{ $order->order_reference }}</small></h5>
             </div>
             <!-- Responsive Multi-Step Progress Bar -->
-            <div class="progress-container my-4">
+            @include('main.buyer.protobar', ['order' => $orders->first()])
+            <!-- <div class="progress-container my-4">
                 <ul class="progressbar">
                     <li class="active">Order</li>
                     <li>Preparing</li>
                     <li>Pick-up</li>
                 </ul>
-            </div>
+            </div> -->
         </div>
         @empty
 

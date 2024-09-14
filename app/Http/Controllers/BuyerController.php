@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Shop;
+use App\Models\UserProfile;
 use Exception;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
@@ -464,6 +465,8 @@ class BuyerController extends Controller
     {
         $userId = $request->session()->get('loginId');
 
+        $user = UserProfile::where('id', $userId)->first();
+
         // Get all unique orders for this seller's shop
         $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
             ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
@@ -503,6 +506,7 @@ class BuyerController extends Controller
                 ->select(
                     'products.id',
                     'products.product_name',
+                    'products.image',
                     'products.price',
                     'orders.quantity',
                     'orders.total',
@@ -512,6 +516,6 @@ class BuyerController extends Controller
                 ->get();
         }
 
-        return view('main.buyer.trackorder', compact('orders'));
+        return view('main.buyer.trackorder', compact('orders', 'user'));
     }
 }

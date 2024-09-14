@@ -11,7 +11,7 @@
     <div class="order-card p-4 shadow-sm rounded mb-5">
         <h5>We were processing your order klasmeyt</h5>
         <p>Thank you for being patient, we appreciated it</p>
-        <p>Pick-up klasmeyt: <strong>Lebron James</strong></p>
+        <p>Pick-up klasmeyt: <strong class="text-uppercase">{{ $user->first_name . ' ' . $user->last_name }}</strong></p>
     </div>
 
     @foreach($orders as $order)
@@ -40,13 +40,13 @@
                 <!-- </div> -->
                 <div class="row align-items-center">
                     <div class="col-4 col-md-2">
-                        <img src="path_to_image" alt="{{ $product->product_name }}" class="img-fluid rounded">
+                        <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->product_name }}" class="img-fluid rounded bg-secondary-subtle" style="height: 100px; width: 100px; object-fit: contain; margin-right: 20px;">
                     </div>
                     <div class="col-8 col-md-8">
                         <h5 class="mb-0">{{ $product->product_name }}</h5>
                         <p class="text-muted mb-0">Quantity: {{ $product->quantity }}</p>
                     </div>
-                    <div class="col-12 col-md-2 text-end mt-2 mt-md-0">
+                    <div class="col-2 col-md-2 text-end mt-2 mt-md-0">
                         <h4 class="text-primary">₱ {{ number_format($product->total, 2) }}</h4>
                     </div>
                 </div>

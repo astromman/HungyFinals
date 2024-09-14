@@ -2,14 +2,17 @@
 
 <div class="progress-container mb-4">
     <ul class="progressbar">
-        <li class="{{ isset($order) && $order->order_status == 'Pending' ? 'active' : '' }}">
-            Pick Shop
+        <li class="{{ isset($order) && $order->order_status == 'Pending' || $order->order_status == 'At Cart' ? 'active' : '' }}">
+            Make Order
         </li>
         <li class="{{ isset($order) && $order->order_status == 'Preparing' ? 'active' : '' }}">
-            Order Foods
+            Preparing
         </li>
         <li class="{{ isset($order) && $order->order_status == 'Ready' ? 'active' : '' }}">
-            Checkout
+            <small>
+                Ready to Pick-up
+            </small>
+            
         </li>
     </ul>
 </div>
