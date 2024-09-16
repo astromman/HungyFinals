@@ -50,16 +50,19 @@
             <a class="navbar-brand" href="{{ route('seller.dashboard') }}">Hungry Falcons</a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    @php
+                    $userId = session()->get('loginId');
+                    $shop = App\Models\Shop::where('user_id', $userId)->first();
+                    @endphp
                     <li class="px-3 nav-item d-flex align-items-center">
+                        <div class=" text-white" id="userDropdown" data-bs-toggle="dropdown">
+                            {{ $shop->shop_name }}
+                        </div>
                         <div class="dropdown">
                             <button class="btn btn-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle" style="font-size: 30px; color: white;"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                @php
-                                $userId = session()->get('loginId');
-                                $shop = App\Models\Shop::where('user_id', $userId)->first();
-                                @endphp
                                 <li>
                                     <!-- Switch for Open/Closed -->
                                     <form id="storeStatusForm" method="POST" action="{{ route('update.shop.status') }}">

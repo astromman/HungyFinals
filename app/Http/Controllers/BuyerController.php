@@ -148,13 +148,15 @@ class BuyerController extends Controller
         // Get all shop details for shops present in the cart
         $shopDetails = Shop::whereIn('id', $groupedOrders->keys())->get()->keyBy('id');
 
+        $shop = Shop::where('id', $groupedOrders->keys())->first();
+
         // Recalculate total in case of discrepancies
         foreach ($orders as $order) {
             $order->total = $order->quantity * $order->price;
             $order->save();
         }
 
-        return view('main.buyer.protocart', compact('orders', 'groupedOrders', 'shopDetails'));
+        return view('main.buyer.protocart', compact('orders', 'groupedOrders', 'shop'));
     }
 
     public function addToCart(Request $request)
@@ -507,6 +509,10 @@ class BuyerController extends Controller
             ->orderBy('orders.updated_at', 'desc')
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
+
+        if($orders->isEmpty()) {
+            return redirect()->route('landing.page')->with('error', 'Order not found.');
+        }
 
         foreach ($orders as $order) {
             // Fetch products for each order

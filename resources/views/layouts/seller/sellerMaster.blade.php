@@ -974,6 +974,17 @@
             color: #0B1E59;
             font-size: 170px;
         }
+
+        .disabled-link {
+            pointer-events: none;
+            /* Disable the click */
+            color: #6c757d;
+            /* Gray out the link */
+            cursor: default;
+            /* Change the cursor to default */
+            text-decoration: none;
+            /* Remove the underline */
+        }
     </style>
 
 </head>

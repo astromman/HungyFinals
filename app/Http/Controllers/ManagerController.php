@@ -221,6 +221,7 @@ class ManagerController extends Controller
             $user->seller_building_id = $managerBuilding->manager_building_id;
             $user->save();
 
+            // is_reopen column is false by default
             $shop = new Shop();
             $shop->shop_name = 'Not Available';
             $shop->shop_image = 'Not Available';
@@ -382,7 +383,7 @@ class ManagerController extends Controller
 
                     // Update the shop status to 'Verified'
                     $shop->status = 'Verified';
-                    $shop->is_reopen = 1;
+                    $shop->is_reopen = false;
                     $shop->save();
 
                     // Update the permit status to 'Approved'
@@ -429,7 +430,7 @@ class ManagerController extends Controller
                 if ($shop) {
                     // Update the shop status to 'Verified'
                     $shop->status = 'Unverified';
-                    $shop->is_reopen = 0;
+                    $shop->is_reopen = false;
                     $shop->save();
 
                     // Update the is_approved field to 0 (rejected)

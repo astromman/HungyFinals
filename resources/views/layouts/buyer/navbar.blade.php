@@ -1,5 +1,5 @@
 <nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container-fluid">
+    <div class="container">
         <a class="navbar-brand" href="{{ route('landing.page') }}">HUNGRY FALCONS</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -28,19 +28,38 @@
             <div class="d-flex align-items-center nav-icons">
                 @php
                 $userId = session()->get('loginId');
-                $sumInCart = App\Models\Order::where('user_id', $userId)->where('at_cart', true)->count();
+
+                $sumInCart = App\Models\Order::where('user_id', $userId)
+                ->where('at_cart', true)
+                ->count();
+
+                $submittedOrders = App\Models\Order::where('user_id', $userId)
+                ->where('order_status', '!=', 'Completed')
+                ->where('order_status', '!=', 'At Cart')
+                ->where('at_cart', false)
+                ->groupBy('order_reference')
+                ->get();
+
+                $sumOfOrders = $submittedOrders->count();
                 @endphp
                 <a class="nav-link position-relative" href="{{ route('shop.cart') }}">
                     <i class="fas fa-shopping-cart"></i>
+                    @if($sumInCart >= 1)
                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                         {{ $sumInCart }}
                     </span>
+                    @endif
+                </a>
+                <a href="#" class="nav-link position-relative" data-bs-toggle="offcanvas" data-bs-target="#shoppingCartCanvas" aria-controls="shoppingCartCanvas">
+                    <i class="fa fa-list" aria-hidden="true"></i>
+                    @if($sumOfOrders >= 1)
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {{ $sumOfOrders }}
+                    </span>
+                    @endif
                 </a>
                 <a href="{{ route('my.profile') }}" class="nav-link">
                     <i class="fas fa-user"></i>
-                </a>
-                <a href="#" class="nav-link" data-bs-toggle="offcanvas" data-bs-target="#shoppingCartCanvas" aria-controls="shoppingCartCanvas">
-                    <i class="fa fa-list" aria-hidden="true"></i>
                 </a>
             </div>
         </div>

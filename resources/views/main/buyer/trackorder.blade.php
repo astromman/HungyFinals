@@ -15,10 +15,6 @@
     </div>
 
     @foreach($orders as $order)
-    <div class="py-2">
-        @include('main.buyer.protobar', ['order' => $order])
-    </div>
-    
     <div class="order-progress shadow-sm rounded mb-4" style="border-radius: 10px; background-color: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 5px">
         <div class="mb-2 d-flex justify-content-between align-items center">
             <h5>
@@ -29,6 +25,10 @@
                 </small>
             </h5>
             <h5>Order Ref: <strong>{{ $order->order_reference }}</strong></h5>
+        </div>
+
+        <div class="py-2">
+            @include('main.buyer.protobar', ['order' => $order])
         </div>
 
         <!-- Order Items -->

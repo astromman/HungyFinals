@@ -99,7 +99,12 @@
                 <div class="d-flex justify-content-end my-4">
                     <div class="d-flex align-items-center">
                         <h5 class="mx-2 mb-0"><strong>Total: <span class="overall-total">₱{{ number_format($shopTotal, 2) }}</span></strong></h5>
-                        <a href="{{ route('checkout.orders', ['shopId' => Crypt::encrypt($shopId)]) }}" class="btn btn-success"><i class="fa fa-shopping-cart"></i> Checkout</a>
+                        <a href="{{ route('checkout.orders', ['shopId' => Crypt::encrypt($shopId)]) }}"
+                            class="btn btn-success {{ !$shop->is_reopen ? 'disabled-link' : '' }}"
+                            onclick="{{ !$shop->is_reopen ? 'return false;' : '' }}"
+                            title="{{ !$shop->is_reopen ? 'Shop suddenly closed, unable to make order' : ''}}">
+                            <i class="fa fa-shopping-cart"></i> Checkout
+                        </a>
                     </div>
                 </div>
             </div>

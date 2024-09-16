@@ -455,12 +455,19 @@ class SellerController extends Controller
         try {
             $product = Product::findOrFail($id);
 
-            // Delete the image from storage
-            if ($product->image) {
-                Storage::disk('public')->delete('products/' . $product->image);
+            $productExistinOrder = Order::where('product_id', $product->id)->first();
+
+            if ($productExistinOrder) {
+                return redirect()->back()->with('error', 'Cannot Delete Product. Existing order(s) found.');
+            } else {
+                // Delete the image from storage
+                if ($product->image) {
+                    Storage::disk('public')->delete('products/' . $product->image);
+                    $product->delete();
+                }
             }
 
-            $product->delete();
+
             return redirect()->route('my.products.table')->with('success', 'Product deleted successfully.');
         } catch (QueryException $e) {
             DB::rollBack();
@@ -470,6 +477,7 @@ class SellerController extends Controller
                 return redirect()->back()->with('error', 'Cannot Delete Product. Existing order(s) found.');
             }
         } catch (Exception $e) {
+            DB::rollBack();
             return redirect()->back()->with('error', 'An unexpected error occurred.');
         }
     }
@@ -562,12 +570,12 @@ class SellerController extends Controller
     {
         $userId = $request->session()->get('loginId');
 
-        $shop = Shop::where('user_id', $userId)->first();
+        $shopDetails = Shop::where('user_id', $userId)->first();
 
-        $categories = Category::where('shop_id', $shop->id)->get();
+        $categories = Category::where('shop_id', $shopDetails->id)->get();
 
         $categoryId = Category::findOrFail($id);
-        return view('main.seller.addCategory', compact('categories', 'categoryId'));
+        return view('main.seller.addCategory', compact('categories', 'categoryId', 'shopDetails'));
     }
 
     public function edit_category(Request $request, $id)

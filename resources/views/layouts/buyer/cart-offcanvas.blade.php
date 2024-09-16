@@ -19,7 +19,6 @@
         $orders = App\Models\Order::where('user_id', $userId)
         ->where('order_status', '!=', 'Completed')
         ->where('order_status', '!=', 'At Cart')
-        ->where('order_status', 'Pending')
         ->where('at_cart', false)
         ->groupBy('order_reference')
         ->get();
@@ -29,11 +28,11 @@
         <form id="trackOrderForm{{ $order->order_reference }}" action="{{ route('track.this.order', ['orderRef' => Crypt::encrypt($order->order_reference)]) }}" method="POST">
             @csrf
             <div class="card w-100 mb-3" onclick="submitForm('trackOrderForm{{ $order->order_reference }}')">
+                @include('main.buyer.protobar', ['order' => $order])
                 <div class="py-2 justify-content-start align-items-start">
-                    <h5>Order Ref. <small>{{ $order->order_reference }}</small></h5>
+                    <span>Order Ref: <strong>{{ $order->order_reference }}</strong></span>
                 </div>
                 <!-- Responsive Multi-Step Progress Bar -->
-                @include('main.buyer.protobar', ['order' => $orders->first()])
                 <!-- <div class="progress-container my-4">
                     <ul class="progressbar">
                         <li class="active">Order</li>
@@ -85,13 +84,13 @@
         </table> -->
     </div>
 
-    <div class="offcanvas-footer p-3">
+    <!-- <div class="offcanvas-footer p-3">
         <div class="d-flex justify-content-between mb-2">
             <div>Total</div>
             <div>₱115.00</div>
         </div>
         <button class="btn btn-primary w-100">Review Order</button>
-    </div>
+    </div> -->
 </div>
 
 <!-- Add the required CSS for the Progress Bar -->
