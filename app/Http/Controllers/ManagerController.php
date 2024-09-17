@@ -527,6 +527,8 @@ class ManagerController extends Controller
             ->orderBy('permits.updated_at', 'desc')
             ->get();
 
-        return view('main.manager.applicationHistory', compact('application'));
+           $shopApplication = $application
+           ->groupBy('shop_id');
+        return view('main.manager.applicationHistory', compact('application', 'shopApplication'));
     }
 }
