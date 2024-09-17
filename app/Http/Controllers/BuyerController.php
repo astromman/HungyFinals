@@ -148,15 +148,13 @@ class BuyerController extends Controller
         // Get all shop details for shops present in the cart
         $shopDetails = Shop::whereIn('id', $groupedOrders->keys())->get()->keyBy('id');
 
-        $shop = Shop::where('id', $groupedOrders->keys())->first();
-
         // Recalculate total in case of discrepancies
         foreach ($orders as $order) {
             $order->total = $order->quantity * $order->price;
             $order->save();
         }
 
-        return view('main.buyer.protocart', compact('orders', 'groupedOrders', 'shop'));
+        return view('main.buyer.protocart', compact('orders', 'groupedOrders'));
     }
 
     public function addToCart(Request $request)
@@ -270,7 +268,11 @@ class BuyerController extends Controller
         $canteen = Building::where('id', $shop->building_id)->first();
 
         if (!$shopId) {
-            abort(404, 'Page not Found');
+            return redirect()->route('landing.page')->with('error', 'Error with the shop, please try again later.');
+        }
+
+        if($shop && $shop->is_reopen == false) {
+            return redirect()->route('landing.page')->with('error', 'Shop suddenly closed. Making order to this shop is currently unavailable. Please try again later.');
         }
 
         // Get only the orders for this user and shop
@@ -292,16 +294,20 @@ class BuyerController extends Controller
             )
             ->where('products.status', 'Available')
             ->where('products.shop_id', $shopId)
-            ->where('is_deleted', false)
+            ->where('products.is_deleted', false)
             ->where('orders.user_id', $userId)
             ->where('orders.at_cart', true)
             ->where('orders.order_status', 'At Cart')
             ->get();
 
+        if ($orders->first() && $orders->first()->order_status == 'Completed') {
+            return redirect()->route('landing.page');
+        }
+
         // Check if no orders exist for the user in the cart
         if ($orders->isEmpty()) {
             // Redirect to my.cart if no orders are found
-            return redirect()->route('shop.cart')->with('error', 'Your cart is empty.');
+            return redirect()->route('landing.page')->with('error', 'Your cart is empty.');
         }
 
         // Return the checkout view if there are orders
@@ -315,14 +321,18 @@ class BuyerController extends Controller
 
         $shopId = Crypt::decrypt($shopId);
 
-        $shopName = Shop::where('id', $shopId)->first()->shop_name;
+        $shop = Shop::where('id', $shopId)->first();
+
+        if($shop && $shop->is_reopen == false) {
+            return redirect()->route('landing.page')->with('error', 'Shop suddenly closed. Making order is currently unavailable.');
+        }
 
         // Get the length of the shop name
-        $length = strlen($shopName);
+        $length = strlen($shop->shop_name);
         // Extract the first, middle, and last letters
-        $firstLetter = $shopName[0];
-        $middleLetter = $shopName[(int)floor($length / 2)];
-        $lastLetter = $shopName[$length - 1];
+        $firstLetter = $shop->shop_name[0];
+        $middleLetter = $shop->shop_name[(int)floor($length / 2)];
+        $lastLetter = $shop->shop_name[$length - 1];
         // Concatenate the letters
         $shopCode = $firstLetter . $middleLetter . $lastLetter;
 
@@ -364,11 +374,15 @@ class BuyerController extends Controller
                 )
                 ->where('products.status', 'Available')
                 ->where('products.shop_id', $shopId)
-                ->where('is_deleted', false)
+                ->where('products.is_deleted', false)
                 ->where('orders.user_id', $userId)
                 ->where('orders.at_cart', true)
                 ->where('orders.order_status', 'At Cart')
                 ->get();
+
+            if ($orders->first() && $orders->first()->order_status == 'Completed') {
+                return redirect()->route('landing.page');
+            }
 
             $totalAmount = $orders->sum('total');
 
@@ -438,9 +452,14 @@ class BuyerController extends Controller
                 $order->order_reference = $orderReference; // Assign the order reference
                 $order->at_cart = false; // Remove from the cart
                 $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
-
+                $order->created_at = now();
                 $order->updated_at = now();
                 $order->save();
+            }
+
+            // Check if no orders exist for the user in the cart
+            if ($orders->isEmpty()) {
+                return redirect()->route('landing.page')->with('error', 'Your cart is empty.');
             }
 
             DB::commit();
@@ -449,7 +468,6 @@ class BuyerController extends Controller
             return redirect($checkoutUrl);
         } catch (Exception $e) {
             DB::rollBack();
-            dd($e);
             return redirect()->back()->with('error', 'Failed to place the order. Please try again.');
         }
     }
@@ -459,7 +477,7 @@ class BuyerController extends Controller
         return redirect()->route('track.order', ['orderRef' => $orderRef])->with('success', 'Payment successful! Your order has been placed.');
     }
 
-    public function paymentFailed(Request $request)
+    public function paymentFailed()
     {
         return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
     }
@@ -510,8 +528,12 @@ class BuyerController extends Controller
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
 
-        if($orders->isEmpty()) {
-            return redirect()->route('landing.page')->with('error', 'Order not found.');
+        if ($orders->first() && $orders->first()->order_status == 'Completed') {
+            return redirect()->route('landing.page');
+        }
+
+        if ($orders->isEmpty()) {
+            return redirect()->route('landing.page');
         }
 
         foreach ($orders as $order) {
@@ -532,5 +554,50 @@ class BuyerController extends Controller
         }
 
         return view('main.buyer.trackorder', compact('orders', 'user'));
+    }
+
+    public function order_history(Request $request)
+    {
+        $userId = $request->session()->get('loginId');
+
+        $orders = Order::join('products', 'orders.product_id', 'products.id')
+            ->join('shops', 'products.shop_id', 'shops.id')
+            ->join('buildings', 'shops.building_id', 'buildings.id')
+            ->select(
+                'orders.*',
+                'products.product_name',
+                'products.product_description',
+                'products.image',
+                'products.price',
+                'products.category_id',
+                'products.shop_id',
+                'products.status',
+                'products.is_deleted',
+                'shops.shop_name',
+                'buildings.building_name as designated_canteen'
+            )
+            ->where('orders.user_id', $userId)
+            ->where('orders.order_status', 'Completed')
+            ->orderBy('orders.updated_at', 'desc')
+            ->get();
+
+        foreach ($orders as $order) {
+            // Fetch products for each order
+            $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
+                ->join('categories', 'products.category_id', 'categories.id')
+                ->select(
+                    'products.id',
+                    'products.product_name',
+                    'products.image',
+                    'products.price',
+                    'orders.quantity',
+                    'orders.total',
+                    'categories.type_name'
+                )
+                ->where('orders.order_reference', $order->order_reference)
+                ->get();
+        }
+
+        return view('main.buyer.order-history', compact('orders'));
     }
 }

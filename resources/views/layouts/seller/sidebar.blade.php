@@ -24,7 +24,7 @@
         <div class="collapse show ps-3" id="orders-collapse">
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1">
                 <li class="li-sub"><a href="{{ route('my.orders') }}" class="li-a">My Orders</a></li>
-                <li class="li-sub"><a href="{{ route('order.history') }}" class="li-a">Order History</a></li>
+                <li class="li-sub"><a href="{{ route('seller.order.history') }}" class="li-a">Order History</a></li>
             </ul>
         </div>
 
@@ -36,7 +36,7 @@
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1">
                 <li class="li-sub"><a href="{{ route('shop.view.mode') }}" class="li-a">View Mode</a></li>
                 <li class="li-sub"><a href="{{ route('shop.update.details') }}" class="li-a">Shop Details</a></li>
-                <!-- <li class="li-sub"><a href="" class="li-a">Payment Method</a></li> -->
+                <li class="li-sub"><a href="" class="li-a">Payment Method</a></li>
             </ul>
         </div>
 

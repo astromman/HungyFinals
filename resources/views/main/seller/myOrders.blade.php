@@ -53,7 +53,7 @@
                         data-bs-target="#orderDetails{{ $order->id }}"
                         aria-expanded="false"
                         aria-controls="orderDetails{{ $order->id }}">
-                        {{ $order->updated_at->diffForHumans() }}
+                        {{ $order->created_at->diffForHumans() }}
                     </td>
                     <td class="text-center" data-label="Payment"
                         data-bs-toggle="collapse"

@@ -49,13 +49,14 @@
             </div>
 
             <!-- form here -->
-            <div class="col-lg-8 container justify-content-center align-items-center">
+            <div class="col-10 container justify-content-center align-items-center">
                 <form method="POST" action="{{ route('submit.application') }}" enctype="multipart/form-data">
                     @csrf
                     <!-- First row -->
                     <div class="mb-3">
                         <label class="form-label">Shop Name</label>
                         <input name="shop_name" class="form-control @error('shop_name') is-invalid @enderror" value="{{ old('shop_name') }}" type="text">
+                        <small class="text-muted">Please insert your registered shop name. If you have changes, please contact your manager.</small>
                         @error('shop_name')
                         <small class="text-danger">{{ $message }}</small>
                         @enderror
@@ -65,14 +66,16 @@
                         <div class="mb-3 col-lg-6">
                             <label class="form-label">Person in charge's email</label>
                             <input name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" type="text">
+                            <small class="text-muted">This email is for the person in charge in handling online transaction.</small>
                             @error('email')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
 
                         <div class="mb-3 col-lg-6">
-                            <label class="form-label">Person in charge's phone number</label>
+                            <label class="form-label">E-Wallet Number</label>
                             <input name="contact_num" class="form-control @error('contact_num') is-invalid @enderror" value="{{ old('contact_num') }}" type="text">
+                            <small class="text-muted">Please insert your E-wallet number such as Gcash, Paypal, etc.</small>
                             @error('contact_num')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
@@ -83,6 +86,7 @@
                         <div class="mb-3 col-lg-6">
                             <label for="formFile" class="form-label">Mayor's Permit <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
                             <input name="mayors" class="form-control @error('mayors') is-invalid @enderror" type="file" id="formFile">
+                            <small class="text-muted">If you are uploading file with more than 1 page, submit it into PDF format.</small>
                             @error('mayors')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
@@ -91,6 +95,7 @@
                         <div class="mb-3 col-lg-6">
                             <label for="formFile" class="form-label">BIR <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
                             <input name="bir" class="form-control @error('bir') is-invalid @enderror" type="file" id="formFile">
+                            <small class="text-muted">If you are uploading file with more than 1 page, submit it into PDF format.</small>
                             @error('bir')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
@@ -102,6 +107,7 @@
                         <div class="mb-3 col-lg-6">
                             <label for="formFile" class="form-label">DTI <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
                             <input name="dti" class="form-control @error('dti') is-invalid @enderror" type="file" id="formFile">
+                            <small class="text-muted">If you are uploading file with more than 1 page, submit it into PDF format.</small>
                             @error('dti')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
@@ -110,11 +116,13 @@
                         <div class="mb-3 col-lg-6">
                             <label for="formFile" class="form-label">Adamson Contract <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
                             <input name="contract" class="form-control @error('contract') is-invalid @enderror" type="file" id="formFile">
+                            <small class="text-muted">If you are uploading file with more than 1 page, submit it into PDF format.</small>
                             @error('contract')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
                     </div>
+
 
                     <!-- Submit button -->
                     <div class="pb-2 text-center">
@@ -248,76 +256,53 @@
                 <div class="alert alert-danger" role="alert">
                     <p>Your previous application has been rejected.</p>
                     <strong>Manager's Feedback:</strong>
-                    <li>
+                    <p>
                         {{ $applicationId->feedback }}
-                    </li>
-
+                    </p>
                 </div>
                 <form method="POST" action="{{ route('resubmit.application') }}" enctype="multipart/form-data">
                     @csrf
-                    <!-- First row -->
+
+                    <!-- Display only the rejected fields based on what the manager has selected -->
+                    @if(str_contains($applicationId->feedback, 'Mayor\'s Permit') || str_contains($applicationId->feedback, 'mayors'))
                     <div class="mb-3">
-                        <label class="form-label">Shop Name</label>
-                        <input class="form-control @error('shop_name') is-invalid @enderror" value="{{ old('shop_name', $shopDetails->shop_name) }}" readonly type="text">
-                        @error('shop_name')
+                        <label for="mayors" class="form-label">Mayor's Permit (PDF, JPEG, PNG Only)</label>
+                        <input name="mayors" class="form-control @error('mayors') is-invalid @enderror" type="file" id="mayors">
+                        @error('mayors')
                         <small class="text-danger">{{ $message }}</small>
                         @enderror
                     </div>
+                    @endif
 
-                    <div class="row mb-2">
-                        <div class="mb-3 col-lg-6">
-                            <label class="form-label">Person in charge's email</label>
-                            <input class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $shopDetails->email) }}" readonly type="text">
-                            @error('email')
-                            <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3 col-lg-6">
-                            <label class="form-label">Person in charge's phone number</label>
-                            <input class="form-control @error('contact_num') is-invalid @enderror" value="{{ old('contact_num', $shopDetails->contact_num) }}" readonly type="text">
-                            @error('contact_num')
-                            <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
+                    @if(str_contains($applicationId->feedback, 'BIR') || str_contains($applicationId->feedback, 'bir'))
+                    <div class="mb-3">
+                        <label for="bir" class="form-label">BIR (PDF, JPEG, PNG Only)</label>
+                        <input name="bir" class="form-control @error('bir') is-invalid @enderror" type="file" id="bir">
+                        @error('bir')
+                        <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
+                    @endif
 
-                    <div class="row mb-2">
-                        <div class="mb-3 col-lg-6">
-                            <label for="formFile" class="form-label">Mayor's Permit <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
-                            <input name="mayors" class="form-control @error('mayors') is-invalid @enderror" type="file" id="formFile">
-                            @error('mayors')
-                            <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3 col-lg-6">
-                            <label for="formFile" class="form-label">BIR <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
-                            <input name="bir" class="form-control @error('bir') is-invalid @enderror" type="file" id="formFile">
-                            @error('bir')
-                            <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
+                    @if(str_contains($applicationId->feedback, 'DTI') || str_contains($applicationId->feedback, 'dti'))
+                    <div class="mb-3">
+                        <label for="dti" class="form-label">DTI (PDF, JPEG, PNG Only)</label>
+                        <input name="dti" class="form-control @error('dti') is-invalid @enderror" type="file" id="dti">
+                        @error('dti')
+                        <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
+                    @endif
 
-                    <!-- Second row -->
-                    <div class="row mb-2">
-                        <div class="mb-3 col-lg-6">
-                            <label for="formFile" class="form-label">DTI <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
-                            <input name="dti" class="form-control @error('dti') is-invalid @enderror" type="file" id="formFile">
-                            @error('dti')
-                            <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3 col-lg-6">
-                            <label for="formFile" class="form-label">Adamson Contract <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
-                            <input name="contract" class="form-control @error('contract') is-invalid @enderror" type="file" id="formFile">
-                            @error('contract')
-                            <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
+                    @if(str_contains($applicationId->feedback, 'Contract') || str_contains($applicationId->feedback, 'contract'))
+                    <div class="mb-3">
+                        <label for="contract" class="form-label">AdU Contract (PDF, JPEG, PNG Only)</label>
+                        <input name="contract" class="form-control @error('contract') is-invalid @enderror" type="file" id="contract">
+                        @error('contract')
+                        <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
+                    @endif
 
                     <!-- Submit button -->
                     <div class="pb-2 text-center">

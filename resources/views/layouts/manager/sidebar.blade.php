@@ -17,7 +17,14 @@
             <a class="navbar-brand" href="{{ route('manager.dashboard') }}">Hungry Falcons</a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    @php
+                    $userId = session()->get('loginId');
+                    $user = App\Models\UserProfile::where('id', $userId)->first();
+                    @endphp
                     <li class="px-3 nav-item d-flex align-items-center">
+                        <div class=" text-white" id="userDropdown" data-bs-toggle="dropdown">
+                            {{ $user->first_name . ' ' . $user->last_name }}
+                        </div>
                         <div class="dropdown">
                             <button class="btn btn-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle" style="font-size: 30px; color: white;"></i>

@@ -87,6 +87,8 @@ Route::group([
 
     Route::get('/track-order/{orderRef}', [BuyerController::class, 'track_order'])->name('track.order');
     Route::post('/track-order/{orderRef}', [BuyerController::class, 'track_this_order'])->name('track.this.order');
+
+    Route::get('/order-history', [BuyerController::class, 'order_history'])->name('buyer.order.history');
 });
 
 Route::group([
@@ -141,7 +143,7 @@ Route::group([
     Route::get('/my-orders', [SellerController::class, 'my_orders'])->name('my.orders');
     Route::post('/update-order/{orderRef}', [SellerController::class, 'updateOrder'])->name('update.order');
 
-    Route::get('/order-history', [SellerController::class, 'order_history'])->name('order.history');
+    Route::get('/order-history', [SellerController::class, 'order_history'])->name('seller.order.history');
 
     Route::get('/my-shop/verification', [SellerController::class, 'verified'])->name('verified');
 });

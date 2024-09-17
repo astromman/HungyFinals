@@ -410,12 +410,63 @@ class ManagerController extends Controller
         }
     }
 
+    // public function reject_shops_application(Request $request, $id)
+    // {
+    //     try {
+    //         // Validate the feedback input
+    //         $request->validate([
+    //             'feedback' => 'required|string|max:255',
+    //         ]);
+
+    //         DB::beginTransaction();
+
+    //         // Find the permit by ID
+    //         $permit = Permit::find($id);
+
+    //         if ($permit) {
+    //             // Retrieve the shop model using the shop_id from the permit
+    //             $shop = Shop::where('id', $permit->shop_id)->first();
+
+    //             if ($shop) {
+    //                 // Update the shop status to 'Verified'
+    //                 $shop->status = 'Unverified';
+    //                 $shop->is_reopen = false;
+    //                 $shop->save();
+
+    //                 // Update the is_approved field to 0 (rejected)
+    //                 $permit->status = 'Rejected';
+    //                 $permit->is_rejected = 1;
+
+    //                 // Save feedback (assuming there's a feedback column in permits table)
+    //                 $permit->feedback = $request->input('feedback');
+    //                 $permit->save();
+
+    //                 DB::commit();
+
+    //                 return redirect()->route('shops.applications')->with('success', 'Application rejected successfully.');
+    //             } else {
+    //                 return redirect()->route('shops.applications')->with('error', 'Shop not found.');
+    //             }
+    //         } else {
+    //             DB::rollBack();
+    //             return redirect()->route('shops.applications')->with('error', 'Application not found.');
+    //         }
+    //     } catch (QueryException $e) {
+    //         DB::rollBack();
+    //         return redirect()->back()->with('error', 'Database error: ' . $e->getMessage());
+    //     } catch (Exception $e) {
+    //         DB::rollBack();
+    //         return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+    //     }
+    // }
+
     public function reject_shops_application(Request $request, $id)
     {
         try {
             // Validate the feedback input
             $request->validate([
                 'feedback' => 'required|string|max:255',
+                'rejected_files' => 'required|array',
             ]);
 
             DB::beginTransaction();
@@ -424,25 +475,23 @@ class ManagerController extends Controller
             $permit = Permit::find($id);
 
             if ($permit) {
-                // Retrieve the shop model using the shop_id from the permit
                 $shop = Shop::where('id', $permit->shop_id)->first();
 
                 if ($shop) {
-                    // Update the shop status to 'Verified'
+                    // Update the shop and permit statuses
                     $shop->status = 'Unverified';
-                    $shop->is_reopen = false;
                     $shop->save();
 
-                    // Update the is_approved field to 0 (rejected)
                     $permit->status = 'Rejected';
                     $permit->is_rejected = 1;
+                    $feedback = $request->input('feedback');
 
-                    // Save feedback (assuming there's a feedback column in permits table)
-                    $permit->feedback = $request->input('feedback');
+                    // Store the rejected files in the feedback
+                    $rejectedFiles = $request->input('rejected_files');
+                    $permit->feedback = "Rejected files: " . implode(", ", $rejectedFiles) . "<br>" . $feedback;
                     $permit->save();
 
                     DB::commit();
-
                     return redirect()->route('shops.applications')->with('success', 'Application rejected successfully.');
                 } else {
                     return redirect()->route('shops.applications')->with('error', 'Shop not found.');
@@ -451,14 +500,12 @@ class ManagerController extends Controller
                 DB::rollBack();
                 return redirect()->route('shops.applications')->with('error', 'Application not found.');
             }
-        } catch (QueryException $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Database error: ' . $e->getMessage());
         } catch (Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'An error occurred: ' . $e->getMessage());
         }
     }
+
 
     public function applications_history(Request $request)
     {

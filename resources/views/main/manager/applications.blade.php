@@ -16,6 +16,7 @@
         {{ session('success') }}
     </div>
     @endif
+
     <div>
         <table class="table table-hover">
             <thead>
@@ -103,6 +104,28 @@
                                         <label for="feedback" class="form-label">Reason for Rejection</label>
                                         <textarea class="form-control" id="feedback" name="feedback" rows="3" required></textarea>
                                     </div>
+
+                                    <!-- Checkboxes for selecting which files need to be resubmitted -->
+                                    <div class="mb-3">
+                                        <p>Select the documents that need resubmission:</p>
+                                        <div>
+                                            <input type="checkbox" id="reject_mayors" name="rejected_files[]" value="mayors">
+                                            <label for="reject_mayors">Mayor's Permit</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="reject_bir" name="rejected_files[]" value="bir">
+                                            <label for="reject_bir">BIR</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="reject_dti" name="rejected_files[]" value="dti">
+                                            <label for="reject_dti">DTI</label>
+                                        </div>
+                                        <div>
+                                            <input type="checkbox" id="reject_contract" name="rejected_files[]" value="contract">
+                                            <label for="reject_contract">AdU Contract</label>
+                                        </div>
+                                    </div>
+
                                     <button type="submit" class="btn btn-danger w-100">Submit</button>
                                 </form>
                             </div>

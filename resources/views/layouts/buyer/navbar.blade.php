@@ -20,7 +20,7 @@
                         More
                     </a>
                     <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">Order History</a></li>
+                        <li><a class="dropdown-item" href="{{ route('buyer.order.history') }}">Order History</a></li>
                         <li><a class="dropdown-item" href="{{ route('my.favorites') }}">Favorites</a></li>
                     </ul>
                 </li>

@@ -658,7 +658,7 @@ class SellerController extends Controller
             ->where('orders.at_cart', false)
             ->where('orders.order_status', '!=', 'At Cart')
             ->where('orders.order_status', '!=', 'Completed')
-            ->orderBy('orders.updated_at', 'desc')
+            ->orderBy('orders.created_at', 'desc')
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
 
