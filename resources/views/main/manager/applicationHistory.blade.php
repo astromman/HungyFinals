@@ -11,97 +11,120 @@
     </div>
     @endif
     <div>
-        <table class="table table-hover">
+        <table class="table table-hover table-bordered">
             <thead>
                 <tr class="text-center">
                     <th scope="col">Shop Name</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Feedback</th>
                     <th scope="col">Date Submitted</th>
-                    <th scope="col">Date Updated</th>
-                    <th scope="col">Documents</th>
+                    <th scope="col">Details</th>
                 </tr>
             </thead>
             <tbody class="borderless">
-                @forelse($application as $applicationData)
-                <tr class="text-center">
-                    <td>{{ $applicationData->shop_name }}</td>
-                    <td>{{ $applicationData->application_status }}</td>
-                    <td>{{ $applicationData->feedback }}</td>
-                    <td>{{ $applicationData->date_submitted }}</td>
-                    <td>{{ $applicationData->date_updated }}</td>
+                @forelse($shopApplication as $applicationData => $application)
+                <tr class="text-center align-middle">
+                    <td>{{ $application->first()->shop_name }}</td>
+                    <td>{{ $application->first()->date_submitted }}</td>
                     <td>
-                        <button type="button" class="btn btn-primary py-1 w-100 rounded-pill" onclick="toggleDocuments({{ $applicationData->id }})">
-                            View
+                        <!-- Button to toggle details view -->
+                        <button type="button" class="btn btn-primary py-1 w-100 rounded-pill" onclick="toggleDetails({{ $application->first()->id }})">
+                            View Details
                         </button>
                     </td>
                 </tr>
-                <tr id="documents-{{ $applicationData->id }}" class="documents-row" style="display:none;">
-                    <td colspan="6">
-                        <div class="row">
-                            <div class="col-lg-3 px-2 text-center">
-                                Mayor's Permit
-                                <a href="{{ asset('storage/permits/'. $applicationData->mayors) }}" target="_blank">
-                                    <embed src="{{ asset('storage/permits/'. $applicationData->mayors) }}" width="100%" height="400px" style="object-fit: contain;" />
-                                </a>
-                                <a href="{{ asset('storage/permits/'. $applicationData->mayors) }}" download class="btn btn-link">Download</a>
-                            </div>
-                            <div class="col-lg-3 px-2 text-center">
-                                BIR
-                                <a href="{{ asset('storage/permits/'. $applicationData->bir) }}" target="_blank">
-                                    <embed src="{{ asset('storage/permits/'. $applicationData->bir) }}" width="100%" height="400px" style="object-fit: contain;" />
-                                </a>
-                                <a href="{{ asset('storage/permits/'. $applicationData->bir) }}" download class="btn btn-link">Download</a>
-                            </div>
-                            <div class="col-lg-3 px-2 text-center">
-                                DTI
-                                <a href="{{ asset('storage/permits/'. $applicationData->dti) }}" target="_blank">
-                                    <embed src="{{ asset('storage/permits/'. $applicationData->dti) }}" width="100%" height="400px" style="object-fit: contain;" />
-                                </a>
-                                <a href="{{ asset('storage/permits/'. $applicationData->dti) }}" download class="btn btn-link">Download</a>
-                            </div>
-                            <div class="col-lg-3 px-2 text-center">
-                                AdU Contract
-                                <a href="{{ asset('storage/permits/'. $applicationData->contract) }}" target="_blank">
-                                    <embed src="{{ asset('storage/permits/'. $applicationData->contract) }}" width="100%" height="400px" style="object-fit: contain;" />
-                                </a>
-                                <a href="{{ asset('storage/permits/'. $applicationData->contract) }}" download class="btn btn-link">Download</a>
-                            </div>
+
+                <!-- Hidden row for the detailed info -->
+                <tr id="details-{{ $application->first()->id }}" class="details-row shadow-sm" style="display:none;">
+                    <td colspan="3" class="p-0">
+                        <div class="container p-3">
+                            <!-- Table for Status, Feedback, Date Updated -->
+                            <table class="table details-table w-100 text-center">
+                                <thead>
+                                    <tr class="text-center">
+                                        <th>Status</th>
+                                        <th>Feedback</th>
+                                        <th>Date Updated</th>
+                                        <th>Documents</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($application as $applicationData)
+                                    <tr>
+                                        <td class="{{ $applicationData->application_status == 'Approved' ? 'text-success' : ($applicationData->application_status == 'Rejected' ? 'text-danger' : '') }} fw-bold">
+                                            {{ $applicationData->application_status }}
+                                        </td>
+                                        <td>{{ $applicationData->feedback }}</td>
+                                        <td>{{ $applicationData->date_updated }}</td>
+                                        <td>
+                                            <!-- Button to trigger the modal -->
+                                            <button type="button" class="btn btn-primary py-1 w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#documentsModal-{{ $applicationData->id }}">
+                                                View Documents
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <!-- Modal for displaying documents -->
+                                    <div class="modal fade" id="documentsModal-{{ $applicationData->id }}" tabindex="-1" aria-labelledby="documentsModalLabel-{{ $applicationData->id }}" aria-hidden="true">
+                                        <div class="modal-dialog modal-xl">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="documentsModalLabel-{{ $applicationData->id }}">Documents for {{ $applicationData->shop_name }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="row text-center">
+                                                        <div class="col-lg-3">
+                                                            <strong>Mayor's Permit</strong>
+                                                            <embed src="{{ asset('storage/permits/' . $applicationData->mayors) }}" width="100%" height="200px" />
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->mayors) }}" download class="btn btn-link">Download</a>
+                                                        </div>
+                                                        <div class="col-lg-3">
+                                                            <strong>BIR</strong>
+                                                            <embed src="{{ asset('storage/permits/' . $applicationData->bir) }}" width="100%" height="200px" />
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->bir) }}" download class="btn btn-link">Download</a>
+                                                        </div>
+                                                        <div class="col-lg-3">
+                                                            <strong>DTI</strong>
+                                                            <embed src="{{ asset('storage/permits/' . $applicationData->dti) }}" width="100%" height="200px" />
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->dti) }}" download class="btn btn-link">Download</a>
+                                                        </div>
+                                                        <div class="col-lg-3">
+                                                            <strong>AdU Contract</strong>
+                                                            <embed src="{{ asset('storage/permits/' . $applicationData->contract) }}" width="100%" height="200px" />
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->contract) }}" download class="btn btn-link">Download</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
                     </td>
                 </tr>
+
                 @empty
                 <tr class="text-center">
-                    <td colspan="6">No Applications Found</td>
+                    <td colspan="3">No Applications Found</td>
                 </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+
 </div>
 
 <script>
-    function toggleDocuments(id) {
-        var rows = document.querySelectorAll('.documents-row');
-        rows.forEach(function(row) {
-            if (row.id === 'documents-' + id) {
-                if (row.style.display === "none") {
-                    row.style.display = "table-row";
-                    setTimeout(() => {
-                        row.style.width = "100%";
-                        row.style.marginLeft = "0";
-                    }); // Delay to ensure the element is considered "displayed" before transitioning
-                } else {
-                    row.style.width = "0";
-                    row.style.marginLeft = "100%";
-                    setTimeout(() => row.style.display = "none");
-                }
-            } else {
-                row.style.width = "0";
-                row.style.marginLeft = "100%";
-                setTimeout(() => row.style.display = "none");
-            }
-        });
+    function toggleDetails(id) {
+        var row = document.getElementById('details-' + id);
+        if (row.style.display === "none" || row.style.display === "") {
+            row.style.display = "table-row"; // Show the row with details
+        } else {
+            row.style.display = "none"; // Hide the row
+        }
     }
 </script>
 @endsection
