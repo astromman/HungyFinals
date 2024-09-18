@@ -256,15 +256,20 @@
                 <div class="alert alert-danger" role="alert">
                     <p>Your previous application has been rejected.</p>
                     <strong>Manager's Feedback:</strong>
-                    <p>
+                    <p class="mb-0">
+                        Reason:
                         {{ $applicationId->feedback }}
+                    </p>
+                    <p class="mb-0">
+                        Rejected Files:
+                        {{ $applicationId->rejected_files}}
                     </p>
                 </div>
                 <form method="POST" action="{{ route('resubmit.application') }}" enctype="multipart/form-data">
                     @csrf
 
                     <!-- Display only the rejected fields based on what the manager has selected -->
-                    @if(str_contains($applicationId->feedback, 'Mayor\'s Permit') || str_contains($applicationId->feedback, 'mayors'))
+                    @if(str_contains($applicationId->rejected_files, 'Mayor\'s Permit') || str_contains($applicationId->rejected_files, 'mayor\'s'))
                     <div class="mb-3">
                         <label for="mayors" class="form-label">Mayor's Permit (PDF, JPEG, PNG Only)</label>
                         <input name="mayors" class="form-control @error('mayors') is-invalid @enderror" type="file" id="mayors">
@@ -274,7 +279,7 @@
                     </div>
                     @endif
 
-                    @if(str_contains($applicationId->feedback, 'BIR') || str_contains($applicationId->feedback, 'bir'))
+                    @if(str_contains($applicationId->rejected_files, 'BIR') || str_contains($applicationId->rejected_files, 'bir'))
                     <div class="mb-3">
                         <label for="bir" class="form-label">BIR (PDF, JPEG, PNG Only)</label>
                         <input name="bir" class="form-control @error('bir') is-invalid @enderror" type="file" id="bir">
@@ -284,7 +289,7 @@
                     </div>
                     @endif
 
-                    @if(str_contains($applicationId->feedback, 'DTI') || str_contains($applicationId->feedback, 'dti'))
+                    @if(str_contains($applicationId->rejected_files, 'DTI') || str_contains($applicationId->rejected_files, 'dti'))
                     <div class="mb-3">
                         <label for="dti" class="form-label">DTI (PDF, JPEG, PNG Only)</label>
                         <input name="dti" class="form-control @error('dti') is-invalid @enderror" type="file" id="dti">
@@ -294,7 +299,7 @@
                     </div>
                     @endif
 
-                    @if(str_contains($applicationId->feedback, 'Contract') || str_contains($applicationId->feedback, 'contract'))
+                    @if(str_contains($applicationId->rejected_files, 'AdU Contract') || str_contains($applicationId->rejected_files, 'AdU contract'))
                     <div class="mb-3">
                         <label for="contract" class="form-label">AdU Contract (PDF, JPEG, PNG Only)</label>
                         <input name="contract" class="form-control @error('contract') is-invalid @enderror" type="file" id="contract">

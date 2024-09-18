@@ -109,7 +109,7 @@
                                     <div class="mb-3">
                                         <p>Select the documents that need resubmission:</p>
                                         <div>
-                                            <input type="checkbox" id="reject_mayors" name="rejected_files[]" value="mayors">
+                                            <input type="checkbox" id="reject_mayors" name="rejected_files[]" value="mayor's">
                                             <label for="reject_mayors">Mayor's Permit</label>
                                         </div>
                                         <div>
@@ -121,7 +121,7 @@
                                             <label for="reject_dti">DTI</label>
                                         </div>
                                         <div>
-                                            <input type="checkbox" id="reject_contract" name="rejected_files[]" value="contract">
+                                            <input type="checkbox" id="reject_contract" name="rejected_files[]" value="AdU contract">
                                             <label for="reject_contract">AdU Contract</label>
                                         </div>
                                     </div>

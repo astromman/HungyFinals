@@ -484,11 +484,11 @@ class ManagerController extends Controller
 
                     $permit->status = 'Rejected';
                     $permit->is_rejected = 1;
-                    $feedback = $request->input('feedback');
 
                     // Store the rejected files in the feedback
                     $rejectedFiles = $request->input('rejected_files');
-                    $permit->feedback = "Rejected files: " . implode(", ", $rejectedFiles) . "<br>" . $feedback;
+                    $permit->rejected_files = implode(", ", $rejectedFiles);
+                    $permit->feedback = $request->feedback;
                     $permit->save();
 
                     DB::commit();
@@ -527,8 +527,8 @@ class ManagerController extends Controller
             ->orderBy('permits.updated_at', 'desc')
             ->get();
 
-           $shopApplication = $application
-           ->groupBy('shop_id');
+        $shopApplication = $application->groupBy('shop_id');
+
         return view('main.manager.applicationHistory', compact('application', 'shopApplication'));
     }
 }

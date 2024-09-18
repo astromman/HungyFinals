@@ -41,6 +41,7 @@
                                 <thead>
                                     <tr class="text-center">
                                         <th>Status</th>
+                                        <th>Rejected Files</th>
                                         <th>Feedback</th>
                                         <th>Date Updated</th>
                                         <th>Documents</th>
@@ -52,6 +53,7 @@
                                         <td class="{{ $applicationData->application_status == 'Approved' ? 'text-success' : ($applicationData->application_status == 'Rejected' ? 'text-danger' : '') }} fw-bold">
                                             {{ $applicationData->application_status }}
                                         </td>
+                                        <td>{{ $applicationData->rejected_files }}</td>
                                         <td>{{ $applicationData->feedback }}</td>
                                         <td>{{ $applicationData->date_updated }}</td>
                                         <td>
@@ -73,22 +75,30 @@
                                                     <div class="row text-center">
                                                         <div class="col-lg-3">
                                                             <strong>Mayor's Permit</strong>
-                                                            <embed src="{{ asset('storage/permits/' . $applicationData->mayors) }}" width="100%" height="200px" />
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->mayors) }}" target="_blank">
+                                                                <embed src="{{ asset('storage/permits/' . $applicationData->mayors) }}" width="100%" height="400px" style="object-fit: contain;" />
+                                                            </a>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->mayors) }}" download class="btn btn-link">Download</a>
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <strong>BIR</strong>
-                                                            <embed src="{{ asset('storage/permits/' . $applicationData->bir) }}" width="100%" height="200px" />
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->bir) }}" target="_blank">
+                                                                <embed src="{{ asset('storage/permits/' . $applicationData->bir) }}" width="100%" height="400px" style="object-fit: contain;" />
+                                                            </a>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->bir) }}" download class="btn btn-link">Download</a>
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <strong>DTI</strong>
-                                                            <embed src="{{ asset('storage/permits/' . $applicationData->dti) }}" width="100%" height="200px" />
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->dti) }}" target="_blank">
+                                                                <embed src="{{ asset('storage/permits/' . $applicationData->dti) }}" width="100%" height="400px" style="object-fit: contain;" />
+                                                            </a>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->dti) }}" download class="btn btn-link">Download</a>
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <strong>AdU Contract</strong>
-                                                            <embed src="{{ asset('storage/permits/' . $applicationData->contract) }}" width="100%" height="200px" />
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->contract) }}" target="_blank">
+                                                                <embed src="{{ asset('storage/permits/' . $applicationData->contract) }}" width="100%" height="400px" style="object-fit: contain;" />
+                                                            </a>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->contract) }}" download class="btn btn-link">Download</a>
                                                         </div>
                                                     </div>
