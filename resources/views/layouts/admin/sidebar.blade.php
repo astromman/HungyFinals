@@ -4,7 +4,7 @@
     <div id="sidebar" class="sidebar">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
         <a href="{{ route('admin.dashboard') }}"><i class="bi bi-easel"></i> Dashboard</a>
-        <a href="{{ route('audit.logs') }}"><i class="bi bi-card-list"></i> Audit Trail</a>
+        <a href="{{ route('admin.audit.logs') }}"><i class="bi bi-card-list"></i> Audit Trail</a>
         <a href="{{ route('manage.building') }}"><i class="bi bi-pin-map-fill"></i> Canteen Control</a>
         <a href="{{ route('manager.account') }}"><i class="bi bi-person-circle"></i> Manager's Accounts</a>
         <a href="{{ route('buyers.account') }}"><i class="bi bi-person-circle"></i> Buyer's Accounts</a>
@@ -17,7 +17,14 @@
             <a class="navbar-brand" href="{{ route('admin.dashboard') }}">Hungry Falcons</a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    @php
+                    $userId = session()->get('loginId');
+                    $user = App\Models\UserProfile::where('id', $userId)->first();
+                    @endphp
                     <li class="px-3 nav-item d-flex align-items-center">
+                        <div class="text-white" id="userDropdown" data-bs-toggle="dropdown">
+                            {{ $user->first_name . ' ' . $user->last_name }}
+                        </div>
                         <div class="dropdown">
                             <button class="btn btn-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle" style="font-size: 30px; color: white;"></i>

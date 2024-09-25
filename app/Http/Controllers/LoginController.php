@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Middleware\CustomAuthMiddleware;
 use App\Models\Credential;
 use App\Models\UserProfile;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -18,7 +19,6 @@ use Illuminate\Support\Facades\Storage;
 use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Mail;
-use Carbon\Carbon;
 
 
 class LoginController extends Controller
@@ -124,7 +124,7 @@ class LoginController extends Controller
             // Generate the OTP and set its expiry
             $otpCode = rand(100000, 999999); // 6-digit random OTP
             $user->otp_code = $otpCode;
-            $user->otp_expires_at = Carbon::now()->addMinutes(10); // OTP expires in 10 minutes
+            $user->otp_expires_at = Carbon::now()->addMinutes(5); // OTP expires in 10 minutes
 
             $user->save();
 

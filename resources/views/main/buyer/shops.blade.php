@@ -66,7 +66,7 @@
                 <a href="{{ route('visit.shop', ['id' => $shop->id, 'shop_name' => Str::slug($shop->shop_name)]) }}" class="text-dark stretched-link" style="text-decoration: none;">
                     <div class="card-body d-flex flex-column justify-content-between" style="height: 100px;">
                         <h5 class=" card-title">{{ $shop->shop_name }}</h5>
-                        <p class="card-text">Mon - Fri</p>
+                        <small class="card-text text-muted">Average Prep Time: {{ $shop->preparation_time . ' mins' }}</small>
                     </div>
                 </a>
                 @else <!-- unclickable -->
@@ -75,7 +75,7 @@
                 </div>
                 <div class="card-body d-flex flex-column justify-content-between" style="height: 100px;">
                     <h5 class=" card-title">{{ $shop->shop_name }}</h5>
-                    <p class="card-text">Closed</p>
+                    <p class="card-text text-danger">Closed</p>
                 </div>
                 @endif
             </div>

@@ -168,6 +168,8 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+
+        Mailjet\LaravelMailjet\MailjetServiceProvider::class,
     ])->toArray(),
 
     /*
@@ -183,9 +185,13 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         // 'Example' => App\Facades\Example::class,
+        'Mailjet' => Mailjet\LaravelMailjet\Facades\Mailjet::class,
     ])->toArray(),
 
     'paymongo_public_key' => env('PAYMONGO_PUBLIC_KEY'),
     'paymongo_secret_key' => env('PAYMONGO_SECRET_KEY'),
+
+    'paypal_client_id' => env('PAYPAL_CLIEND_ID'),
+    'paypal_secret_key' => env('PAYPAL_SECRET_KEY'),
 
 ];

@@ -16,30 +16,34 @@
     <div class="offcanvas-body justify-content-center">
         @php
         $userId = session()->get('loginId');
-        $orders = App\Models\Order::where('user_id', $userId)
-        ->where('order_status', '!=', 'Completed')
-        ->where('order_status', '!=', 'At Cart')
-        ->where('at_cart', false)
-        ->groupBy('order_reference')
+        $orders = App\Models\Order::leftJoin('payments', 'orders.payment_id', 'payments.id')
+        ->where('orders.user_id', $userId)
+        ->where('orders.order_status', '!=', 'Completed')
+        ->where('orders.at_cart', false)
+        ->orderBy('orders.created_at', 'desc')
+        ->groupBy('orders.order_reference')
         ->get();
         @endphp
 
         @forelse($orders as $order)
-        <form id="trackOrderForm{{ $order->order_reference }}" action="{{ route('track.this.order', ['orderRef' => Crypt::encrypt($order->order_reference)]) }}" method="POST">
+        <form id="trackOrderForm{{ $order->order_reference }}" method="POST"
+            @if($order->payment_status == 'Rejected' && $order->payment_type == 'qr')
+            action="{{ route('shop.cart') }}"
+            @else
+            action="{{ route('track.this.order', ['orderRef' => Crypt::encrypt($order->order_reference)]) }}"
+            @endif
+            >
             @csrf
-            <div class="card w-100 mb-3" onclick="submitForm('trackOrderForm{{ $order->order_reference }}')">
+            <div class="card w-100 mb-3"
+                @if($order->payment_status == 'Rejected' && $order->payment_type == 'qr')
+                onclick="submitRejectedPaymentForm('trackOrderForm{{ $order->order_reference }}')"
+                @else
+                onclick="submitForm('trackOrderForm{{ $order->order_reference }}')"
+                @endif>
                 @include('main.buyer.protobar', ['order' => $order])
                 <div class="py-2 justify-content-start align-items-start">
                     <span>Order Ref: <strong>{{ $order->order_reference }}</strong></span>
                 </div>
-                <!-- Responsive Multi-Step Progress Bar -->
-                <!-- <div class="progress-container my-4">
-                    <ul class="progressbar">
-                        <li class="active">Order</li>
-                        <li>Preparing</li>
-                        <li>Pick-up</li>
-                    </ul>
-                </div> -->
             </div>
         </form>
         @empty

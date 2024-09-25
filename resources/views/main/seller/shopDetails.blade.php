@@ -20,26 +20,13 @@
                         <!-- Inputs -->
                         <div class="mb-3">
                             <label class="form-label">Username</label>
-                            <input 
-                                name="username" 
-                                class="form-control @error('username') is-invalid @enderror" 
-                                value="{{ old('username', $userProfile->username) }}" 
-                                type="text" 
+                            <input
+                                name="username"
+                                class="form-control @error('username') is-invalid @enderror"
+                                value="{{ old('username', $userProfile->username) }}"
+                                type="text"
                                 {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
                             @error('username')
-                            <span class="invalid-feedback">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Shop Name</label>
-                            <input 
-                                name="shop_name" 
-                                class="form-control @error('shop_name') is-invalid @enderror" 
-                                value="{{ old('shop_name', $shopDetails->shop_name) }}" 
-                                type="text" 
-                                {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
-                            @error('shop_name')
                             <span class="invalid-feedback">{{ $message }}</span>
                             @enderror
                         </div>
@@ -47,11 +34,11 @@
                         <div class="row">
                             <div class="col-lg-6 mb-3">
                                 <label for="email" class="form-label">Email address</label>
-                                <input 
-                                    name="email" 
-                                    class="form-control @error('email') is-invalid @enderror" 
-                                    value="{{ old('email', $userProfile->email) }}" 
-                                    type="email" 
+                                <input
+                                    name="email"
+                                    class="form-control @error('email') is-invalid @enderror"
+                                    value="{{ old('email', $userProfile->email) }}"
+                                    type="email"
                                     id="email"
                                     {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
                                 @error('email')
@@ -60,12 +47,12 @@
                             </div>
 
                             <div class="col-lg-6 mb-3">
-                                <label for="contact_num" class="form-label">Contact Number</label>
-                                <input 
-                                    name="contact_num" 
-                                    class="form-control @error('contact_num') is-invalid @enderror" 
-                                    value="{{ old('contact_num', $userProfile->contact_num) }}" 
-                                    type="text" 
+                                <label for="contact_num" class="form-label">E-wallet Number</label>
+                                <input
+                                    name="contact_num"
+                                    class="form-control @error('contact_num') is-invalid @enderror"
+                                    value="{{ old('contact_num', $userProfile->contact_num) }}"
+                                    type="text"
                                     id="contact_num"
                                     {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
                                 @error('contact_num')
@@ -75,22 +62,45 @@
                         </div>
 
                         <div class="col mb-3">
+                            <label for="formFile" class="form-label">Shop Payment QR</label>
+                            <input
+                                name="qr_image"
+                                class="form-control"
+                                type="file"
+                                id="formFile"
+                                {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
+                        </div>
+
+                        <div class="mb-3 d-flex align-items-center">
+                            <div class="flex-grow-1 me-3">
+                                <label class="form-label">Shop Name</label>
+                                <input name="shop_name" class="form-control @error('shop_name') is-invalid @enderror" value="{{ old('first_name', $shopDetails->shop_name) }}" type="text">
+                                @error('shop_name')
+                                <span class="invalid-feedback">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="align-self-end"> <!-- Ensure the button is aligned with the field -->
+                                <button type="button" class="btn btn-outline-primary">Request Change</button>
+                            </div>
+                        </div>
+
+                        <div class="col mb-3">
                             <label for="formFile" class="form-label">Shop Banner</label>
-                            <input 
-                                name="shop_image" 
-                                class="form-control" 
-                                type="file" 
+                            <input
+                                name="shop_image"
+                                class="form-control"
+                                type="file"
                                 id="formFile"
                                 {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
                         </div>
 
                         <div class="mb-3">
                             <label for="shop_bio" class="form-label">About Shop (optional)</label>
-                            <textarea 
-                                name="shop_bio" 
-                                class="form-control @error('shop_bio') is-invalid @enderror" 
-                                placeholder="Tell the customers about your shop" 
-                                id="shop_bio" 
+                            <textarea
+                                name="shop_bio"
+                                class="form-control @error('shop_bio') is-invalid @enderror"
+                                placeholder="Tell the customers about your shop"
+                                id="shop_bio"
                                 rows="4"
                                 {{ $shopDetails->is_reopen ? 'disabled' : '' }}></textarea>
                             @error('shop_bio')

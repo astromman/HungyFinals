@@ -9,3 +9,6 @@
 
 //
 @import 'bootstrap-icons/font/bootstrap-icons.css';
+
+// Import Bootstrap and DataTables if not already included
+@import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';  // DataTables Bootstrap 5 styles

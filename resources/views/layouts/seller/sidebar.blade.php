@@ -36,7 +36,7 @@
             <ul class="btn-toggle-nav list-unstyled fw-normal pb-1">
                 <li class="li-sub"><a href="{{ route('shop.view.mode') }}" class="li-a">View Mode</a></li>
                 <li class="li-sub"><a href="{{ route('shop.update.details') }}" class="li-a">Shop Details</a></li>
-                <li class="li-sub"><a href="" class="li-a">Payment Method</a></li>
+                <!-- <li class="li-sub"><a href="" class="li-a">Payment Method</a></li> -->
             </ul>
         </div>
 
@@ -55,7 +55,7 @@
                     $shop = App\Models\Shop::where('user_id', $userId)->first();
                     @endphp
                     <li class="px-3 nav-item d-flex align-items-center">
-                        <div class=" text-white" id="userDropdown" data-bs-toggle="dropdown">
+                        <div class="text-white" id="userDropdown" data-bs-toggle="dropdown">
                             {{ $shop->shop_name }}
                         </div>
                         <div class="dropdown">

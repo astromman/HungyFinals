@@ -3,6 +3,7 @@
 @extends('layouts.buyer.buyermaster')
 
 @section('content')
+
 <div class="container mt-5">
     <h2 class="text-center">Track your orders klasmeyt</h2>
     <p class="text-center">This will help to manage your time and observe your order</p>
@@ -12,6 +13,7 @@
         <h5>We were processing your order klasmeyt</h5>
         <p>Thank you for being patient, we appreciated it</p>
         <p>Pick-up klasmeyt: <strong class="text-uppercase">{{ $user->first_name . ' ' . $user->last_name }}</strong></p>
+        <p>Payment Method: <strong class="text-uppercase">{{ $orders->first()->payment_type }}</strong></p>
     </div>
 
     @foreach($orders as $order)

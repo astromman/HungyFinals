@@ -1,206 +1,224 @@
 @extends('layouts.buyer.buyermaster')
+
 @section('content')
-
 <h5>Klasmeyt's Favorites</h5>
-<div class="row row-cols-3 mt-4 mb-4 gy-5 ">
+<div class="container my-4">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 mt-4 mb-4 gy-5 justify-content-center">
+        @forelse($favorites as $product)
+        <div class="col d-flex flex-column align-items-center">
+            <div class="product-wrapper">
+                <div class="product-card position-relative border" data-bs-toggle="modal"
+                    data-bs-target="#productModal" data-id="{{ $product->id }}"
+                    data-name="{{ $product->product_name }}" data-description="{{ $product->product_description }}"
+                    data-price="{{ $product->price }}" data-category="{{ $product->category_name }}"
+                    data-image="{{ asset('storage/products/' . $product->image) }}">
 
-    <div class="col-md-4">
+                    <!-- Badge for product status -->
+                    @if (!$product->is_deleted)
+                    <div class="badge bg-success position-absolute">
+                        {{ $product->status }}
+                    </div>
+                    @else
+                    <div class="badge bg-danger position-absolute">
+                        {{ $product->status }}
+                    </div>
+                    @endif
 
-        <div class="card">
+                    <!-- Image Container -->
+                    <div class="product-tumb w-100" style="height: 200px;">
+                        <img src="{{ asset('storage/products/' . $product->image) }}"
+                            alt="{{ $product->product_name }}" class="img-fluid w-100 h-100"
+                            style="object-fit: cover;">
+                    </div>
 
-            <div class="image-container p-1">
+                    <!-- Product Details -->
+                    <div class="product-details p-3">
+                        <span class="product-catagory d-block">{{ $product->category_name }}</span>
+                        <h4 class="mt-2">{{ $product->product_name }}</h4>
+                        <p>{{ $product->product_description }}</p>
+                        <hr class="full-width-line">
+                    </div>
+                </div>
 
-                <div class="first">
-
+                <!-- Remove from Favorites Button -->
+                <div class="add-to-favorites mt-2">
                     <div class="d-flex justify-content-between align-items-center">
+                        <!-- Price -->
+                        <div class="product-price" style="padding-left: 18px;">₱{{ $product->price }}</div>
 
-                        <span class="discount"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
-                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6" />
-                            </svg> Pick Up</span>
-                        <span class="wishlist"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
-                                <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15" />
-                            </svg></span>
-
-
+                        <!-- Remove from Favorites Button -->
+                        <form id="removeFavoriteForm" method="POST" action="{{ route('favorites.remove', $product->id) }}"
+                            class="remove-favorite-form" style="padding-right: 20px;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn favorite-btn">
+                                <i class="fa fa-heart-broken"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
-
-                <img src="/images/colet.jpg" class="img-fluid rounded thumbnail-image">
-
-
             </div>
-
-
-            <div class="product-detail-container p-2">
-
-                <div class="d-flex justify-content-between align-items-center">
-
-                    <h5 class="dress-name">Watermelon</h5>
-
-                </div>
-
-
-
-
-
-                <div class="d-flex flex-column">
-
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="lightblue" class="bi bi-tag-fill" viewBox="0 0 16 16">
-                            <path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0" />
-                        </svg>
-                        <span class="price-number">100 Pesos</span>
-                    </div>
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="lightblue" class="bi bi-star-fill" viewBox="0 0 16 16">
-                            <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
-                        </svg>
-                        <span class="rating-number">4.8</span>
-                    </div>
-
-
-
-                </div>
-
-
-
-            </div>
-
         </div>
-    </div>
+        @empty
+        <h5>No favorite products found. 🍟🍔🍕🍽🍳</h5>
+        <a href="{{ route('shops.list') }}"><button class="btn btn-primary mt-2">Let's find some favourites</button></a>
+        @endforelse
 
-    <div class="col-md-4">
+        <!-- Include product modal outside of the loop -->
+        @include('main.buyer.product-modal')
 
-        <div class="card">
-
-            <div class="image-container p-1">
-
-                <div class="first">
-
-                    <div class="d-flex justify-content-between align-items-center">
-
-                        <span class="discount"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
-                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6" />
-                            </svg> Pick Up</span>
-                        <span class="wishlist"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
-                                <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15" />
-                            </svg></span>
-
-
-                    </div>
-                </div>
-
-                <img src="/images/colet.jpg" class="img-fluid rounded thumbnail-image">
-
-
-            </div>
-
-
-            <div class="product-detail-container p-2">
-
-                <div class="d-flex justify-content-between align-items-center">
-
-                    <h5 class="dress-name">Watermelon</h5>
-
-
-
-                </div>
-
-
-
-
-
-                <div class="d-flex flex-column">
-
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="lightblue" class="bi bi-tag-fill" viewBox="0 0 16 16">
-                            <path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0" />
-                        </svg>
-                        <span class="price-number">100 Pesos</span>
-                    </div>
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="lightblue" class="bi bi-star-fill" viewBox="0 0 16 16">
-                            <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
-                        </svg>
-                        <span class="rating-number">4.8</span>
-                    </div>
-
-
-
-                </div>
-
-
-
-            </div>
-
-        </div>
-    </div>
-
-    <div class="col-md-4">
-
-        <div class="card">
-
-            <div class="image-container p-1">
-
-                <div class="first">
-
-                    <div class="d-flex justify-content-between align-items-center">
-
-                        <span class="discount"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" class="bi bi-geo-alt-fill" viewBox="0 0 16 16">
-                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6" />
-                            </svg> Pick Up</span>
-                        <span class="wishlist"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-heart" viewBox="0 0 16 16">
-                                <path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15" />
-                            </svg></span>
-
-
-                    </div>
-                </div>
-
-                <img src="/images/colet.jpg" class="img-fluid rounded thumbnail-image">
-
-
-            </div>
-
-
-            <div class="product-detail-container p-2">
-
-                <div class="d-flex justify-content-between align-items-center">
-
-                    <h5 class="dress-name">Watermelon</h5>
-
-
-
-                </div>
-
-
-
-
-
-                <div class="d-flex flex-column">
-
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="lightblue" class="bi bi-tag-fill" viewBox="0 0 16 16">
-                            <path d="M2 1a1 1 0 0 0-1 1v4.586a1 1 0 0 0 .293.707l7 7a1 1 0 0 0 1.414 0l4.586-4.586a1 1 0 0 0 0-1.414l-7-7A1 1 0 0 0 6.586 1zm4 3.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0" />
-                        </svg>
-                        <span class="price-number">100 Pesos</span>
-                    </div>
-                    <div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="lightblue" class="bi bi-star-fill" viewBox="0 0 16 16">
-                            <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
-                        </svg>
-                        <span class="rating-number">4.8</span>
-                    </div>
-
-
-
-                </div>
-
-
-
-            </div>
-
-        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle "Remove from Favorites" form submission using AJAX
+        document.querySelectorAll('.remove-favorite-btn').forEach(function(button) {
+            button.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent default form submission
+
+                const form = button.closest('form');
+                const url = form.getAttribute('action'); // Get form action
+
+                fetch(url, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Content-Type': 'application/json',
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Remove the product from the DOM
+                            button.closest('.col').remove();
+                        } else {
+                            console.error('Error:', data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Handle product modal
+        document.querySelectorAll('.product-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                const productId = this.getAttribute('data-id');
+                const productName = this.getAttribute('data-name');
+                const productDescription = this.getAttribute('data-description');
+                const productPrice = this.getAttribute('data-price');
+                const productCategory = this.getAttribute('data-category');
+                const productImage = this.getAttribute('data-image');
+
+                const modal = document.getElementById('productModal');
+
+                // Update the modal's content
+                modal.querySelector('.modal-title').textContent = productName;
+                modal.querySelector('.price').textContent = '₱' + productPrice;
+                modal.querySelector('.description').textContent = productDescription;
+                modal.querySelector('.category').textContent = productCategory;
+                modal.querySelector('img').setAttribute('src', productImage);
+                modal.querySelector('img').setAttribute('alt', productName);
+            });
+        });
+    });
+</script>
+
+<!-- CSS for product card styling and responsiveness -->
+<style>
+    .product-wrapper {
+        position: relative !important;
+        background-color: white !important;
+        border-radius: 10px !important;
+        overflow: hidden !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .product-card {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .product-tumb {
+        width: 100% !important;
+        height: 180px !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .product-details {
+        padding: 10px 15px !important;
+        background-color: white !important;
+    }
+
+    img {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        object-fit: cover !important;
+    }
+
+    .add-to-favorites {
+        margin-bottom: 20px;
+    }
+
+    .favorite-btn {
+        padding: 6px 12px;
+        padding-left: 10px;
+        font-size: 14px;
+        color: #3ac2ef;
+        background-color: transparent;
+        border-radius: 15px;
+        border: none;
+    }
+
+    .full-width-line {
+        border: 0;
+        border-top: 1px solid #ddd;
+        width: 100%;
+        margin: 0;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .product-wrapper {
+            max-width: 100%;
+        }
+
+        .product-details h4 {
+            font-size: 16px;
+        }
+
+        .product-price {
+            font-size: 16px;
+        }
+
+        .favorite-btn {
+            font-size: 14px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .product-wrapper {
+            max-width: 100%;
+        }
+
+        .product-details h4 {
+            font-size: 14px;
+        }
+
+        .product-price {
+            font-size: 14px;
+        }
+
+        .favorite-btn {
+            font-size: 12px;
+        }
+    }
+</style>
+
 @endsection

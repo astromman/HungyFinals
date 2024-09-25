@@ -127,7 +127,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="location.reload();"></button>
             </div>
             <div class="modal-body">
-                <form action="{{ route('edit.products', ) }}" id="editProductForm" method="POST" enctype="multipart/form-data">
+                <form action="{{ route('edit.products') }}" id="editProductForm" method="POST" enctype="multipart/form-data">
                     @csrf
                     <!-- method('PUT') -->
                     <input type="hidden" name="id" id="editProductId">
@@ -167,9 +167,12 @@
                         </div>
                     </div>
 
-                    <!-- Status -->
+                    <!-- Status (Available/Unavailable) -->
                     <div class="py-2 form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="editStatus" name="status">
+                        <!-- This hidden input sends 'Unavailable' if the checkbox is unchecked -->
+                        <input type="hidden" name="status" value="Unavailable">
+
+                        <input class="form-check-input" type="checkbox" id="editStatus" name="status" value="Available">
                         <label class="form-check-label" for="editStatus">Available</label>
                     </div>
 

@@ -4,7 +4,6 @@
 <style>
     body {
         background-color: white !important;
-        /* Override master body background */
     }
 
     .parent-div {
@@ -13,13 +12,11 @@
 
     .first-div {
         width: 100%;
-        /* Make sure the div spans the entire width of the screen */
         background-color: white;
     }
 
     .content-div {
         background-color: lightgray;
-        /* Container for 2nd - 8th div */
     }
 
     .content-div .child-div {
@@ -29,6 +26,7 @@
         margin-bottom: 1rem;
     }
 </style>
+
 <!-- Success Modal -->
 @if(session('error'))
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
@@ -53,7 +51,7 @@
     <!-- 1st Div -->
     <div class="d-flex justify-content-between align-items-center py-3">
         <div class="col-auto me-3">
-            <a href="#" class="text-decoration-none">
+            <a href="{{ route('shop.cart') }}" class="text-decoration-none">
                 <i class="fa-solid fa-circle-chevron-left" style="color: #0B1E59; font-size: 30px;"></i>
             </a>
         </div>
@@ -81,7 +79,7 @@
         <div class="border rounded p-3 my-3 bg-white" style="border: 1px solid #ccc; border-radius: 5px;">
             <div class="row">
                 <div class="col-12">{{ $canteen->building_name }}</div>
-                <div class="col-12">20 mins</div>
+                <div class="col-12">{{ $shop->preparation_time . ' mins'}}</div>
             </div>
         </div>
 
@@ -104,18 +102,23 @@
                     <img src="{{ asset('storage/products/' . $order->image) }}" alt="{{ $order->name }}" class="img-fluid rounded bg-secondary-subtle" style="height: 100px; width: 100px; object-fit: contain; margin-right: 20px;">
                 </div>
                 <div class="col-6 d-flex align-items-center text-uppercase">
-                    {{ $order->product_name }}
+                    <div class="row">
+                        <span class="mb-0">
+                            {{ $order->product_name }}
+                        </span>
+                        <small class="text-muted">
+                            {{ $order->category_name}}
+                        </small>
+                        
+                    </div>
                 </div>
-                <!-- <div class="col-3 d-flex align-items-center">
-                    Canteen
-                </div> -->
                 <div class="col-2 d-flex align-items-center justify-content-end">
-                    {{ '₱ ' . $order->price }}
+                    {{ '₱ ' . number_format($order->price, 2) }}
                 </div>
             </div>
             <div class="row border-top pt-2">
                 <div class="col-6">Subtotal</div>
-                <div class="col-6 text-end">{{ '₱ ' . $order->total }}</div>
+                <div class="col-6 text-end">{{ '₱ ' . number_format($order->total, 2) }}</div>
             </div>
         </div>
         @endforeach
@@ -131,9 +134,10 @@
                 <div class="col-12">Payment method</div>
             </div>
             <div class="row">
-                <select name="" class="form-select">
+                <select id="payment-method" name="payment_method" class="form-select">
                     <option value="gcash">💵 GCash</option>
-                    <!-- <option value="maya">💳 Maya</option> -->
+                    <option value="paypal">💳 Paypal</option>
+                    <option value="qr"> QR</option>
                 </select>
             </div>
         </div>
@@ -148,8 +152,9 @@
                 @if($orders->isNotEmpty())
                 <form action="{{ route('place.order', Crypt::encrypt($shop->id)) }}" method="POST">
                     @csrf
-                    <input type="hidden" name="payment_type" value="gcash">
-                    <button type="submit" class="btn btn-primary w-100">Place Order</button>
+                    <!-- Hidden input for payment_method -->
+                    <input type="hidden" id="payment-method-hidden" name="payment_method" value="gcash"> <!-- Default value -->
+                    <button type="submit" id="place-order-btn" class="btn btn-primary w-100">Place Order</button>
                 </form>
                 @endif
             </div>
@@ -157,10 +162,80 @@
     </div>
 </div>
 
+<!-- QR Code Modal -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-labelledby="qrModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrModalLabel">Scan QR Code to Pay</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ asset('storage/shop/' . $shop->shop_qr) }}" alt="QR Code" class="img-fluid">
+                <p class="mt-3">Scan the code to pay using your preferred QR app.</p>
+
+                <!-- Upload screenshot of payment -->
+                <form id="screenshotForm" action="{{ route('submit.payment.screenshot', Crypt::encrypt($shop->id)) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="mb-3">
+                        <label for="paymentScreenshot" class="form-label">Upload Payment Screenshot</label>
+                        <input class="form-control" type="file" id="paymentScreenshot" name="payment_screenshot" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" id="submit-screenshot-btn">Submit Screenshot</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        successModal.show();
+        const placeOrderBtn = document.getElementById('place-order-btn');
+        const paymentMethodSelect = document.getElementById('payment-method');
+        const paymentMethodHiddenInput = document.getElementById('payment-method-hidden');
+        const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+
+        placeOrderBtn.disabled = false;
+
+        // Handle payment method change
+        paymentMethodSelect.addEventListener('change', function() {
+            // Update the hidden input value when the selection changes
+            paymentMethodHiddenInput.value = this.value;
+
+            if (this.value === 'qr') {
+                // Disable place order and show QR modal
+                placeOrderBtn.disabled = true;
+                qrModal.show();
+            } else {
+                placeOrderBtn.disabled = false;
+            }
+        });
+
+        // Handle screenshot submission
+        document.getElementById('screenshotForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent form submission
+
+            const formData = new FormData(this);
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                },
+            }).then(response => {
+                if (response.ok) {
+                    placeOrderBtn.disabled = false; // Enable place order after successful upload
+                    qrModal.hide(); // Close the modal
+                } else {
+                    alert('Failed to upload screenshot, please try again.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+            });
+        });
     });
 </script>
 

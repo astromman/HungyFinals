@@ -2,7 +2,7 @@
 
 @section('content')
 <!-- Success Modal -->
-@if(session('success'))
+@if (session('success'))
 <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -31,7 +31,7 @@
 
         <div class="container position-relative" style="height: 350px; overflow: hidden;">
             <!-- Blurred Background Image -->
-            @if($shops->shop_image == "Not Available")
+            @if ($shops->shop_image == 'Not Available')
             <div class="position-absolute w-100 h-100"
                 style="background-image: url('{{ asset('images/bg/default_shop_image.png') }}'); 
                 background-size: cover; 
@@ -56,7 +56,8 @@
             </div>
 
             <!-- Content -->
-            <div class="position-absolute bottom-0 w-100 p-5" style="z-index: 1; color: white; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);">
+            <div class="position-absolute bottom-0 w-100 p-5"
+                style="z-index: 1; color: white; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);">
                 <table>
                     <tbody>
                         <tr>
@@ -72,12 +73,14 @@
                         </tr>
                     </tbody>
                 </table>
-                <p><strong>Contact:</strong> <span>{{ $shops->contact_num }}</span></p>
+                <p class="text-white"><strong>Contact:</strong> <span>{{ $shops->contact_num }}</span></p>
                 <p class="highlight-text">{{ $shops->shop_bio }}</p>
             </div>
         </div>
     </div>
-    <!-- <h3 class="pt-2 highlight-text">Available Foods</h3> -->
+
+
+    <!-- Product Listing -->
     @forelse($groupedProducts as $categoryName => $products)
     <div class="category-section my-5">
         <h2 class="text-secondary">
@@ -86,65 +89,255 @@
         </h2>
 
         <div class="row">
-            @foreach($products as $product)
-            <!--PRODUCT CARD PART--->
+            @foreach ($products as $product)
+            <!-- Product Card -->
             <div class="col-md-6 col-lg-3 mb-4">
-                <div class="product-card position-relative border shadow" data-bs-toggle="modal" data-bs-target="#productModal"
-                    data-id="{{ $product->id }}"
-                    data-name="{{ $product->product_name }}"
-                    data-description="{{ $product->product_description }}"
-                    data-price="{{ $product->price }}"
-                    data-category="{{ $product->category_name }}"
-                    data-image="{{ asset('storage/products/' . $product->image) }}">
+                <div class="product-wrapper">
+                    <div class="product-card position-relative border shadow" data-bs-toggle="modal"
+                        data-bs-target="#productModal" data-id="{{ $product->id }}"
+                        data-name="{{ $product->product_name }}"
+                        data-description="{{ $product->product_description }}"
+                        data-price="{{ $product->price }}" data-category="{{ $product->category_name }}"
+                        data-image="{{ asset('storage/products/' . $product->image) }}">
 
-                    @if(!$product->is_deleted)
-                    <div class="badge bg-success position-absolute">
-                        {{ $product->status }}
-                    </div>
-                    @else
-                    <div class="badge bg-danger position-absolute">
-                        {{ $product->status }}
-                    </div>
-                    @endif
+                        <!-- Badge for product status -->
+                        @if (!$product->is_deleted)
+                        <div class="badge bg-success position-absolute">
+                            {{ $product->status }}
+                        </div>
+                        @else
+                        <div class="badge bg-danger position-absolute">
+                            {{ $product->status }}
+                        </div>
+                        @endif
 
-                    <!-- Image Container -->
-                    <div class="product-tumb w-100" style="height: 200px;">
-                        <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->product_name }}" class="img-fluid w-100 h-100" style="object-fit: cover;">
-                    </div>
+                        <!-- Image Container -->
+                        <div class="product-tumb w-100" style="height: 200px;">
+                            <!-- if wala pang ma provide na image si seller then -->
+                            <!-- set the shop_image as the image of the product -->
+                            <img src="{{ asset('storage/products/' . $product->image) }}"
+                                alt="{{ $product->product_name }}" class="img-fluid w-100 h-100"
+                                style="object-fit: cover;">
+                        </div>
 
-                    <!-- Product Details -->
-                    <div class="product-details p-3">
-                        <span class="product-catagory d-block">{{ $product->category_name }}</span>
-                        <h4 class="mt-2">{{ $product->product_name }}</h4>
-                        <p>{{ $product->product_description }}</p>
-                        <div class="product-bottom-details d-flex justify-content-between align-items-center">
-                            <div class="product-price">₱{{ $product->price }}</div>
-                            <div class="product-links">
-                                <a href="javascript:void(0);" class="toggle-favorite"><i class="fa fa-heart"></i></a>
-                            </div>
+                        <!-- Product Details -->
+                        <div class="product-details p-3">
+                            <span class="product-catagory d-block">{{ $product->category_name }}</span>
+                            <h4 class="mt-2">{{ $product->product_name }}</h4>
+                            <p>{{ $product->product_description }}</p>
+                            <hr class="full-width-line">
                         </div>
                     </div>
+
+                    <!-- Add to Favorites Form -->
+                    <!-- Add to Favorites Form -->
+                    <div class="add-to-favorites mt-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <!-- Price -->
+                            <div class="product-price" style="padding-left: 18px;">₱{{ $product->price }}</div>
+
+                            <!-- Add to Favorites Button -->
+                            <form id="favoriteForm" method="POST" action="{{ route('favorites.add') }}"
+                                class="favorite-form" style="padding-right: 20px;">
+                                @csrf
+                                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                <button type="submit" class="btn  favorite-btn">
+                                    <i class="fa fa-heart"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
                 </div>
             </div>
-
             @endforeach
         </div>
+        <div style="display:none;">
+            <meta name="csrf-token" content="{{ csrf_token() }}">
+        </div>
     </div>
+
     @empty
     <h3 class="text-secondary text-center pt-5">
         <strong>No products yet.</strong>
     </h3>
     @endforelse
 
+    <!-- Include product modal outside of the loop -->
     @include('main.buyer.product-modal')
 
 </div>
 
+<!-- JavaScript for handling modal and favorites -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        successModal.show();
+
+        // Success Modal
+        document.addEventListener('DOMContentLoaded', function() {
+            var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
+        });
+
+        const productModal = document.getElementById('productModal');
+        const productForm = document.getElementById('productForm');
+        const qtyInput = productForm.querySelector('.qty-input');
+
+        // Handle "Add to Favorites" form submission with AJAX
+        document.querySelectorAll('.favorite-form').forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent the default form submission
+                const formData = new FormData(this);
+                const url = this.action;
+
+                // Perform AJAX request
+                fetch(url, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector(
+                                'meta[name="csrf-token"]').getAttribute('content')
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Optionally, display a success message or update the UI dynamically
+                            alert('Added to favorites successfully!');
+                        } else {
+                            alert('Error adding to favorites!');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+        });
+
+        // Event listener for when the modal is shown
+        productModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+
+            const productId = button.getAttribute('data-id');
+            const productName = button.getAttribute('data-name');
+            const productDescription = button.getAttribute('data-description');
+            const productPrice = button.getAttribute('data-price');
+            const productCategory = button.getAttribute('data-category');
+            const productImage = button.getAttribute('data-image');
+
+            // Update the modal's content
+            productModal.querySelector('.modal-title').textContent = productName;
+            productModal.querySelector('.price').textContent = '₱' + productPrice;
+            productModal.querySelector('.description').textContent = productDescription;
+            productModal.querySelector('.category').textContent = productCategory;
+            productModal.querySelector('img').setAttribute('src', productImage);
+            productModal.querySelector('img').setAttribute('alt', productName);
+
+            // Update the hidden input fields in the form
+            productForm.querySelector('.product_id').value = productId;
+
+            // Reset the quantity input to 1
+            qtyInput.value = 1;
+        });
+
+        // Event listener for when the modal is hidden
+        productModal.addEventListener('hidden.bs.modal', function() {
+            qtyInput.value = 1;
+        });
+
+        // Handle quantity increase
+        document.querySelector('.btn-increase').addEventListener('click', function() {
+            let qty = parseInt(qtyInput.value);
+            qty = isNaN(qty) ? 1 : qty;
+            if (qty < 10) {
+                qtyInput.value = qty + 1;
+            }
+        });
+
+        // Handle quantity decrease
+        document.querySelector('.btn-decrease').addEventListener('click', function() {
+            let qty = parseInt(qtyInput.value);
+            qty = isNaN(qty) ? 1 : qty;
+            if (qty > 1) {
+                qtyInput.value = qty - 1;
+            }
+        });
     });
 </script>
+
+<!-- Basic CSS for button styling -->
+<style>
+    .product-wrapper {
+        position: relative !important;
+        background-color: white !important;
+        border-radius: 10px !important;
+        overflow: hidden !important;
+        box-shadow: none !important;
+        /* Remove the shadow from the wrapper */
+        padding: 0;
+        /* Ensure no padding inside the wrapper */
+        margin: 0;
+        /* Ensure no margin inside the wrapper */
+    }
+
+    .product-card {
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        /* Remove any shadow from the product card */
+    }
+
+    .product-tumb {
+        width: 100% !important;
+        height: 180px !important;
+        /* Ensure image height */
+        margin: 0 !important;
+        /* Remove margin */
+        padding: 0 !important;
+        /* Remove padding */
+    }
+
+    .product-details {
+        padding: 10px 15px !important;
+        box-shadow: none !important;
+        /* Ensure no shadow around the product details */
+        background-color: white !important;
+    }
+
+    img {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        object-fit: cover !important;
+
+        /* Ensure the image covers the space properly */
+    }
+
+    .add-to-favorites {
+        margin-bottom: 20px;
+        /* Add margin at the bottom of the favorites button */
+    }
+
+    .favorite-btn {
+        padding: 6px 12px;
+        padding-left: 10px;
+        font-size: 14px;
+        color: #3ac2ef;
+        /* border-color: #3ac2ef; */
+        background-color: transparent;
+        border-radius: 15px;
+        display: inline-block;
+        white-space: nowrap;
+        border: none;
+    }
+
+    .full-width-line {
+        border: 0;
+        border-top: 1px solid #ddd;
+        /* Define the color and thickness of the line */
+        width: 100%;
+        /* Ensure the line spans the entire width */
+        margin: 0;
+        /* Remove default margins */
+    }
+</style>
 
 @endsection

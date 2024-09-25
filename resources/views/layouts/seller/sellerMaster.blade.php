@@ -17,6 +17,7 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
@@ -984,6 +985,31 @@
             /* Change the cursor to default */
             text-decoration: none;
             /* Remove the underline */
+        }
+
+        /* Charts Container */
+        .charts {
+            display: flex;
+            justify-content: space-between;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-container {
+            background-color: var(--clr-white);
+            border-radius: var(--card-border-radius);
+            padding: var(--card-padding);
+            box-shadow: var(--box-shadow);
+            text-align: center;
+            flex: 1;
+            height: 400px;
+            /* Fixed height for charts */
+        }
+
+        canvas {
+            max-width: 100%;
+            height: 100% !important;
+            /* Ensure the canvas fills the container */
         }
     </style>
 

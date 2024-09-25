@@ -117,7 +117,7 @@
                                     <td>
                                         <div class="d-flex">
                                             <div>
-                                                <a href="{{ route('edit.button.cons.account', $concessionaire->user_id) }}" class="btn btn-sm w-100" title="Edit">
+                                                <a href="{{ route('edit.button.cons.account', ['userId' => Crypt::encrypt($concessionaire->user_id)]) }}" class="btn btn-sm w-100" title="Edit">
                                                     <i class="bi bi-pencil-fill"></i>
                                                 </a>
                                             </div>

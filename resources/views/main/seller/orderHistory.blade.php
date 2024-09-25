@@ -21,35 +21,72 @@
             </thead>
             <tbody>
                 @forelse($orders as $order)
-                <tr class="order-row"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#orderDetails{{ $order->id }}"
-                    aria-expanded="false"
-                    aria-controls="orderDetails{{ $order->id }}">
-                    <td class="text-center order-expand">
+                <tr class="order-row">
+                    <td class="text-center order-expand"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#orderDetails{{ $order->id }}"
+                        aria-expanded="false"
+                        aria-controls="orderDetails{{ $order->id }}">
                         <i class="bi bi-caret-down-fill font-bold" style="font-size: 20px; "></i>
                     </td>
-                    <td class="text-center">
+                    <td class="text-center"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#orderDetails{{ $order->id }}"
+                        aria-expanded="false"
+                        aria-controls="orderDetails{{ $order->id }}">
                         {{ $order->order_reference }}
                     </td>
-                    <td class="text-center text-uppercase">
+                    <td class="text-center text-uppercase"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#orderDetails{{ $order->id }}"
+                        aria-expanded="false"
+                        aria-controls="orderDetails{{ $order->id }}">
                         {{ $order->first_name . ' ' . $order->last_name }}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#orderDetails{{ $order->id }}"
+                        aria-expanded="false"
+                        aria-controls="orderDetails{{ $order->id }}">
                         {{ $order->updated_at }}
                     </td>
-                    <td class="text-center text-uppercase">
+                    <td class="text-center text-uppercase"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#orderDetails{{ $order->id }}"
+                        aria-expanded="false"
+                        aria-controls="orderDetails{{ $order->id }}">
                         <strong class="text-success p-2 w-100 rounded-pill bg-success-subtle">
                             {{ $order->order_status }}
                         </strong>
                     </td>
-                    <td class="text-center text-uppercase">
+                    <td class="text-center text-uppercase"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#orderDetails{{ $order->id }}"
+                        aria-expanded="false"
+                        aria-controls="orderDetails{{ $order->id }}">
                         {{ $order->payment_type }}
                     </td>
                     <td class="text-center">
+                        @if($order->payment_type == 'qr')
+                        <button type="button" class="btn  {{ $order->payment_status == 'Pending' ? 'bg-primary-subtle' : 'bg-success-subtle' }} w-100 rounded-pill"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewPaymentModal"
+                            data-payment-image="{{ asset('storage/payments/' . $order->payment_id) }}"
+                            data-order-id="{{ $order->id }}"
+                            data-payment-status="{{ $order->payment_status }}">
+                            <strong class="{{ $order->payment_status == 'Pending' ? 'text-primary' : 'text-success' }} text-uppercase">
+                                View Payment
+                            </strong>
+                        </button>
+                        @elseif(($order->payment_type == 'gcash' || $order->payment_type == 'paypal'))
                         {{ $order->payment_id }}
+                        @endif
                     </td>
-                    <td class="text-center text-uppercase">
+                    <td class="text-center text-uppercase"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#orderDetails{{ $order->id }}"
+                        aria-expanded="false"
+                        aria-controls="orderDetails{{ $order->id }}">
                         <strong class="text-success p-2 w-100 rounded-pill bg-success-subtle">
                             {{ $order->payment_status }}
                         </strong>
@@ -102,6 +139,26 @@
                         </div>
                     </td>
                 </tr>
+
+                <!-- Payment View Modal -->
+                <div class="modal fade" id="viewPaymentModal" tabindex="-1" aria-labelledby="viewPaymentModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="viewPaymentModalLabel">Payment Proof</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <img id="paymentImage" src="" class="img-fluid" alt="Payment Image">
+                                <!-- Hidden field to store the payment status -->
+                                <input type="hidden" id="paymentStatus" value="">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 @empty
                 <tr>
                     <td class="text-center" colspan="9">No orders found.</td>
@@ -159,6 +216,30 @@
                     openRow = collapseElement; // Set the new open row
                 }
             });
+        });
+
+        // Trigger the payment modal with the correct image
+        $('#viewPaymentModal').on('show.bs.modal', function(event) {
+            var button = $(event.relatedTarget); // Button that triggered the modal
+            var paymentImage = button.data('payment-image'); // Extract info from data-* attributes
+            var orderId = button.data('order-id'); // Get the order id
+            var paymentStatus = button.data('payment-status');
+
+            var modal = $(this);
+            modal.find('#paymentImage').attr('src', paymentImage); // Set the image in the modal
+            modal.find('#orderId').val(orderId); // Set order ID for the confirm form
+            modal.find('#paymentStatus').val(paymentStatus);
+
+            // Check payment status and show/hide buttons
+            if (paymentStatus === 'Completed') {
+                // Hide the Confirm and Reject buttons
+                $('#confirmButton').hide();
+                $('#rejectButton').hide();
+            } else {
+                // Show the buttons if the payment is still pending
+                $('#confirmButton').show();
+                $('#rejectButton').show();
+            }
         });
 
         // Attach click event directly to the select dropdowns to stop propagation

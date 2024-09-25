@@ -3,16 +3,26 @@
 namespace App\Http\Controllers;
 
 use App\Models\Building;
+use App\Models\Category;
+use App\Models\Credential;
+use App\Models\Favorite;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ProductOrder;
+use App\Models\Review;
 use App\Models\Shop;
 use App\Models\UserProfile;
+use DateTime;
 use Exception;
 use GuzzleHttp\Client;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Srmklive\PayPal\Services\PayPal as PayPalClient;
 use Laravel\Ui\Presets\React;
 
 class BuyerController extends Controller
@@ -23,7 +33,43 @@ class BuyerController extends Controller
         $canteens = Building::all();
         $products = Product::all();
 
-        return view('main.buyer.landingpage', compact('canteens', 'products'));
+        $userId = $request->session()->get('loginId');
+
+        if (!$userId) {
+            return redirect()->route('user.logout')->with('error', 'Invalid request!');
+        }
+
+        // Fetch all orders in cart, using LEFT JOIN to handle orders without payment info
+        $orders = Order::leftJoin('products', 'orders.product_id', 'products.id')
+            ->leftJoin('payments', 'orders.payment_id', 'payments.id')
+            ->leftJoin('categories', 'products.category_id', 'categories.id')
+            ->leftJoin('shops', 'products.shop_id', 'shops.id')
+            ->leftJoin('buildings', 'shops.building_id', 'buildings.id')
+            ->select(
+                'orders.*',
+                'products.product_name',
+                'products.product_description',
+                'products.image',
+                'products.price',
+                'products.category_id',
+                'products.shop_id',
+                'products.status',
+                'products.is_deleted',
+                'categories.type_name',
+                'shops.shop_name',
+                'buildings.building_name as designated_canteen',
+                'payments.payment_status', // Include payment details if exists
+                'payments.feedback',
+            )
+            ->where('products.status', 'Available')
+            ->where('products.is_deleted', false)
+            ->where('orders.user_id', $userId)
+            ->where('orders.at_cart', true) // Only get orders still in the cart
+            ->where('orders.order_status', 'At Cart') // Orders that are in cart state
+            ->orderBy('orders.updated_at', 'desc')
+            ->get();
+
+        return view('main.buyer.landingpage', compact('canteens', 'products', 'orders'));
     }
 
     public function about_us_page()
@@ -33,12 +79,253 @@ class BuyerController extends Controller
 
     public function my_favorites(Request $request)
     {
-        return view('main.buyer.favorites');
+        $userId = $request->session()->get('loginId'); // Retrieve the user ID from the session
+
+        if (!$userId) {
+            return redirect()->route('user.logout')->with('error', 'Invalid request!');
+        }
+
+        // Retrieve the favorite products for the logged-in user
+        $favorites = Product::join('favorites', 'products.id', '=', 'favorites.product_id')
+            ->where('favorites.user_id', $userId)
+            ->select('products.*')
+            ->get();
+
+        $reviews = Review::all();
+
+        return view('main.buyer.favorites', compact('favorites', 'reviews'));
+    }
+
+    //ADD TO FAVORITES 
+    public function addToFavorites(Request $request)
+    {
+        $userId = $request->session()->get('loginId');
+
+        if (!$userId) {
+            return redirect()->route('user.logout')->with('error', 'Invalid request!');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Check if the item is already in the favorites list
+            $existingFavorite = Favorite::where('user_id', $userId)
+                ->where('product_id', $request->product_id)
+                ->first();
+
+            if ($existingFavorite) {
+                // If the item is already in the favorites, return with a message
+                return redirect()->back()->with('info', 'This item is already in your favorites!');
+            } else {
+                // Add the item to the favorites
+                $favorite = new Favorite;
+                $favorite->user_id = $userId;
+                $favorite->product_id = $request->product_id;
+                $favorite->created_at = now();
+                $favorite->updated_at = now();
+                $favorite->save();
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('successFavorites', 'Item added to favorites!');
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to add product to favorites!');
+        }
+    }
+
+    //REMOVE FROM FAVORITES PAGE
+    public function removeFavorite(Request $request, $productId)
+    {
+        $userId = $request->session()->get('loginId');
+        // \Log::info('User ID: ' . $userId);
+        // \Log::info('Product ID: ' . $productId);
+
+        try {
+            DB::beginTransaction();
+
+            $favorite = Favorite::where('user_id', $userId)
+                ->where('product_id', $productId)
+                ->first();
+
+            if ($favorite) {
+                $favorite->delete();
+                DB::commit();
+                return response()->json(['success' => true]);
+            } else {
+                // \Log::info('Item not found for user ID: ' . $userId . ' and product ID: ' . $productId);
+                return response()->json(['success' => false, 'message' => 'Item not found in favorites.'])->header('Content-Type', 'text/plain');
+            }
+        } catch (Exception $e) {
+            DB::rollBack();
+            // \Log::error('Error while removing favorite: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to remove product from favorites.'])->header('Content-Type', 'text/plain');
+        }
+    }
+
+    //SEARCH FUNCTION (❁´◡`❁)
+    public function searchItem(Request $request)
+    {
+        $searchTerm = $request->input('query');
+
+        // Search for shops
+        $shops = Shop::join('user_profiles', 'shops.user_id', 'user_profiles.id')
+            ->join('buildings', 'shops.building_id', 'buildings.id')
+            ->select(
+                'shops.*',
+                'shops.shop_name',
+                'user_profiles.contact_num',
+                'buildings.building_name as designated_canteen'
+            )
+            ->where('shop_name', 'LIKE', '%' . $searchTerm . '%')
+            ->orWhere('buildings.building_name', 'LIKE', '%' . $searchTerm . '%')
+            ->get();
+
+        // Search for products
+        $products = Product::join('categories', 'products.category_id', '=', 'categories.id')
+            ->select(
+                'products.*',
+                'categories.type_name as category_name'
+            )
+            ->where('products.product_name', 'LIKE', '%' . $searchTerm . '%')  // Corrected column name
+            ->orWhere('categories.type_name', 'LIKE', '%' . $searchTerm . '%')
+            ->get();
+
+        $reviews = Review::all();
+
+        // Group products by category
+        $groupedProducts = $products->groupBy('category_name');
+
+        return view('main.buyer.search-results', compact('shops', 'groupedProducts', 'searchTerm', 'reviews'));
     }
 
     public function my_profile(Request $request)
     {
-        return view('main.buyer.profile');
+        $userId = $request->session()->get('loginId');
+
+        $userProfile = UserProfile::where('id', $userId)->first();
+
+        return view('main.buyer.profile', compact('userProfile'));
+    }
+
+    public function update_profile(Request $request)
+    {
+        $userId = $request->session()->get('loginId');
+
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'first_name' => 'required',
+                    'last_name' => 'required',
+                    'username' => 'required|unique:user_profiles,username,' . $userId,
+                    'email' => 'required|email|unique:user_profiles,email,' . $userId,
+                ],
+                [
+                    'first_name.required' => 'First name is required.',
+                    'last_name.required' => 'Last name is required.',
+                    'username.required' => 'Username is required.',
+                    'username.unique' => 'Username is already taken.',
+                    'email.required' => 'Email is required.',
+                    'email.email' => 'Invalid email.',
+                    'email.unique' => 'Email already exists.',
+                ]
+            );
+
+            // This block will check if the inputted infos are valid
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator)->withInput();
+            }
+
+            DB::beginTransaction();
+
+            $userProfile = UserProfile::where('id', $userId)->first();
+            $userProfile->first_name = $request->first_name;
+            $userProfile->last_name = $request->last_name;
+            $userProfile->email = $request->email;
+            $userProfile->username = $request->username;
+            $userProfile->updated_at = now();
+            $userProfile->save();
+
+            DB::commit();
+            return redirect()->route('landing.page')->with('success', 'Profile updated');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Database error: ' . $e->getMessage());
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+        }
+    }
+
+    public function buyer_change_password()
+    {
+        return view('main.buyer.password');
+    }
+
+    public function update_password(Request $request)
+    {
+        $userId = $request->session()->get('loginId');
+        $credential = Credential::where('user_id', $userId)
+            ->where('is_deleted', false)
+            ->first();
+
+        if (empty($request->current_password)) {
+            return redirect()->back()->with('error', 'Enter Current Password.');
+        }
+
+        if (!Hash::check($request->input('current_password'), $credential->password)) {
+            return redirect()->back()->with('error', 'The provided current password does not match our records.');
+        }
+
+        try {
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required',
+                'new_password' => [
+                    'required',
+                    'string',
+                    'min:8',
+                    'regex:/^(?=.*[A-Z])(?=.*[\W_]).+$/'
+                ],
+                'confirm_password' => 'required|same:new_password',
+            ], [
+                'current_password.required' => 'Current password is required.',
+                'new_password.required' => 'New password is required.',
+                'new_password.min' => 'New password must be at least 8 characters.',
+                'new_password.regex' => 'New password must include at least one uppercase letter and one special character.',
+                'confirm_password.required' => 'New password confirmation is required.',
+                'confirm_password.same' => 'New password and confirmation do not match.',
+            ]);
+
+            if ($validator->fails()) {
+                return redirect()->back()->withErrors($validator);
+            }
+
+            DB::beginTransaction();
+
+            // Mark the old password as deleted
+            $credential->is_deleted = true;
+            $credential->save();
+
+            // Store the new password
+            $newCredential = new Credential();
+            $newCredential->user_id = $userId;
+            $newCredential->password = Hash::make($request->input('new_password'));
+            $newCredential->is_deleted = false;
+            $newCredential->created_at = now();
+            $newCredential->updated_at = now();
+            $newCredential->save();
+
+            DB::commit();
+            return redirect()->route('buyer.change.password')->with('success', 'Password changed successfully.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Database error: ' . $e->getMessage());
+        } catch (Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+        }
     }
 
     // VISIT A SPECIFIC CANTEEN THAT IS FEATURED IN THE LANDING PAGE
@@ -103,10 +390,12 @@ class BuyerController extends Controller
             // ->where('products.status', 'Available')
             ->get();
 
+        $reviews = Review::all();
+
         // Group products by category
         $groupedProducts = $products->groupBy('category_name');
 
-        return view('main.buyer.shop-menu', compact('shops', 'products', 'groupedProducts'));
+        return view('main.buyer.shop-menu', compact('shops', 'products', 'groupedProducts', 'reviews'));
     }
 
     // CART
@@ -114,10 +403,12 @@ class BuyerController extends Controller
     {
         $userId = $request->session()->get('loginId');
 
-        $orders = Order::join('products', 'orders.product_id', 'products.id')
-            ->join('categories', 'products.category_id', 'categories.id')
-            ->join('shops', 'products.shop_id', 'shops.id')
-            ->join('buildings', 'shops.building_id', 'buildings.id')
+        // Fetch all orders in cart, using LEFT JOIN to handle orders without payment info
+        $orders = Order::leftJoin('products', 'orders.product_id', 'products.id')
+            ->leftJoin('payments', 'orders.payment_id', 'payments.id')
+            ->leftJoin('categories', 'products.category_id', 'categories.id')
+            ->leftJoin('shops', 'products.shop_id', 'shops.id')
+            ->leftJoin('buildings', 'shops.building_id', 'buildings.id')
             ->select(
                 'orders.*',
                 'products.product_name',
@@ -130,14 +421,16 @@ class BuyerController extends Controller
                 'products.is_deleted',
                 'categories.type_name',
                 'shops.shop_name',
-                'buildings.building_name as designated_canteen'
+                'buildings.building_name as designated_canteen',
+                'payments.payment_status', // Include payment details if exists
+                'payments.feedback',
             )
             ->where('products.status', 'Available')
-            ->where('is_deleted', false)
+            ->where('products.is_deleted', false)
             ->where('orders.user_id', $userId)
-            ->where('orders.at_cart', true)
-            ->where('orders.order_status', 'At Cart')
-            ->orderBy('orders.updated_at',  'desc')
+            ->where('orders.at_cart', true) // Only get orders still in the cart
+            ->where('orders.order_status', 'At Cart') // Orders that are in cart state
+            ->orderBy('orders.updated_at', 'desc')
             ->get();
 
         // Group orders by shop_id
@@ -199,7 +492,7 @@ class BuyerController extends Controller
 
             // Store the quantity in the session along with the success message
             return redirect()->back()->with([
-                'success' => 'Item added to cart!',
+                'successAddToCart' => 'Item added to cart!',
                 'qty' => $qty
             ]);
         } catch (Exception $e) {
@@ -232,9 +525,12 @@ class BuyerController extends Controller
         return response()->json(['success' => false]);
     }
 
-    public function removeItem($orderId)
+    public function removeItem(Request $request, $orderId)
     {
+        $userId = $request->session()->get('loginId');
+
         $order = Order::where('order_status', 'At Cart')
+            ->where('user_id', $userId)
             ->where('at_cart', false)
             ->findOrFail($orderId);
         $order->delete();
@@ -271,12 +567,13 @@ class BuyerController extends Controller
             return redirect()->route('landing.page')->with('error', 'Error with the shop, please try again later.');
         }
 
-        if($shop && $shop->is_reopen == false) {
+        if ($shop && $shop->is_reopen == false) {
             return redirect()->route('landing.page')->with('error', 'Shop suddenly closed. Making order to this shop is currently unavailable. Please try again later.');
         }
 
         // Get only the orders for this user and shop
         $orders = Order::join('products', 'orders.product_id', 'products.id')
+            ->join('categories', 'products.category_id', 'categories.id')
             ->join('shops', 'products.shop_id', 'shops.id')
             ->join('buildings', 'shops.building_id', 'buildings.id')
             ->select(
@@ -289,6 +586,7 @@ class BuyerController extends Controller
                 'products.shop_id',
                 'products.status',
                 'products.is_deleted',
+                'categories.type_name as category_name',
                 'shops.shop_name',
                 'buildings.building_name as designated_canteen'
             )
@@ -304,6 +602,11 @@ class BuyerController extends Controller
             return redirect()->route('landing.page');
         }
 
+        // Check if the product was marked as 'Unavailable' or 'Deleted'
+        if ($orders->first() && ($orders->first()->status == 'Unavailable' || $orders->first()->is_deleted)) {
+            return redirect()->route('landing.page')->with('error', 'Product was marked Unavailable by the seller. Please try again soon.');
+        }
+
         // Check if no orders exist for the user in the cart
         if ($orders->isEmpty()) {
             // Redirect to my.cart if no orders are found
@@ -314,16 +617,15 @@ class BuyerController extends Controller
         return view('main.buyer.checkout', compact('orders', 'shop', 'canteen'));
     }
 
+    // Ito ang bago tumatanggap ng qr code submission panis
     public function placeOrder(Request $request, $shopId)
     {
         $userId = $request->session()->get('loginId');
         $user = $request->session()->get('user');
-
         $shopId = Crypt::decrypt($shopId);
 
         $shop = Shop::where('id', $shopId)->first();
-
-        if($shop && $shop->is_reopen == false) {
+        if ($shop && $shop->is_reopen == false) {
             return redirect()->route('landing.page')->with('error', 'Shop suddenly closed. Making order is currently unavailable.');
         }
 
@@ -336,21 +638,21 @@ class BuyerController extends Controller
         // Concatenate the letters
         $shopCode = $firstLetter . $middleLetter . $lastLetter;
 
-        // $dateToday = date('dmY');
+        $dateTime = new DateTime();
 
-        do {
-            // Generate a random 4-digit number
-            $randomNumber = mt_rand(1000, 9999);
+        $randomNumber = $dateTime->format('sv');
 
-            $exists = Order::where('order_reference', strtoupper($shopCode) . '-' . 'ORD-' . $randomNumber)
-                ->where('created_at', now())
-                ->exists();
-        } while ($exists);
+        // do {
+        //     // Generate a random 4-digit number
+        //     // $randomNumber = mt_rand(1000, 9999);
+        //     $exists = Order::where('order_reference', strtoupper($shopCode) . '-' . 'ORD-' . $randomNumber)
+        //         ->where('created_at', now())
+        //         ->exists();
+
+        // } while ($exists);
 
         // Generate unique order reference (this can be any unique string)
         $orderReference = strtoupper($shopCode) . '-' . 'ORD-' . $randomNumber;
-
-        $orderRef = Crypt::encrypt($orderReference);
 
         try {
             DB::beginTransaction();
@@ -384,10 +686,14 @@ class BuyerController extends Controller
                 return redirect()->route('landing.page');
             }
 
-            $totalAmount = $orders->sum('total');
+            // Check if no orders exist for the user in the cart
+            if ($orders->isEmpty()) {
+                return redirect()->route('landing.page');
+            }
 
-            $totalAmountInCentavos = $totalAmount * 100;
-            // dd($totalAmountInCentavos);
+            $totalAmount = $orders->sum('total');
+            $totalAmountInCentavos = $totalAmount * 100; // For GCash and other payment gateways
+
             if ($totalAmountInCentavos < 2000) {
                 return redirect()->back()->with('error', 'Minimum transaction amount is ₱20.00.');
             }
@@ -396,59 +702,146 @@ class BuyerController extends Controller
                 $product = Product::where('id', $order->product_id)->first();
                 $product->sold += $order->quantity;
                 $product->save();
+
+                // Update order statuses and link payment to orders
+                $orderedProducts = new ProductOrder;
+                $orderedProducts->product_name = $product->product_name;
+                $orderedProducts->product_description = $product->product_description;
+                $orderedProducts->price = $product->price;
+                $orderedProducts->category_name = Category::where('id', $product->category_id)->first()->type_name;
+                $orderedProducts->product_id = $product->id;
+                $orderedProducts->created_at = now();
+                $orderedProducts->updated_at = now();
+                $orderedProducts->save();
+
+                $order->product_orders_id = $orderedProducts->id;
+                $order->save();
             }
 
-            $paymentType = $request->payment_type;
+            // Get the payment method from the request
+            $paymentType = $request->input('payment_method');
 
-            $payment = new Payment;
-            $payment->payment_id = null;
-            $payment->payer_email = $user->email;
-            $payment->amount = $totalAmount;
-            $payment->currency = 'PHP';
-            $payment->payment_type = $paymentType;
-            $payment->payment_status = 'Pending';
-            $payment->created_at = now();
-            $payment->updated_at = now();
-            $payment->save();
+            // Handle QR payment: Check if the user uploaded the screenshot
+            if ($paymentType === 'qr') {
+                $paymentId = $request->session()->get('payment_screenshot');
+                if (!$paymentId) {
+                    return redirect()->back()->with('error', 'Please upload your payment screenshot.');
+                }
 
-            // Make a request to PayMongo to create a GCash payment source
-            $client = new Client();
-            $response = $client->post('https://api.paymongo.com/v1/sources', [
-                'auth' => [config('app.paymongo_secret_key'), ''],
-                'json' => [
-                    'data' => [
-                        'attributes' => [
-                            'amount' => $totalAmountInCentavos, // Amount in centavos
-                            'redirect' => [
-                                'success' => route('payment.success', ['orderRef' => $orderRef]),
-                                'failed' => route('payment.failed'),
-                            ],
-                            'type' => $paymentType,
-                            'currency' => $payment->currency,
+                // Retrieve the screenshot payment and update the amount
+                $payment = Payment::find($paymentId);
+                $payment->amount = $totalAmount;
+                $payment->payment_status = 'Pending';
+                $payment->updated_at = now();
+                $payment->save();
+            } else {
+                // Handle GCash and PayPal payments
+                $payment = new Payment;
+                $payment->payment_id = null;
+                $payment->payer_email = $user->email;
+                $payment->amount = $totalAmount;
+                $payment->currency = 'PHP';
+                $payment->payment_type = $paymentType;
+                $payment->payment_status = 'Pending';
+                $payment->created_at = now();
+                $payment->updated_at = now();
+                $payment->save();
+
+                $paymentID = $payment->id;
+
+                // Handle GCash Payment
+                if ($paymentType === 'gcash') {
+                    $client = new Client();
+                    $response = $client->post('https://api.paymongo.com/v1/sources', [
+                        'auth' => [config('app.paymongo_secret_key'), ''],
+                        'json' => [
+                            'data' => [
+                                'attributes' => [
+                                    'amount' => $totalAmountInCentavos, // Amount in centavos
+                                    'redirect' => [
+                                        'success' => route('track.this.order', ['orderRef' => Crypt::encrypt($orderReference)]),
+                                        'failed' => route('payment.failed'),
+                                    ],
+                                    'type' => $paymentType,
+                                    'currency' => 'PHP',
+                                ]
+                            ]
                         ]
-                    ]
-                ]
-            ]);
+                    ]);
 
-            // Parse the response
-            $responseData = json_decode($response->getBody(), true);
-            $sourceId = $responseData['data']['id'];
-            $checkoutUrl = $responseData['data']['attributes']['redirect']['checkout_url'];
+                    $responseData = json_decode($response->getBody(), true);
+                    $sourceId = $responseData['data']['id'];
+                    $checkoutUrl = $responseData['data']['attributes']['redirect']['checkout_url'];
 
-            if (!$checkoutUrl) {
-                return redirect()->back()->with('error', 'Failed to get GCash payment URL.');
+                    if (!$checkoutUrl) {
+                        return redirect()->back()->with('error', 'Failed to get GCash payment URL.');
+                    }
+
+                    $payment = Payment::where('id', $paymentID)->first();
+                    // Update payment record
+                    $payment->update([
+                        'payment_id' => $sourceId,
+                        'payment_status' => 'Completed',
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                // Handle PayPal Payment (for demonstration, you can implement PayPal logic here)
+                elseif ($paymentType === 'paypal') {
+                    // Initialize PayPal API request
+                    $provider = new PayPalClient;
+                    $provider->setApiCredentials(config('paypal'));
+                    $token = $provider->getAccessToken();
+                    $provider->setAccessToken($token);
+
+                    $response = $provider->createOrder([
+                        "intent" => "CAPTURE",
+                        "purchase_units" => [
+                            0 => [
+                                "amount" => [
+                                    "currency_code" => "PHP",
+                                    "value" => number_format($totalAmount, 2, '.', '')
+                                ]
+                            ]
+                        ],
+                        "application_context" => [
+                            "cancel_url" => route('payment.failed'),
+                            "return_url" => route('payment.success', ['orderRef' => Crypt::encrypt($orderReference)])
+                        ]
+                    ]);
+
+                    if (isset($response['id']) && $response['status'] === 'CREATED') {
+                        foreach ($response['links'] as $link) {
+                            if ($link['rel'] === 'approve') {
+                                $approvalUrl = $link['href'];
+                                $payment = Payment::where('id', $paymentID)->first();
+                                $payment->payment_id = strval($response['id']);
+                                $payment->update();
+
+                                // Update each order's status to "Pending" and assign the order reference
+                                foreach ($orders as $order) {
+                                    $order->order_status = 'Pending';
+                                    $order->order_reference = $orderReference; // Assign the order reference
+                                    $order->at_cart = false; // Remove from the cart
+                                    $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
+                                    $order->created_at = now();
+                                    $order->updated_at = now();
+                                    $order->save();
+                                }
+
+                                DB::commit();
+                                return redirect($approvalUrl); // Redirect to PayPal approval page
+                            }
+                        }
+                    } else {
+                        return redirect()->back()->with('error', $response['message'] ?? 'Something went wrong.');
+                    }
+                }
             }
 
-            // Update the payment record with PayMongo's source ID
-            $payment->update([
-                'payment_id' => $sourceId,
-                'payment_status' => 'Completed',
-                'updated_at' => now(),
-            ]);
-
-            // Update each order's status to "Placed" and assign the order reference
+            // Update each order's status to "Pending" and assign the order reference
             foreach ($orders as $order) {
-                $order->order_status = 'Pending'; // Update status to "Placed"
+                $order->order_status = 'Pending';
                 $order->order_reference = $orderReference; // Assign the order reference
                 $order->at_cart = false; // Remove from the cart
                 $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
@@ -457,35 +850,169 @@ class BuyerController extends Controller
                 $order->save();
             }
 
-            // Check if no orders exist for the user in the cart
-            if ($orders->isEmpty()) {
-                return redirect()->route('landing.page')->with('error', 'Your cart is empty.');
-            }
-
             DB::commit();
 
-            // Redirect the user to PayMongo's GCash checkout URL
-            return redirect($checkoutUrl);
+            // Clear session for payment screenshot after placing the order
+            if ($paymentType === 'qr') {
+                $request->session()->forget('payment_screenshot');
+            }
+
+            // Redirect for GCash payment if applicable
+            if ($paymentType === 'gcash' && isset($checkoutUrl)) {
+                return redirect($checkoutUrl);
+            }
+
+            // Redirect to payment queue for QR payment
+            if ($paymentType === 'qr') {
+                return redirect()->route('payment.queue', ['orderRef' => Crypt::encrypt($orderReference)]);
+            }
         } catch (Exception $e) {
             DB::rollBack();
+            dd($e);
             return redirect()->back()->with('error', 'Failed to place the order. Please try again.');
         }
     }
 
-    public function paymentSuccess($orderRef)
+    public function submitPaymentScreenshot(Request $request, $shopId)
     {
-        return redirect()->route('track.order', ['orderRef' => $orderRef])->with('success', 'Payment successful! Your order has been placed.');
+        $userId = $request->session()->get('loginId');
+        $user = UserProfile::where('id', $userId)->first();
+
+        $shopId = Crypt::decrypt($shopId);
+
+        $request->validate([
+            'payment_screenshot' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Validation for file type and size
+        ]);
+
+        if ($request->hasFile('payment_screenshot')) {
+            // Store the screenshot
+            $screenshotPath = time() . '_' . $user->last_name . '_' . $request->payment_screenshot->getClientOriginalName();
+            $request->file('payment_screenshot')->storeAs('payments', $screenshotPath, 'public');
+
+            // Store the screenshot info in the `payments` table
+            $payment = new Payment;
+            $payment->payment_id = $screenshotPath;
+            $payment->payer_email = $request->session()->get('user')->email;
+            $payment->amount = 0; // Will be updated when placing the order
+            $payment->currency = 'PHP';
+            $payment->payment_type = 'qr';
+            $payment->payment_status = 'Pending';
+            $payment->created_at = now();
+            $payment->updated_at = now();
+            $payment->save();
+
+            // Store payment ID in session for later use when placing the order
+            $request->session()->put('payment_screenshot', $payment->id);
+
+            return response()->json(['success' => true]);
+        }
+
+        return response()->json(['success' => false], 400);
     }
+
+    public function paymentSuccess(Request $request)
+    {
+        $provider = new PayPalClient;
+        $provider->setApiCredentials(config('paypal'));
+        $token = $provider->getAccessToken();
+        $provider->setAccessToken($token);
+
+        $response = $provider->capturePaymentOrder($request->input('token'));
+
+        if (isset($response['status']) && $response['status'] == 'COMPLETED') {
+            // Update the payment status to 'Completed'
+            $orderReference = Crypt::decrypt($request->input('orderRef'));
+            $payment = Payment::where('payment_id', $response['id'])->first();
+            $payment->payment_status = 'Completed';
+            $payment->updated_at = now();
+            $payment->save();
+
+            // Update order status to 'Completed'
+            Order::where('order_reference', $orderReference)->update(['order_status' => 'Pending']);
+
+            return redirect()->route('track.this.order', ['orderRef' => Crypt::encrypt($orderReference)])
+                ->with('success', 'Payment successful!');
+        }
+
+        return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
+    }
+
 
     public function paymentFailed()
     {
         return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
     }
 
-    public function track_this_order($orderRef)
+    public function track_this_order(Request $request, $orderRef)
     {
-        return redirect()->route('track.order', ['orderRef' => $orderRef]);
+        $userId = $request->session()->get('loginId');
+
+        // Decrypt orderRef
+        $decryptedOrderRef = Crypt::decrypt($orderRef);
+
+        // Query orders and their payment details
+        $order = Order::join('payments', 'orders.payment_id', 'payments.id')
+            ->select(
+                'orders.*',
+                'payments.payment_status'
+            )
+            ->where('orders.at_cart', false)
+            ->where('orders.order_status', '!=', 'Completed')
+            ->where('orders.user_id', $userId)
+            ->where('orders.order_reference', $decryptedOrderRef)
+            ->first();  // We expect only one order per reference, so use first()
+
+        // If payment status is 'Rejected', redirect to the cart page with a rejection message
+        if ($order && $order->payment_status == 'Rejected') {
+            return redirect()->route('shop.cart');
+        }
+
+        // Check if the order exists and handle the payment status
+        if ($order) {
+            if ($order->payment_status == 'Completed') {
+                return redirect()->route('track.order', ['orderRef' => $orderRef]);
+            } else {
+                return redirect()->route('payment.queue', ['orderRef' => $orderRef]);
+            }
+        }
+
+        // Handle the case where no order was found
+        return redirect()->route('landing.page')->with('error', 'Order not found.');
     }
+
+    public function paymentQueue(Request $request, $orderRef)
+    {
+        $userId = $request->session()->get('loginId');
+
+        // Decrypt orderRef
+        $decryptedOrderRef = Crypt::decrypt($orderRef);
+
+        // Query orders and their payment details
+        $order = Order::leftjoin('payments', 'orders.payment_id', 'payments.id')
+            ->select(
+                'orders.*',
+                'payments.payment_status'
+            )
+            ->where('orders.at_cart', false)
+            ->where('orders.order_status', '!=', 'Completed')
+            ->where('orders.user_id', $userId)
+            ->where('orders.order_reference', $decryptedOrderRef)
+            ->first();  // We expect only one order per reference, so use first()
+
+        // If the payment status is 'Rejected', redirect to the cart page
+        if (!$order) {
+            return redirect()->route('landing.page');
+        }
+
+        // If the payment status is 'Completed', redirect to the order tracking page
+        if ($order && $order->payment_status == 'Completed') {
+            return redirect()->route('track.order', ['orderRef' => $orderRef]);
+        }
+
+        // If payment is still pending, display the payment queue page
+        return view('main.buyer.qpayment');
+    }
+
 
     public function track_order(Request $request, $orderRef)
     {
@@ -493,10 +1020,13 @@ class BuyerController extends Controller
 
         $user = UserProfile::where('id', $userId)->first();
 
-        $orderRef = Crypt::decrypt($orderRef);
+        // $orderRef = Crypt::decrypt($orderRef);
+
+        // dd($orderRef);
 
         // Get all unique orders for this seller's shop
-        $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
+        $orders = Order::join('product_orders', 'orders.product_orders_id', 'product_orders.id')
+            ->join('products', 'orders.product_id', '=', 'products.id')
             ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
             ->join('payments', 'orders.payment_id', 'payments.id')
             ->join('shops', 'products.shop_id', 'shops.id')
@@ -509,6 +1039,8 @@ class BuyerController extends Controller
                 'orders.total',
                 'orders.quantity',
                 'orders.order_status',
+                'product_orders.product_name',
+                'product_orders.price',
                 'user_profiles.first_name',
                 'user_profiles.last_name',
                 'user_profiles.contact_num',
@@ -518,36 +1050,37 @@ class BuyerController extends Controller
                 'shops.shop_name',
                 'buildings.building_name as designated_canteen'
             )
-            // Filter orders by the shop_id
-            // ->where('products.shop_id', $shopId) 
             ->where('orders.at_cart', false)
-            ->where('orders.order_status', '!=', 'At Cart')
             ->where('orders.order_status', '!=', 'Completed')
-            ->where('orders.order_reference', $orderRef)
+            ->where('orders.order_reference', Crypt::decrypt($orderRef))
+            ->where('orders.user_id', $userId)
             ->orderBy('orders.updated_at', 'desc')
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
 
         if ($orders->first() && $orders->first()->order_status == 'Completed') {
+            dd($orders);
             return redirect()->route('landing.page');
         }
 
         if ($orders->isEmpty()) {
+            // dd($orders);
             return redirect()->route('landing.page');
         }
 
         foreach ($orders as $order) {
             // Fetch products for each order
             $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
+                ->join('product_orders', 'orders.product_orders_id', 'product_orders.id')
                 ->join('categories', 'products.category_id', 'categories.id')
                 ->select(
                     'products.id',
-                    'products.product_name',
+                    'product_orders.product_name',
                     'products.image',
-                    'products.price',
+                    'product_orders.price',
                     'orders.quantity',
                     'orders.total',
-                    'categories.type_name'
+                    'product_orders.category_name'
                 )
                 ->where('orders.order_reference', $order->order_reference)
                 ->get();
@@ -560,39 +1093,36 @@ class BuyerController extends Controller
     {
         $userId = $request->session()->get('loginId');
 
-        $orders = Order::join('products', 'orders.product_id', 'products.id')
+        $orders = Order::join('product_orders', 'orders.product_orders_id', 'product_orders.id')
+            ->join('products', 'orders.product_id', 'products.id')
             ->join('shops', 'products.shop_id', 'shops.id')
             ->join('buildings', 'shops.building_id', 'buildings.id')
             ->select(
-                'orders.*',
-                'products.product_name',
-                'products.product_description',
-                'products.image',
-                'products.price',
-                'products.category_id',
-                'products.shop_id',
-                'products.status',
-                'products.is_deleted',
+                'orders.order_reference',
+                'orders.created_at',
+                'orders.total',
+                'orders.quantity',
+                'orders.order_status',
                 'shops.shop_name',
                 'buildings.building_name as designated_canteen'
             )
             ->where('orders.user_id', $userId)
             ->where('orders.order_status', 'Completed')
             ->orderBy('orders.updated_at', 'desc')
+            ->groupBy('orders.order_reference')
             ->get();
 
         foreach ($orders as $order) {
             // Fetch products for each order
-            $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
-                ->join('categories', 'products.category_id', 'categories.id')
+            $order->products = Order::join('product_orders', 'orders.product_orders_id', 'product_orders.id')
+                ->join('products', 'orders.product_id', 'products.id')
                 ->select(
-                    'products.id',
-                    'products.product_name',
+                    'product_orders.product_name',
                     'products.image',
-                    'products.price',
+                    'product_orders.price',
                     'orders.quantity',
                     'orders.total',
-                    'categories.type_name'
+                    'product_orders.category_name'
                 )
                 ->where('orders.order_reference', $order->order_reference)
                 ->get();

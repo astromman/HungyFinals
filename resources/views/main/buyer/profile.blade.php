@@ -1,86 +1,98 @@
 @extends('layouts.buyer.buyermaster')
 
 @section('content')
-
-<div class="container pt-5 pb-5">
-
-    <div class="row pt-2 pb-2" style="border-bottom: 1px solid gray">
-        <div class="col-12">
-            <h6>My profile &nbsp; <span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="lightblue" class="bi bi-info-circle" viewBox="0 0 16 16">
-                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
-                        <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0" />
-                    </svg>
-                </span></h6>
+<div class="container pt-5 d-flex justify-content-center align-items-center">
+    <div class="container-form pt-5">
+        <h2>Welcome Klasmeyt, {{ $userProfile->username }}</h2>
+        @if (session('error'))
+        <div class="alert alert-danger" role="alert">
+            {{ session('error') }}
         </div>
-
-        <div class="col-12">
-            <div class="mb-3">
-                <label for="exampleFormControlInput1" class="form-label">First Name</label>
-                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="">
+        @endif
+        <hr class="divider">
+        <div class="info-container">
+            <div>
+                <h3><strong style="color: grey;">Personal info</strong> <br><span style="font-size: small;">See your personal information on this page</span></h3>
+            </div>
+            <div class="button-group">
+                <button type="button" class="edit-button" id="editButton" onclick="enableEditing()">Edit</button>
+                <button type="button" class="save-button" id="saveButton" onclick="submitForm()" style="display:none;">Save</button>
+                <button type="button" class="cancel-button" id="cancelButton" onclick="disableEditing()" style="display:none;">Cancel</button>
             </div>
         </div>
-
-        <div class="col-12">
-            <div class="mb-3">
-                <label for="exampleFormControlInput1" class="form-label">Middle Name</label>
-                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="">
+        <hr class="divider">
+        @if (session('success'))
+        <div class="alert alert-info" role="alert">
+            <strong>{{ session('success') }}</strong>
+        </div>
+        @endif
+        <form id="profileForm" method="POST" action="{{ route('buyer.update.profile') }}">
+            @csrf
+            <div class="form-group">
+                <input name="first_name" class="form-control @error('first_name') is-invalid @enderror" value="{{ old('first_name', $userProfile->first_name) }}" type="text" placeholder="First Name" disabled>
+                @error('first_name')
+                <span class="invalid-feedback">{{ $message }}</span>
+                @enderror
             </div>
-        </div>
-
-        <div class="col-12">
-            <div class="mb-3">
-                <label for="exampleFormControlInput1" class="form-label">Last Name</label>
-                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="">
+            <div class="form-group">
+                <input name="last_name" class="form-control @error('last_name') is-invalid @enderror" value="{{ old('last_name', $userProfile->last_name) }}" type="text" placeholder="Last Name" disabled>
+                @error('last_name')
+                <span class="invalid-feedback">{{ $message }}</span>
+                @enderror
             </div>
-        </div>
-    </div>
-
-    <div class="row pt-2 pb-2" style="border-bottom: 1px solid gray">
-        <div class="col-12">
-            <h6>Email</h6>
-        </div>
-
-        <div class="col-12">
-            <div class="mb-3">
-                <label for="exampleFormControlInput1" class="form-label">Account</label>
-                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="">
+            <div class="form-group">
+                <input name="username" class="form-control @error('username') is-invalid @enderror" value="{{ old('username', $userProfile->username) }}" type="text" placeholder="Username" disabled>
+                @error('username')
+                <span class="invalid-feedback">{{ $message }}</span>
+                @enderror
             </div>
-        </div>
-    </div>
-
-    <div class="row pt-2 pb-2">
-        <div class="col-12">
-            <h6>Password</h6>
-        </div>
-
-        <div class="col-12">
-            <div class="mb-3">
-                <label for="exampleFormControlInput1" class="form-label">Current Password</label>
-                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="">
+            <div class="form-group">
+                <input name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $userProfile->email) }}" type="email" placeholder="Email" disabled>
+                @error('email')
+                <span class="invalid-feedback">{{ $message }}</span>
+                @enderror
             </div>
-        </div>
-
-        <div class="col-12">
-            <div class="mb-3">
-                <label for="exampleFormControlInput1" class="form-label">New Password</label>
-                <input type="email" class="form-control" id="exampleFormControlInput1" placeholder="">
+        </form>
+        <hr class="divider">
+        <div class="change-password-container">
+            <div class="change-password-text">
+                <strong style="color: grey;">Change Password</strong> <br><span style="font-size: small;">Click this to change your password</span>
             </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-12">
-            <div class="row d-flex justify-content-end">
-                <div class="col-auto">
-                    <button>Edit</button>
-                </div>
-                <div class="col-auto">
-                    <button>Save</button>
-                </div>
-            </div>
+            <a href="{{ route('buyer.change.password') }}" class="change-password-button">Change Password</a>
         </div>
     </div>
 </div>
 
+<script>
+    function enableEditing() {
+        // Enable all input fields
+        var inputs = document.querySelectorAll('#profileForm input');
+        inputs.forEach(function(input) {
+            input.disabled = false;
+        });
+
+        // Change Edit button to Save and Cancel
+        document.getElementById('editButton').style.display = 'none';
+        document.getElementById('saveButton').style.display = 'inline-block';
+        document.getElementById('cancelButton').style.display = 'inline-block';
+    }
+
+    function disableEditing() {
+        // Disable all input fields
+        var inputs = document.querySelectorAll('#profileForm input');
+        inputs.forEach(function(input) {
+            input.disabled = true;
+        });
+
+        // Revert buttons to only show Edit
+        document.getElementById('editButton').style.display = 'inline-block';
+        document.getElementById('saveButton').style.display = 'none';
+        document.getElementById('cancelButton').style.display = 'none';
+    }
+
+    // Submit the form when the Save button is clicked
+    function submitForm() {
+        document.getElementById('profileForm').submit();
+    }
+</script>
 @endsection

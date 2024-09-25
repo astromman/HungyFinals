@@ -44,30 +44,6 @@
             </div>
         </div>
 
-
-        <div class="recent_order">
-            <h2>Recent Orders</h2>
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>Product Name</th>
-                        <th>Product Number</th>
-                        <th>Payments</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody class="borderless">
-                    <tr>
-                        <td>Mini USB</td>
-                        <td>4563</td>
-                        <td>Due</td>
-                        <td class="warning">Pending</td>
-                    </tr>
-                    <!-- Repeat rows as needed -->
-                </tbody>
-            </table>
-            <a href="#">Show All</a>
-        </div>
     </main>
     <div class="right-sidebar">
         <h2>Recent Update</h2>
@@ -82,5 +58,77 @@
             </ul>
         </div>
     </div>
+
+    <!-- Start Pie and Bar Charts Side by Side -->
+    <div class="charts">
+        <div class="chart-container">
+            <h3>Sold Items per Categories</h3>
+            <canvas id="myPieChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3>Recent Orders</h3>
+            <canvas id="myBarChart"></canvas>
+        </div>
+    </div>
+    <!-- End Pie and Bar Charts -->
+
+    <script>
+        const pieCtx = document.getElementById('myPieChart').getContext('2d');
+        const categoryLabels = <?= json_encode(array_keys($categoriesData)) ?>; // Category names
+        const categoryValues = <?= json_encode(array_values($categoriesData)) ?>; // Total sold count per category
+
+        const myPieChart = new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    label: 'Sold Items per Category',
+                    data: categoryValues,
+                    backgroundColor: ['#7380ec', '#ff7782', '#41f1b6', '#ffcd56'], // Custom colors
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    </script>
+
+    <script>
+        const barCtx = document.getElementById('myBarChart').getContext('2d');
+
+        // Use json_encode() to pass the data from PHP to JavaScript
+        const orderDates = <?= json_encode(array_keys($dailyOrders)) ?>; // Get the order dates
+        const orderCounts = <?= json_encode(array_values($dailyOrders)) ?>; // Get the order counts for each day
+
+        const myBarChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: orderDates, // Dates as labels
+                datasets: [{
+                    label: 'Total Orders',
+                    data: orderCounts, // Order counts as data
+                    backgroundColor: '#7380ec', // Bar color
+                    borderRadius: 5,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true // Start y-axis at 0
+                    }
+                }
+            }
+        });
+    </script>
+
+
+
+    <!-- End of Redesigned Recent Update Section -->
 </div>
 @endsection

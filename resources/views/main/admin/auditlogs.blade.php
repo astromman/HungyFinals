@@ -1,28 +1,39 @@
 @extends('layouts.admin.adminMaster')
 
 @section('content')
-<div class="container-fluid pt-3">
-    <div class="py-2 px-5">
-        <h2>Audit Logs</h2>
+<div class="container">
+    <h2 class="mt-4 mb-4">Audit Trail</h2>
+    <div class="table-responsive">
+        <table id="auditTrailTable" class="table table-bordered table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action Type</th>
+                    <th class="hidden-xs">Action Details</th>
+                    <!-- <th class="hidden-xs">Before</th>
+                    <th class="hidden-xs">After</th> -->
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Sample Data (Should be populated from backend) -->
+                @forelse($logs as $log)
+                <tr>
+                    <td>{{ $log->logs_created }}</td>
+                    <td class="text-uppercase">{{ $log->username }}</td>
+                    <td>{{ $log->action }}</td>
+                    <td class="hidden-xs text-start">{{ $log->description }}</td>
+                    <!-- <td class="hidden-xs">Price: 50</td>
+                    <td class="hidden-xs">Price: 45</td> -->
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="6">No audit trail found.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>User</th>
-                <th>Action</th>
-                <th>Date</th>
-                <th>Details</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Example data, you would dynamically populate this -->
-            <tr>
-                <td>Yoreeeee</td>
-                <td>Login</td>
-                <td>2023-08-01 12:34:56</td>
-                <td>User logged in from IP 192.168.1.1</td>
-            </tr>
-        </tbody>
-    </table>
 </div>
+
 @endsection

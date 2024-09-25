@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Audit;
 use App\Models\Category;
 use App\Models\Credential;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ProductOrder;
 use App\Models\Shop;
 use App\Models\UserProfile;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -24,13 +28,13 @@ class SellerController extends Controller
     {
         $sellerId = $request->session()->get('loginId'); // Assuming seller is logged in and you get their ID
         // dd($sellerId);
-        $shopId = Shop::where('user_id', $sellerId)->first();
+        $shopId = Shop::where('user_id', $sellerId)->first()->id;
 
         // Yesterday's date range
         // $yesterdayStart = now()->subDay()->startOfDay();
         // $yesterdayEnd = now()->subDay()->endOfDay();
 
-        // Fetch Yesterday's Total Sales
+        // Fetch Pending
         $pending = DB::table('orders')
             ->join('products', 'orders.product_id', '=', 'products.id')
             ->join('shops', 'products.shop_id', '=', 'shops.id')
@@ -41,7 +45,7 @@ class SellerController extends Controller
             ->count('orders.order_reference');  // Count unique order references
 
 
-        // Fetch Total Number of Orders (for the seller)
+        // Fetch Total Number of Completed Orders (for the seller)
         $totalNumberOfOrders = DB::table('orders')
             ->join('products', 'orders.product_id', '=', 'products.id')
             ->join('shops', 'products.shop_id', '=', 'shops.id')
@@ -58,10 +62,33 @@ class SellerController extends Controller
             ->where('orders.order_status', 'Completed')
             ->sum('orders.total');
 
+        // PIE CHART
+        // Query to get the sum of sold items for each category in the seller's shop
+        $categoriesData = DB::table('categories')
+            ->join('products', 'categories.id', '=', 'products.category_id')
+            ->select('categories.type_name', DB::raw('SUM(products.sold) as total_sold'))
+            ->where('categories.shop_id', $shopId)
+            ->groupBy('categories.type_name')
+            ->pluck('total_sold', 'categories.type_name')
+            ->toArray();
+
+        // BAR GRAPH
+        $dailyOrders = DB::table('orders')
+            ->join('products', 'orders.product_id', 'products.id')
+            ->join('shops', 'products.shop_id', 'shops.id')
+            ->select(DB::raw('DATE(orders.created_at) as order_date'), DB::raw('COUNT(*) as total_orders'))
+            ->where('products.shop_id', $shopId)
+            ->groupBy('order_date')
+            ->orderBy('order_date', 'ASC')
+            ->pluck('total_orders', 'order_date')
+            ->toArray();
+
         return view('main.seller.seller', [
             'pending' => $pending,
             'totalNumberOfOrders' => $totalNumberOfOrders,
-            'totalIncome' => $totalIncome
+            'totalIncome' => $totalIncome,
+            'categoriesData' => $categoriesData,
+            'dailyOrders' => $dailyOrders
         ]);
     }
 
@@ -209,7 +236,7 @@ class SellerController extends Controller
                 [
                     'username' => 'required|unique:user_profiles,username,' . $userId,
                     'shop_name' => [
-                        'required',
+                        'nullable',
                         Rule::unique('shops')->ignore($shop->id)->where(function ($query) use ($shop) {
                             return $query->where('building_id', $shop->building_id);
                         }),
@@ -217,6 +244,7 @@ class SellerController extends Controller
                     'email' => 'required|email|unique:user_profiles,email,' . $userId,
                     'contact_num' => 'required|numeric|digits:11|starts_with:09|unique:user_profiles,contact_num,' . $userId,
                     'shop_image' => 'nullable|file|mimes:jpg,jpeg,png|max:51200',
+                    'shop_qr' => 'nullable|file|mimes:jpg,jpeg,png|max:51200',
                     'shop_bio' => 'nullable|max:255',
                 ],
                 [
@@ -265,6 +293,18 @@ class SellerController extends Controller
                 $image = time() . '_' . $request->shop_name . '_' . $request->shop_image->getClientOriginalName();
                 $request->file('shop_image')->storeAs('shop', $image, 'public');
                 $shop->shop_image = $image;
+            }
+
+            if ($request->hasFile('qr_image')) {
+                // Delete old image if exists
+                if ($shop->shop_qr) {
+                    Storage::disk('public')->delete('shop/' . $shop->shop_qr);
+                }
+
+                // Store new image
+                $image = time() . '_' . $request->shop_name . '_' . $request->qr_image->getClientOriginalName();
+                $request->file('qr_image')->storeAs('shop', $image, 'public');
+                $shop->shop_qr = $image;
             }
 
             $shop->shop_name = $request->shop_name;
@@ -350,6 +390,8 @@ class SellerController extends Controller
                 $products->image = $image;
             }
 
+            $description = "";
+
             $products->product_name = $request->product_name;
             $products->product_description = $request->description;
             $products->price = $request->price;
@@ -363,6 +405,11 @@ class SellerController extends Controller
             $products->save();
 
             DB::commit();
+
+            $description .= "a product named " . $products->product_name . ", with a price of " . $products->price . ". And description " . $products->product_description;
+            $commonUtility = new CommonUtilityController();
+            $commonUtility->addAuditTrail($userId, 1, $shop->shop_name . ' Added ' . $description);
+
             return redirect()->route('my.products')->with('success', 'Product Added successfully.');
         } catch (QueryException $e) {
             DB::rollBack();
@@ -405,18 +452,51 @@ class SellerController extends Controller
             }
 
             // Update product details
-            $product->product_name = $request->product_name;
-            $product->product_description = $request->description;
-            $product->price = $request->price;
-            $product->category_id = $request->category_id;
-            $product->status = $request->status ? 'Available' : 'Unavailable';
-
-            if ($product->status == 'Available') {
-                $product->is_deleted = false;
-            } else {
-                $product->is_deleted = true;
+            $description = "";
+            if ($product->product_name != $request->product_name) {
+                $description .= "Product Name changed from " . $product->product_name . " to " . $request->product_name;
+                $product->product_name = $request->product_name;
             }
 
+            if ($product->product_description != $request->description) {
+                $description .= "Description for " . $product->product_name . " changed from " . $product->product_description . " to " . $request->description;
+                $product->product_description = $request->description;
+            }
+
+            if ($product->price != $request->price) {
+                $description .= "Price for " . $product->product_name . " changed from " . $product->price . " to " . $request->price;
+                $product->price = $request->price;
+            }
+
+            if ($product->category_id != $request->category_id) {
+
+                $oldCategory = Category::where('id', $product->category_id)->first()->type_name;
+                $newCategory = Category::where('id', $request->category_id)->first()->type_name;
+
+                $description .= "Category for " . $product->product_name . " changed from " . $oldCategory . " to " . $newCategory;
+                $product->category_id = $request->category_id;
+            }
+
+            // Toggle status between 'Available' and 'Unavailable' based on the form submission
+            $unavailable = $request->status == 'Available' ? 'Available' : 'Unavailable';
+
+            if ($product->status != $unavailable) {
+                if ($unavailable == 'Available') {
+                    $oldProductStatus = 'Unavailable';
+                    $newProductStatus = 'Available';
+                    $description .= "Product Status for " . $product->product_name . " changed from " . $oldProductStatus . " to " . $newProductStatus;
+                    $product->is_deleted = false; // Product is not deleted when it's available
+                } else {
+                    $oldProductStatus = 'Available';
+                    $newProductStatus = 'Unavailable';
+                    $description .= "Product Status for " . $product->product_name . " changed from " . $oldProductStatus . " to " . $newProductStatus;
+                    $product->is_deleted = true; // Product is marked as deleted when unavailable
+                }
+
+                // Update the product's status
+                $product->status = $unavailable;
+                $product->save();
+            }
 
             // Handle the image upload if a new image is provided
             if ($request->hasFile('image')) {
@@ -430,12 +510,16 @@ class SellerController extends Controller
                 $filename = time() . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('public/products', $filename);
 
+                $description .= "Product Image for " . $product->product_name;
                 // Update product's image
                 $product->image = $filename;
             }
 
             // Save the updated product data
             $product->save();
+
+            $commonUtility = new CommonUtilityController();
+            $commonUtility->addAuditTrail($userId, 2, $shop->shop_name . ' Updated ' . $description);
 
             return redirect()->route('my.products')->with('success', 'Product updated successfully.');
         } catch (QueryException $e) {
@@ -450,8 +534,32 @@ class SellerController extends Controller
         }
     }
 
-    public function delete_products($id)
+    // public function addAuditTrail($userId, $actionType, $description)
+    // {
+    //     if ($actionType == 1) {
+    //         $action = "ADD";
+    //     } elseif ($actionType == 2) {
+    //         $action = "\UPDATE";
+    //     } elseif ($actionType == 3) {
+    //         $action = "\DELETE";
+    //     }
+
+    //     $audit = new Audit;
+    //     $audit->user_id = $userId;
+    //     $audit->action = $action;
+    //     $audit->description = $description;
+    //     $audit->created_at = now();
+    //     $audit->updated_at = now();
+    //     $audit->save();
+
+    // }
+
+    public function delete_products(Request $request, $id)
     {
+        $userId = $request->session()->get('loginId');
+        $shop = Shop::where('user_id', $userId)->first();
+        $description = "";
+
         try {
             $product = Product::findOrFail($id);
 
@@ -463,10 +571,13 @@ class SellerController extends Controller
                 // Delete the image from storage
                 if ($product->image) {
                     Storage::disk('public')->delete('products/' . $product->image);
+                    $description .= "a product named " . $product->product_name;
                     $product->delete();
                 }
             }
 
+            $commonUtility = new CommonUtilityController();
+            $commonUtility->addAuditTrail($userId, 3, $shop->shop_name . ' Deleted ' . $description);
 
             return redirect()->route('my.products.table')->with('success', 'Product deleted successfully.');
         } catch (QueryException $e) {
@@ -635,9 +746,11 @@ class SellerController extends Controller
         $shopId = Shop::where('user_id', $userId)->first()->id;
 
         // Get all unique orders for this seller's shop
-        $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
+        $orders = Order::join('product_orders', 'orders.product_orders_id', 'product_orders.id')
+            ->join('products', 'orders.product_id', 'products.id')
             ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
             ->join('payments', 'orders.payment_id', 'payments.id')
+            ->join('shops', 'user_profiles.id', 'shops.user_id')
             ->select(
                 'orders.id',
                 'orders.order_reference',
@@ -664,21 +777,35 @@ class SellerController extends Controller
 
         foreach ($orders as $order) {
             // Fetch products for each order
-            $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
-                ->join('categories', 'products.category_id', 'categories.id')
+            $order->products = Order::join('product_orders', 'orders.product_orders_id', '=', 'product_orders.id')
+                ->join('products', 'orders.product_id', 'products.id')
+                // ->join('categories', 'products.category_id', 'categories.id')
                 ->select(
-                    'products.id',
-                    'products.product_name',
-                    'products.price',
+                    'product_orders.product_name',
+                    'product_orders.price',
                     'orders.quantity',
                     'orders.total',
-                    'categories.type_name'
                 )
                 ->where('orders.order_reference', $order->order_reference)
                 ->get();
         }
 
         return view('main.seller.myOrders', compact('orders', 'shopDetails'));
+    }
+
+    public function getAveragePreparationTime($shopId)
+    {
+        // Get the average preparation time for the shop in minutes
+        $averagePreparationTime = Order::join('products', 'orders.product_id', '=', 'products.id')
+            ->select(
+                DB::raw('AVG(TIMESTAMPDIFF(MINUTE, orders.created_at, orders.updated_at)) as avg_preparation_time')
+            )
+            ->where('products.shop_id', $shopId)
+            ->where('orders.order_status', 'Completed') // Only consider completed orders
+            ->orWhere('orders.order_status', 'Ready')
+            ->value('avg_preparation_time');
+
+        return $averagePreparationTime;
     }
 
     public function updateOrder(Request $request, $orderRef)
@@ -689,20 +816,28 @@ class SellerController extends Controller
             $orderReference = Order::where('order_reference', $orderRef)->get();
 
             foreach ($orderReference as $order) {
-
-                if ($order->order_status == 'Ready') {
-                    $orderStatus = $request->order_status;
-                } else {
-                    $orderStatus = $request->order_status;
-                }
+                $orderStatus = $request->order_status;
+                // dd($orderStatus);
 
                 $order->order_status = $orderStatus;
+                $order->updated_at = now();
                 $order->save();
+
+                $productId = Order::where('order_reference', $orderRef)->first()->product_id;
+                $shopId = Product::where('id', $productId)->first()->shop_id;
+            }
+
+            // After the order is updated, calculate the new average preparation time
+            if ($shopId && $order->order_status == 'Ready') {
+                $averagePreparationTime = $this->getAveragePreparationTime($shopId);
+
+                // Update the shop with the new average preparation time
+                Shop::where('id', $shopId)->update(['preparation_time' => $averagePreparationTime]);
             }
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Order status updated for all matching records.');
+            return redirect()->back()->with('success', 'Order status updated.');
         } catch (Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Something went wrong while updating the order.');
@@ -719,7 +854,7 @@ class SellerController extends Controller
         $shopId = Shop::where('user_id', $userId)->first()->id;
 
         // Get all unique orders for this seller's shop
-        $orders = Order::join('products', 'orders.product_id', '=', 'products.id')
+        $orders = Order::join('product_orders', 'orders.product_orders_id', '=', 'product_orders.id')
             ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
             ->join('payments', 'orders.payment_id', 'payments.id')
             ->select(
@@ -738,7 +873,7 @@ class SellerController extends Controller
                 'payments.payment_type',
             )
             // Filter orders by the shop_id
-            ->where('products.shop_id', $shopId)
+            // ->where('products.shop_id', $shopId)
             ->where('orders.at_cart', false)
             ->where('orders.order_status', 'Completed')
             ->orderBy('orders.updated_at', 'desc')
@@ -747,21 +882,86 @@ class SellerController extends Controller
 
         foreach ($orders as $order) {
             // Fetch products for each order
-            $order->products = Order::join('products', 'orders.product_id', '=', 'products.id')
-                ->join('categories', 'products.category_id', 'categories.id')
+            $order->products = Order::join('product_orders', 'orders.product_orders_id', '=', 'product_orders.id')
+                // ->join('categories', 'products.category_id', 'categories.id')
                 ->select(
-                    'products.id',
-                    'products.product_name',
-                    'products.price',
+                    'product_orders.id',
+                    'product_orders.product_name',
+                    'product_orders.price',
                     'orders.quantity',
                     'orders.total',
-                    'categories.type_name'
+                    // 'categories.type_name'
                 )
                 ->where('orders.order_reference', $order->order_reference)
                 ->get();
         }
 
         return view('main.seller.orderHistory', compact('orders', 'shopDetails'));
+    }
+
+    public function confirmPayment(Request $request)
+    {
+        $orderId = $request->input('order_id');
+
+        // Find the order and its payment
+        $order = Order::findOrFail($orderId);
+        $payment = Payment::findOrFail($order->payment_id);
+
+        // Update the payment status to "Completed"
+        $payment->payment_status = 'Completed';
+        $payment->save();
+
+        return redirect()->back()->with('success', 'Payment confirmed successfully.');
+    }
+
+    public function rejectPayment(Request $request)
+    {
+        // Validate the input fields to ensure that order_reference and feedback are provided
+        $request->validate([
+            'order_reference' => 'required|exists:orders,order_reference', // Validate that order_reference exists in the orders table
+            'feedback' => 'required|string|max:255',  // Validate feedback as required and of proper length
+        ]);
+
+        try {
+            DB::beginTransaction();  // Begin transaction to ensure atomicity
+
+            $orderReference = $request->order_reference;
+            $feedback = $request->input('feedback');
+
+            // Find all orders with the given order_reference
+            $orders = Order::where('order_reference', $orderReference)->get();
+
+            // Ensure that orders are retrieved successfully, otherwise throw an error
+            if ($orders->isEmpty()) {
+                throw new Exception("No orders found with the reference " . $orderReference);
+            }
+
+            foreach ($orders as $order) {
+                // Find the associated payment
+                $payment = Payment::findOrFail($order->payment_id);
+
+                // Update payment status to 'Rejected' and add the feedback
+                $payment->feedback = $feedback;
+                $payment->payment_status = 'Rejected';
+                $payment->updated_at = now();
+                $payment->save();
+
+                // Update the order status back to 'At Cart' and clear the order reference
+                $order->order_status = 'At Cart';
+                $order->order_reference = null;
+                $order->at_cart = true; // Mark as in cart
+                $order->updated_at = now();
+                $order->save();
+            }
+
+            DB::commit();  // Commit the transaction
+
+            // Redirect back with a success message
+            return redirect()->back()->with('success', 'Payment rejected successfully for the order reference: ' . $orderReference . '. Feedback: ' . $feedback);
+        } catch (Exception $e) {
+            DB::rollBack();  // Roll back the transaction in case of an error
+            return redirect()->back()->with('error', 'Failed to reject payment: ' . $e->getMessage());
+        }
     }
 
 

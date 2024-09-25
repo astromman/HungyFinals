@@ -10,6 +10,7 @@ use App\Models\UserProfile;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -20,6 +21,11 @@ class ManagerController extends Controller
     public function manager_dashboard()
     {
         return view('main.manager.manager');
+    }
+
+    public function audit_logs()
+    {
+        return view('main.manager.auditlogs');
     }
 
     // My profile and change password
@@ -264,7 +270,7 @@ class ManagerController extends Controller
         return str_shuffle($password);
     }
 
-    public function edit_button_cons_account(Request $request, $id)
+    public function edit_button_cons_account(Request $request, $userId)
     {
         $userBuildingId = $request->session()->get('user');
 
@@ -286,7 +292,7 @@ class ManagerController extends Controller
             ->orderBy('user_profiles.created_at', 'desc')
             ->get();
 
-        $userData = UserProfile::findOrFail($id);
+        $userData = UserProfile::findOrFail(Crypt::decrypt($userId));
 
         return view('main.manager.addConcessionaire', compact('user', 'userData'));
     }
@@ -409,56 +415,6 @@ class ManagerController extends Controller
             return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }
     }
-
-    // public function reject_shops_application(Request $request, $id)
-    // {
-    //     try {
-    //         // Validate the feedback input
-    //         $request->validate([
-    //             'feedback' => 'required|string|max:255',
-    //         ]);
-
-    //         DB::beginTransaction();
-
-    //         // Find the permit by ID
-    //         $permit = Permit::find($id);
-
-    //         if ($permit) {
-    //             // Retrieve the shop model using the shop_id from the permit
-    //             $shop = Shop::where('id', $permit->shop_id)->first();
-
-    //             if ($shop) {
-    //                 // Update the shop status to 'Verified'
-    //                 $shop->status = 'Unverified';
-    //                 $shop->is_reopen = false;
-    //                 $shop->save();
-
-    //                 // Update the is_approved field to 0 (rejected)
-    //                 $permit->status = 'Rejected';
-    //                 $permit->is_rejected = 1;
-
-    //                 // Save feedback (assuming there's a feedback column in permits table)
-    //                 $permit->feedback = $request->input('feedback');
-    //                 $permit->save();
-
-    //                 DB::commit();
-
-    //                 return redirect()->route('shops.applications')->with('success', 'Application rejected successfully.');
-    //             } else {
-    //                 return redirect()->route('shops.applications')->with('error', 'Shop not found.');
-    //             }
-    //         } else {
-    //             DB::rollBack();
-    //             return redirect()->route('shops.applications')->with('error', 'Application not found.');
-    //         }
-    //     } catch (QueryException $e) {
-    //         DB::rollBack();
-    //         return redirect()->back()->with('error', 'Database error: ' . $e->getMessage());
-    //     } catch (Exception $e) {
-    //         DB::rollBack();
-    //         return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
-    //     }
-    // }
 
     public function reject_shops_application(Request $request, $id)
     {

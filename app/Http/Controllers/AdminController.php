@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Audit;
 use App\Models\Building;
 use App\Models\Credential;
 use App\Models\UserProfile;
@@ -21,9 +22,16 @@ class AdminController extends Controller
         return view('main.admin.admin');
     }
 
-    public function aduit_logs()
+    public function audit_logs()
     {
-        return view('main.admin.auditlogs');
+        $logs = Audit::join('user_profiles', 'audits.user_id', 'user_profiles.id')
+            ->select(
+                'audits.*',
+                'audits.created_at as logs_created',
+                'user_profiles.username'
+            )
+            ->get();
+        return view('main.admin.auditlogs', compact('logs'));
     }
 
     public function buyers_account()

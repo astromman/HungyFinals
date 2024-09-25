@@ -4,7 +4,7 @@
     <div id="sidebar" class="sidebar">
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
         <a href="{{ route('manager.dashboard') }}"><i class="bi bi-easel"></i> Dashboard</a>
-        <a href="#"><i class="bi bi-card-list"></i> Audit Trail</a>
+        <a href="{{ route('manager.audit.logs') }}"><i class="bi bi-card-list"></i> Audit Trail</a>
         <a href="{{ route('shops.applications') }}"><i class="bi bi-clipboard-fill"></i> Applications</a>
         <a href="{{ route('applications.history') }}"><i class="bi bi-clipboard-check-fill"></i> Applications History</a>
         <a href="{{ route('concessionaires.account') }}"><i class="bi bi-person-circle"></i> Concessionaire's Accounts</a>
@@ -22,7 +22,7 @@
                     $user = App\Models\UserProfile::where('id', $userId)->first();
                     @endphp
                     <li class="px-3 nav-item d-flex align-items-center">
-                        <div class=" text-white" id="userDropdown" data-bs-toggle="dropdown">
+                        <div class="text-white" id="userDropdown" data-bs-toggle="dropdown">
                             {{ $user->first_name . ' ' . $user->last_name }}
                         </div>
                         <div class="dropdown">

@@ -6,8 +6,10 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\UnverifiedController;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\Translation\Loader\CsvFileLoader;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -21,7 +23,11 @@ use Symfony\Component\Translation\Loader\CsvFileLoader;
 */
 
 Route::get('/test', function () {
-    return view('main.buyer.trackorder');
+    // return view('main.buyer.qpayment');
+    Mail::raw('This is a test email using Mailjet', function ($message) {
+        $message->to('lloyd.adrian.lindo@adamson.edu.ph')
+                ->subject('Test Mail from Hungry Falcons -Lindope');
+    });
 });
 
 Route::get('/logout', [LoginController::class, 'logout'])->name('user.logout');
@@ -65,8 +71,18 @@ Route::group([
     Route::get('/about-us', [BuyerController::class, 'about_us_page'])->name('about.us.page');
 
     Route::get('/my-favorites', [BuyerController::class, 'my_favorites'])->name('my.favorites');
+    Route::post('/toggle-favorite/{productId}', [BuyerController::class, 'toggleFavorite'])->name('toggle.favorite');
+    Route::post('/favorites/add', [BuyerController::class, 'addToFavorites'])->name('favorites.add');
+    //REMOVE FROM FAVORITES
+    Route::delete('/favorites/remove/{id}', [BuyerController::class, 'removeFavorite'])->name('favorites.remove');
 
-    Route::get('/my-profile', [BuyerController::class, 'my_profile'])->name('my.profile');
+    //SEARCH FOR SHOPS AND ITEMS
+    Route::get('/search', [BuyerController::class, 'searchItem'])->name('searchItem');
+
+    Route::get('/my-profile', [BuyerController::class, 'my_profile'])->name('buyer.my.profile');
+    Route::post('/my-profile/update-profile', [BuyerController::class, 'update_profile'])->name('buyer.update.profile');
+    Route::get('/change-password', [BuyerController::class, 'buyer_change_password'])->name('buyer.change.password');
+    Route::post('/change-password', [BuyerController::class, 'update_password'])->name('buyer.update.password');
 
     Route::get('/canteen/visit/{id}/{building_name}', [BuyerController::class, 'visit_canteen'])->name('visit.canteen');
 
@@ -81,9 +97,12 @@ Route::group([
     Route::delete('/cart/remove-items/{shopId}', [BuyerController::class, 'removeItems'])->name('remove.items');
 
     Route::get('/checkout/{shopId}', [BuyerController::class, 'checkoutOrders'])->name('checkout.orders');
+    Route::post('/submit-payment-screenshot/{shopId}', [BuyerController::class, 'submitPaymentScreenshot'])->name('submit.payment.screenshot');
     Route::post('/checkout/place-order/{shopId}', [BuyerController::class, 'placeOrder'])->name('place.order');
-    Route::get('/payment/success/{orderRef}', [BuyerController::class, 'paymentSuccess'])->name('payment.success');
+    Route::get('/payment/success', [BuyerController::class, 'paymentSuccess'])->name('payment.success');
     Route::get('/payment/failed', [BuyerController::class, 'paymentFailed'])->name('payment.failed');
+
+    Route::get('/payment-queue/{orderRef}', [BuyerController::class, 'paymentQueue'])->name('payment.queue');
 
     Route::get('/track-order/{orderRef}', [BuyerController::class, 'track_order'])->name('track.order');
     Route::post('/track-order/{orderRef}', [BuyerController::class, 'track_this_order'])->name('track.this.order');
@@ -125,8 +144,8 @@ Route::group([
 
     Route::get('/my-shop/view-mode', [SellerController::class, 'shop_view_mode'])->name('shop.view.mode');
 
-    Route::get('/my-shop/edit-detials', [SellerController::class, 'shop_update_details'])->name('shop.update.details');
-    Route::post('/my-shop/edit-detials', [SellerController::class, 'update_details'])->name('shop.updated.details');
+    Route::get('/my-shop/edit-details', [SellerController::class, 'shop_update_details'])->name('shop.update.details');
+    Route::post('/my-shop/edit-details', [SellerController::class, 'update_details'])->name('shop.updated.details');
 
     Route::get('/my-products', [SellerController::class, 'my_products_table'])->name('my.products.table');
     Route::get('/add-products', [SellerController::class, 'my_products'])->name('my.products');
@@ -142,6 +161,9 @@ Route::group([
 
     Route::get('/my-orders', [SellerController::class, 'my_orders'])->name('my.orders');
     Route::post('/update-order/{orderRef}', [SellerController::class, 'updateOrder'])->name('update.order');
+    Route::post('/confirm-payment', [SellerController::class, 'confirmPayment'])->name('confirm.payment');
+    Route::post('/reject-payment', [SellerController::class, 'rejectPayment'])->name('reject.payment');
+
 
     Route::get('/order-history', [SellerController::class, 'order_history'])->name('seller.order.history');
 
@@ -159,6 +181,8 @@ Route::group([
 ], function () {
     Route::get('/', [ManagerController::class, 'manager_dashboard'])->name('manager.dashboard');
 
+    Route::get('/logs', [ManagerController::class, 'audit_logs'])->name('manager.audit.logs');
+
     Route::get('/my-profile', [ManagerController::class, 'manager_my_profile'])->name('manager.my.profile');
     Route::post('my-profile/update-profile', [ManagerController::class, 'update_profile'])->name('manager.update.profile');
     Route::get('my-profile/change-password', [ManagerController::class, 'manager_change_password'])->name('manager.change.password');
@@ -166,8 +190,8 @@ Route::group([
 
     Route::get('/concessionaires-account/add', [ManagerController::class, 'concessionaires_account'])->name('concessionaires.account');
     Route::post('/concessionaires-account/add', [ManagerController::class, 'post_concessionaires_account'])->name('post.concessionaires.account');
-    Route::get('/concessionaires-account/edit/{id}', [ManagerController::class, 'edit_button_cons_account'])->name('edit.button.cons.account');
-    Route::post('/concessionaires-account/edit/{id}', [ManagerController::class, 'edit_cons_account'])->name('edit.cons.account');
+    Route::get('/concessionaires-account/edit/{userId}', [ManagerController::class, 'edit_button_cons_account'])->name('edit.button.cons.account');
+    Route::post('/concessionaires-account/edit/{userId}', [ManagerController::class, 'edit_cons_account'])->name('edit.cons.account');
     Route::delete('/concessionaires-account/delete/{id}', [ManagerController::class, 'delete_concessionaires_account'])->name('delete.concessionaires.account');
 
     Route::get('/applications', [ManagerController::class, 'shops_applications'])->name('shops.applications');
@@ -187,7 +211,7 @@ Route::group([
 ], function () {
     Route::get('/', [AdminController::class, 'admin_dashboard'])->name('admin.dashboard');
 
-    Route::get('/logs', [AdminController::class, 'aduit_logs'])->name('audit.logs');
+    Route::get('/logs', [AdminController::class, 'audit_logs'])->name('admin.audit.logs');
 
     Route::get('/buyers-account', [AdminController::class, 'buyers_account'])->name('buyers.account');
 

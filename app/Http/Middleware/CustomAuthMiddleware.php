@@ -38,7 +38,7 @@ class CustomAuthMiddleware
                 return redirect()->route('login.form')->withErrors(['error' => 'Invalid username or password']);
             }
 
-            $credentials = Credential::where('user_id', $user->id)->where('is_deleted', 0)->first();
+            $credentials = Credential::where('user_id', $user->id)->where('is_deleted', 0)->orderBy('created_at', 'desc')->first();
 
             if (!$credentials || !Hash::check($password, $credentials->password)) {
                 return redirect()->route('login.form')->withErrors(['error' => 'Invalid username or password']);

@@ -16,22 +16,24 @@
                     <a class="nav-link" href="{{ route('about.us.page') }}">About Us</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" data-bs-target="more-items" aria-expanded="false">
                         More
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <ul id="more-items" class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item" href="{{ route('buyer.order.history') }}">Order History</a></li>
                         <li><a class="dropdown-item" href="{{ route('my.favorites') }}">Favorites</a></li>
                     </ul>
                 </li>
             </ul>
-            <div class="d-flex align-items-center nav-icons">
+            <div class="three-buttons d-flex align-items-center nav-icons">
                 @php
                 $userId = session()->get('loginId');
 
-                $sumInCart = App\Models\Order::where('user_id', $userId)
+                $ordersInCart = App\Models\Order::where('user_id', $userId)
                 ->where('at_cart', true)
-                ->count();
+                ->get();
+
+                $sumInCart = $ordersInCart->count();
 
                 $submittedOrders = App\Models\Order::where('user_id', $userId)
                 ->where('order_status', '!=', 'Completed')
@@ -58,9 +60,16 @@
                     </span>
                     @endif
                 </a>
-                <a href="{{ route('my.profile') }}" class="nav-link">
-                    <i class="fas fa-user"></i>
-                </a>
+                <!-- Profile Icon with Dropdown -->
+                <div class="dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user"></i>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
+                        <li><a class="dropdown-item" href="{{ route('buyer.my.profile') }}">My profile</a></li>
+                        <li><a class="dropdown-item" href="{{ route('user.logout') }}">Logout</a></li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
