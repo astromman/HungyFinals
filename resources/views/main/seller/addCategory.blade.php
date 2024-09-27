@@ -98,8 +98,8 @@
                             <thead>
                                 <tr class="text-center">
                                     <th>Name</th>
-                                    <th>Date Created</th>
-                                    <th>Date Updated</th>
+                                    <!-- <th>Date Created</th>
+                                    <th>Date Updated</th> -->
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -107,8 +107,8 @@
                                 @forelse ($categories as $category)
                                 <tr class="text-center">
                                     <td>{{ $category->type_name }}</td>
-                                    <td>{{ $category->created_at }}</td>
-                                    <td>{{ $category->updated_at }}</td>
+                                    <!-- <td>{{ $category->created_at }}</td>
+                                    <td>{{ $category->updated_at }}</td> -->
                                     <td>
                                         <div class="row">
                                             <div class="col-lg-6 d-flex align-items-center">

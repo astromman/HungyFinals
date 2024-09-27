@@ -19,6 +19,7 @@ class UnverifiedController extends Controller
     public function resubmission_form(Request $request)
     {
         $userId = $request->session()->get('loginId');
+        
         $shopDetails = Shop::join('user_profiles', 'shops.user_id', 'user_profiles.id')
             ->select(
                 'shops.*',
@@ -27,6 +28,7 @@ class UnverifiedController extends Controller
             )
             ->where('user_id', $userId)
             ->first();
+
         $applicationId = $shopDetails ? Permit::where('shop_id', $shopDetails->id)
             ->orderByDesc('created_at')
             ->first() : null;

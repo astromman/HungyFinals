@@ -18,6 +18,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
 
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
@@ -90,11 +92,10 @@
             appearance: none;
         }
 
-        .container1 {
-            display: grid;
+        .container-dash {
             width: 96%;
             gap: 1.8rem;
-            grid-template-columns: 3fr 1fr;
+            /* grid-template-columns: 3fr 1fr; */
             margin: 0 auto;
         }
 
@@ -185,6 +186,7 @@
             padding: var(--card-padding);
             border-radius: var(--card-border-radius);
             margin-top: 1rem;
+            margin-bottom: 1rem;
             box-shadow: var(--box-shadow);
             transition: all 0.3s ease;
         }
@@ -884,7 +886,6 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-
         }
 
         .bi-clock-fill {
@@ -992,24 +993,44 @@
             display: flex;
             justify-content: space-between;
             gap: 2rem;
-            margin-top: 2rem;
+            padding-bottom: 2rem;
         }
 
         .chart-container {
             background-color: var(--clr-white);
             border-radius: var(--card-border-radius);
             padding: var(--card-padding);
-            box-shadow: var(--box-shadow);
             text-align: center;
             flex: 1;
             height: 400px;
             /* Fixed height for charts */
         }
 
+        .chart-container h3 {
+            font-size: 1rem;
+            font-weight: bold;
+            padding-top: 0px;
+        }
+
         canvas {
             max-width: 100%;
             height: 100% !important;
             /* Ensure the canvas fills the container */
+        }
+
+        .bi-hourglass-split {
+            color: #0B1E59;
+            font-size: 50px
+        }
+
+        .bi-check2-circle {
+            color: #0B1E59;
+            font-size: 50px
+        }
+
+        .bi-cash-stack {
+            color: #0B1E59;
+            font-size: 50px
         }
     </style>
 

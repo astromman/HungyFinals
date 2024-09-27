@@ -17,7 +17,7 @@
             </div>
 
             <!-- progress tracker here -->
-            <div class="container con-pb py-3">
+            <!-- <div class="container con-pb py-3">
                 <div class="main">
                     <ul class="progressbar">
                         <li>
@@ -46,6 +46,10 @@
                         </li>
                     </ul>
                 </div>
+            </div> -->
+
+            <div class="p-5">
+                @include('main.unverified.protobar')
             </div>
 
             <!-- form here -->
@@ -148,7 +152,7 @@
             </div>
 
             <!-- progress tracker here -->
-            <div class="container con-pb pt-3">
+            <!-- <div class="container con-pb pt-3">
                 <div class="main">
                     <ul class="progressbar">
                         <li>
@@ -177,6 +181,10 @@
                         </li>
                     </ul>
                 </div>
+            </div> -->
+
+            <div class="p-5">
+                @include('main.unverified.protobar')
             </div>
 
             <!-- message with logo here -->
@@ -219,36 +227,8 @@
                 <h2>Upload all the following files</h2>
             </div>
 
-            <!-- progress tracker here -->
-            <div class="container con-pb py-3">
-                <div class="main">
-                    <ul class="progressbar">
-                        <li>
-                            <i class="icons awesome fa-solid fa-user"></i>
-                            <div class="step first active">
-                                <p>1</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Upload Files</p>
-                        </li>
-                        <li>
-                            <i class="icons awesome fa-solid fa-coins"></i>
-                            <div class="step second">
-                                <p>2</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Processing</p>
-                        </li>
-                        <li>
-                            <i class="icons awesome fa-solid fa-house"></i>
-                            <div class="step third">
-                                <p>3</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Complete</p>
-                        </li>
-                    </ul>
-                </div>
+            <div class="p-5">
+                @include('main.unverified.protobar')
             </div>
 
             <!-- form here -->

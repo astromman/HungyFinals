@@ -18,9 +18,47 @@ use Illuminate\Validation\Rule;
 
 class ManagerController extends Controller
 {
-    public function manager_dashboard()
+    public function manager_dashboard(Request $request)
     {
-        return view('main.manager.manager');
+        $userId = $request->session()->get('loginId');
+
+        $user = UserProfile::where('id', $userId)->first();
+
+        $applications = Shop::join('user_profiles', 'user_profiles.id', 'shops.user_id')
+            ->join('permits', 'shops.id', 'permits.shop_id')
+            ->where('permits.status', 'Pending')
+            ->where('user_profiles.seller_building_id', $user->manager_building_id)
+            ->count();
+
+        $verifiedShops = Shop::join('user_profiles', 'user_profiles.id', 'shops.user_id')
+            ->where('shops.status', 'Verified')
+            ->where('user_profiles.seller_building_id', $user->manager_building_id)
+            ->count();
+
+        // Fetch total orders per shop (unique order_reference counts as one)
+        $ordersPerShop = DB::table('orders')
+            ->join('products', 'orders.product_id', 'products.id')
+            ->join('shops', 'products.shop_id', 'shops.id')
+            ->join('user_profiles', 'shops.user_id', 'user_profiles.id')
+            ->where('user_profiles.seller_building_id', $user->manager_building_id)
+            ->where('orders.order_status', 'Completed')
+            ->select('shops.shop_name', DB::raw('COUNT(DISTINCT orders.order_reference) as total_orders'))
+            ->groupBy('shops.shop_name')
+            ->get();
+
+        // Fetch total sales per shop per day
+        $salesPerShop = DB::table('orders')
+            ->join('products', 'orders.product_id', 'products.id')
+            ->join('shops', 'products.shop_id', 'shops.id')
+            ->join('user_profiles', 'shops.user_id', 'user_profiles.id')
+            ->where('user_profiles.seller_building_id', $user->manager_building_id)
+            ->where('orders.order_status', 'Completed')
+            ->select('shops.shop_name', DB::raw('SUM(orders.total) as total_sales'), DB::raw('DATE(orders.created_at) as sale_date'))
+            ->groupBy('shops.shop_name', 'sale_date')
+            ->orderBy('sale_date')
+            ->get();
+
+        return view('main.manager.manager',  compact('applications', 'verifiedShops', 'ordersPerShop', 'salesPerShop'));
     }
 
     public function audit_logs()

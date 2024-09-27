@@ -5,7 +5,7 @@
     </div>
     @endif
     <h1>Enter OTP:</h1>
-    <p style="font-size: 15px;">We sent a code to <strong>{{ $user->email }}</strong></p>
+    <p style="font-size: 15px;">We sent a code to your email. {{ $censoredEmail }}</p>
     <form action="{{ route('verify.otp.post') }}" method="POST">
         @csrf
         <label for="otp" style="font-size: 11px; font-weight: bold;">Authentication code</label>

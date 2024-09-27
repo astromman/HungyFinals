@@ -44,7 +44,6 @@ class SellerController extends Controller
             ->distinct()  // Ensure only unique order references are counted
             ->count('orders.order_reference');  // Count unique order references
 
-
         // Fetch Total Number of Completed Orders (for the seller)
         $totalNumberOfOrders = DB::table('orders')
             ->join('products', 'orders.product_id', '=', 'products.id')
@@ -66,30 +65,49 @@ class SellerController extends Controller
         // Query to get the sum of sold items for each category in the seller's shop
         $categoriesData = DB::table('categories')
             ->join('products', 'categories.id', '=', 'products.category_id')
+            ->join('orders', 'orders.product_id', 'products.id')
             ->select('categories.type_name', DB::raw('SUM(products.sold) as total_sold'))
             ->where('categories.shop_id', $shopId)
+            ->where('orders.order_status', 'Completed')
             ->groupBy('categories.type_name')
             ->pluck('total_sold', 'categories.type_name')
             ->toArray();
 
-        // BAR GRAPH
+        // Fetch Total Sold Items
+        $totalSoldItems = array_sum(array_values($categoriesData));
+
+        // BAR GRAPH (Modified to count unique order_reference)
         $dailyOrders = DB::table('orders')
-            ->join('products', 'orders.product_id', 'products.id')
-            ->join('shops', 'products.shop_id', 'shops.id')
-            ->select(DB::raw('DATE(orders.created_at) as order_date'), DB::raw('COUNT(*) as total_orders'))
+            ->join('products', 'orders.product_id', '=', 'products.id')
+            ->join('shops', 'products.shop_id', '=', 'shops.id')
+            ->select(DB::raw('DATE(orders.created_at) as order_date'), DB::raw('COUNT(DISTINCT orders.order_reference) as total_orders'))
             ->where('products.shop_id', $shopId)
+            ->where('orders.order_status', '!=', 'At Cart')
             ->groupBy('order_date')
             ->orderBy('order_date', 'ASC')
             ->pluck('total_orders', 'order_date')
             ->toArray();
 
-        return view('main.seller.seller', [
-            'pending' => $pending,
-            'totalNumberOfOrders' => $totalNumberOfOrders,
-            'totalIncome' => $totalIncome,
-            'categoriesData' => $categoriesData,
-            'dailyOrders' => $dailyOrders
-        ]);
+        // Fetch total sales for the current seller's shop per day
+        $salesPerShop = DB::table('orders')
+            ->join('products', 'orders.product_id', 'products.id')
+            ->join('shops', 'products.shop_id', 'shops.id')
+            ->where('shops.user_id', $sellerId)
+            ->where('orders.order_status', 'Completed')
+            ->select(DB::raw('SUM(orders.total) as total_sales'), DB::raw('DATE(orders.created_at) as sale_date'))
+            ->groupBy('sale_date')
+            ->orderBy('sale_date')
+            ->get();
+
+        return view('main.seller.seller', compact(
+            'pending',
+            'totalNumberOfOrders',
+            'totalIncome',
+            'categoriesData',
+            'dailyOrders',
+            'totalSoldItems',
+            'salesPerShop',
+        ));
     }
 
     // PASSWORD
@@ -748,9 +766,8 @@ class SellerController extends Controller
         // Get all unique orders for this seller's shop
         $orders = Order::join('product_orders', 'orders.product_orders_id', 'product_orders.id')
             ->join('products', 'orders.product_id', 'products.id')
-            ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
+            ->join('user_profiles', 'orders.user_id', 'user_profiles.id')
             ->join('payments', 'orders.payment_id', 'payments.id')
-            ->join('shops', 'user_profiles.id', 'shops.user_id')
             ->select(
                 'orders.id',
                 'orders.order_reference',
@@ -761,13 +778,13 @@ class SellerController extends Controller
                 'orders.order_status',
                 'user_profiles.first_name',
                 'user_profiles.last_name',
-                'user_profiles.contact_num',
+                'user_profiles.email_verified_at',
                 'payments.payment_id',
                 'payments.payment_status',
                 'payments.payment_type',
             )
-            // Filter orders by the shop_id
-            ->where('products.shop_id', $shopId)
+            ->where('products.shop_id', $shopId) // Make sure shopId is correct here
+            ->whereNotNull('user_profiles.email_verified_at')
             ->where('orders.at_cart', false)
             ->where('orders.order_status', '!=', 'At Cart')
             ->where('orders.order_status', '!=', 'Completed')
@@ -782,6 +799,7 @@ class SellerController extends Controller
                 // ->join('categories', 'products.category_id', 'categories.id')
                 ->select(
                     'product_orders.product_name',
+                    'product_orders.category_name',
                     'product_orders.price',
                     'orders.quantity',
                     'orders.total',
@@ -854,7 +872,8 @@ class SellerController extends Controller
         $shopId = Shop::where('user_id', $userId)->first()->id;
 
         // Get all unique orders for this seller's shop
-        $orders = Order::join('product_orders', 'orders.product_orders_id', '=', 'product_orders.id')
+        $orders = Order::join('product_orders', 'orders.product_orders_id', 'product_orders.id')
+            ->join('products', 'orders.product_id', 'products.id')
             ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
             ->join('payments', 'orders.payment_id', 'payments.id')
             ->select(
@@ -873,7 +892,7 @@ class SellerController extends Controller
                 'payments.payment_type',
             )
             // Filter orders by the shop_id
-            // ->where('products.shop_id', $shopId)
+            ->where('products.shop_id', $shopId)
             ->where('orders.at_cart', false)
             ->where('orders.order_status', 'Completed')
             ->orderBy('orders.updated_at', 'desc')

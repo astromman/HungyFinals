@@ -170,6 +170,7 @@ return [
         App\Providers\RouteServiceProvider::class,
 
         Mailjet\LaravelMailjet\MailjetServiceProvider::class,
+        Anhskohbo\NoCaptcha\NoCaptchaServiceProvider::class,
     ])->toArray(),
 
     /*
@@ -186,6 +187,7 @@ return [
     'aliases' => Facade::defaultAliases()->merge([
         // 'Example' => App\Facades\Example::class,
         'Mailjet' => Mailjet\LaravelMailjet\Facades\Mailjet::class,
+        'NoCaptcha' => Anhskohbo\NoCaptcha\Facades\NoCaptcha::class,
     ])->toArray(),
 
     'paymongo_public_key' => env('PAYMONGO_PUBLIC_KEY'),

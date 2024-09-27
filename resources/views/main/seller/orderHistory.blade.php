@@ -9,7 +9,7 @@
         <table class="order-table">
             <thead>
                 <tr>
-                    <th class="text-center">Expand</th>
+                    <th class="text-center"></th>
                     <th class="text-center">Reference</th>
                     <th class="text-center">Customer</th>
                     <th class="text-center">Pick-up At</th>
@@ -55,7 +55,7 @@
                         data-bs-target="#orderDetails{{ $order->id }}"
                         aria-expanded="false"
                         aria-controls="orderDetails{{ $order->id }}">
-                        <strong class="text-success p-2 w-100 rounded-pill bg-success-subtle">
+                        <strong class="text-success p-1 w-100 rounded-pill bg-success-subtle">
                             {{ $order->order_status }}
                         </strong>
                     </td>
@@ -66,7 +66,7 @@
                         aria-controls="orderDetails{{ $order->id }}">
                         {{ $order->payment_type }}
                     </td>
-                    <td class="text-center">
+                    <td class="text-center" {{ $order->payment_type != 'qr' ? 'data-bs-toggle=collapse data-bs-target=#orderDetails' . $order->id : '' }}>
                         @if($order->payment_type == 'qr')
                         <button type="button" class="btn  {{ $order->payment_status == 'Pending' ? 'bg-primary-subtle' : 'bg-success-subtle' }} w-100 rounded-pill"
                             data-bs-toggle="modal"
@@ -87,7 +87,7 @@
                         data-bs-target="#orderDetails{{ $order->id }}"
                         aria-expanded="false"
                         aria-controls="orderDetails{{ $order->id }}">
-                        <strong class="text-success p-2 w-100 rounded-pill bg-success-subtle">
+                        <strong class="text-success p-1 w-100 rounded-pill bg-success-subtle">
                             {{ $order->payment_status }}
                         </strong>
                     </td>

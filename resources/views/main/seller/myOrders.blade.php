@@ -9,7 +9,7 @@
         <table class="order-table">
             <thead>
                 <tr>
-                    <th class="text-center">Expand</th>
+                    <th class="text-center"></th>
                     <th class="text-center">Reference</th>
                     <th class="text-center">Customer</th>
                     <th class="text-center">Created</th>
@@ -72,10 +72,6 @@
                         {{ $order->payment_type }}
                     </td>
                     <td class="text-center" {{ $order->payment_type != 'qr' ? 'data-bs-toggle=collapse data-bs-target=#orderDetails' . $order->id : '' }}>
-                        <!-- if the payment_type is not qr then display payment_id as text -->
-                        <!-- if the payment_type is qr then display payment_id as link -->
-                        <!-- link name as "view payment" -->
-                        <!-- {{ $order->payment_status }} -->
                         @if($order->payment_type == 'qr')
                         <button type="button" class="btn {{ $order->payment_status == 'Pending' ? 'bg-primary-subtle' : 'bg-success-subtle' }} w-100 rounded-pill"
                             data-bs-toggle="modal"
@@ -169,15 +165,15 @@
                                 <tbody>
                                     @php $total = 0; @endphp
                                     @foreach($order->products as $product)
-                                    @php $total += $product->price * $product->quantity @endphp
+                                    @php $total += $product->total @endphp
                                     <tr>
                                         <td></td>
                                         <td></td>
                                         <td>{{ $product->product_name }}</td>
-                                        <td>{{ $product->type_name }}</td>
+                                        <td>{{ $product->category_name }}</td>
                                         <td>₱ {{ number_format($product->price, 2) }}</td>
                                         <td>{{ $product->quantity }}x</td>
-                                        <td>₱ {{ $product->price * $product->quantity }}</td>
+                                        <td>₱ {{ number_format($product->total,2) }}</td>
                                     </tr>
                                     @endforeach
                                     <tr>
@@ -187,7 +183,7 @@
                                         <td></td>
                                         <td></td>
                                         <td><strong>Order Total</strong></td>
-                                        <td><strong>₱ {{ $total }}</strong></td>
+                                        <td><strong>₱ {{ number_format($total,2) }}</strong></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -254,7 +250,6 @@
                         </div>
                     </div>
                 </div>
-
 
                 @empty
                 <tr>

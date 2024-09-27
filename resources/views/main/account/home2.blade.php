@@ -431,7 +431,7 @@
 <body>
   <div class="container" id="container" class="{{ $errors->hasAny(['first_name', 'last_name', 'email', 'contact_num', 'password', 'confirm_password']) ? 'right-panel-active' : '' }}">
     <div class="form-container register-container">
-      <form method="POST" action="{{ route('register.post') }}">
+      <form id="register-form-id" method="POST" action="{{ route('register.post') }}">
         @csrf
         @if (session('error'))
         <div class="alert alert-danger" role="alert">
@@ -441,7 +441,8 @@
         <h1>Register</h1>
         <div class="form-row">
           <div class="col-lg-6">
-            <input name="first_name" type="text" placeholder="First Name" value="{{ old('first_name') }}">
+            <input name="first_name" type="text" placeholder="First Name"
+              value="{{ old('first_name') }}">
             @error('first_name')
             <small class="text-danger">{{ $message }}</small>
             @enderror
@@ -453,7 +454,6 @@
             <small class="text-danger">{{ $message }}</small>
             @enderror
           </div>
-
         </div>
 
         <input name="email" type="email" placeholder="Email" value="{{ old('email') }}">
@@ -476,7 +476,15 @@
         <small class="text-danger">{{ $message }}</small>
         @enderror
 
-        <button type="submit">Register</button>
+        <!-- reCAPTCHA v3 Widget -->
+        {!! NoCaptcha::displaySubmit('register-form-id', 'Register') !!}
+
+        <!-- reCAPTCHA error handling -->
+        @if ($errors->has('g-recaptcha-response'))
+        <small class="text-danger">{{ $errors->first('g-recaptcha-response') }}</small>
+        @endif
+
+        <!-- Social login or other options -->
         <span>or use your account</span>
         <div class="social-container">
           <a href="{{ route('google.redirect') }}" class="social"><i class="lni lni-google"></i></a>
@@ -578,6 +586,7 @@
       container.classList.add("right-panel-active");
     }
   </script>
+  {!! NoCaptcha::renderJs() !!}
 </body>
 
 </html>

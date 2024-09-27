@@ -23,8 +23,38 @@ use Illuminate\Support\Facades\Mail;
 
 class LoginController extends Controller
 {
-    public function login_form()
+    public function login_form(Request $request)
     {
+        $user = $request->session()->get('user');
+        $loginId = $request->session()->get('loginId');
+
+        if ($user) {
+            $userType = UserProfile::where('username', $user->username)
+                ->where('id', $loginId)
+                ->value('user_type_id');
+
+            switch ($userType) {
+                case 1: // Buyer 
+                    return redirect()->route('landing.page');
+                    break;
+                case 2: // Unverified
+                    return redirect()->route('resubmission.form');
+                    break;
+                case 3: // Seller
+                    return redirect()->route('seller.dashboard');
+                    break;
+                case 4: // Admin
+                    return redirect()->route('admin.dashboard');
+                    break;
+                case 5: // Manager
+                    return redirect()->route('manager.dashboard');
+                    break;
+                default:
+                    return redirect()->route('login.form')->with('error', 'Unauthorized Access!');
+                    break;
+            }
+        }
+
         return view('main.account.home2');
     }
 
@@ -84,6 +114,7 @@ class LoginController extends Controller
                 'contact_num' => 'required|numeric|digits:11|starts_with:09|unique:user_profiles,contact_num,NULL,id',
                 'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*[\W_]).+$/'],
                 'confirm_password' => 'required|same:password',
+                'g-recaptcha-response' => 'required|captcha', // Updated reCAPTCHA validation rule
             ], [
                 'first_name.required' => 'First name is required.',
                 'last_name.required' => 'Last name is required.',
@@ -102,6 +133,8 @@ class LoginController extends Controller
                 'password.regex' => 'Password must include at least one uppercase letter and one special symbol.',
                 'confirm_password.required' => 'Password is required.',
                 'confirm_password.same' => 'Password does not match.',
+                'g-recaptcha-response.required' => 'reCAPTCHA verification failed. Please try again.',
+                'g-recaptcha-response.captcha' => 'Captcha error! Please try again later or contact support.',
             ]);
 
             // This block will check if the inputted infos are valid
@@ -165,9 +198,18 @@ class LoginController extends Controller
         $userId = session()->get('loginId');
 
         // Fetch the user from the database
-        $user = UserProfile::findOrFail($userId);
+        $user = UserProfile::where('id', $userId)->first();
 
-        return view('main.buyer.otp-form', compact('user'));
+        // Extract the email parts
+        $email = $user->email;
+        $emailParts = explode('@', $email);
+        $namePart = substr($emailParts[0], 0, 3); // First 3 characters of the name
+        $domainPart = '@' . $emailParts[1]; // Domain part of the email
+
+        // Concatenate censored email with 5 'x'
+        $censoredEmail = $namePart . 'xxxxx' . $domainPart;
+
+        return view('main.buyer.otp-form', compact('user', 'censoredEmail'));
     }
 
     public function verifyOtp(Request $request)

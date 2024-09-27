@@ -26,7 +26,7 @@ Route::get('/test', function () {
     // return view('main.buyer.qpayment');
     Mail::raw('This is a test email using Mailjet', function ($message) {
         $message->to('lloyd.adrian.lindo@adamson.edu.ph')
-                ->subject('Test Mail from Hungry Falcons -Lindope');
+            ->subject('Test Mail from Hungry Falcons');
     });
 });
 
@@ -108,6 +108,12 @@ Route::group([
     Route::post('/track-order/{orderRef}', [BuyerController::class, 'track_this_order'])->name('track.this.order');
 
     Route::get('/order-history', [BuyerController::class, 'order_history'])->name('buyer.order.history');
+
+    //MODAL POP UP FOR REVIEWS IN LANDING PAGE
+    Route::post('/submit-review', [BuyerController::class, 'store_review'])->name('submit.review');
+
+    //DISPLAY PRODUCT REVIEWS IN THEIR MODAL
+    Route::get('/get-reviews/{productId}', [BuyerController::class, 'getProductReviews']);
 });
 
 Route::group([

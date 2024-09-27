@@ -3,7 +3,7 @@
 @section('content')
 
 @if(session('error'))
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -37,7 +37,7 @@
                 {{ session('success') }}
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.reload();">Close</button>
             </div>
         </div>
     </div>
@@ -86,6 +86,14 @@
         orderStatusModal.show();
     });
 </script>
+@endif
+
+@if(Session::has('orderCompleted'))
+@include('main.buyer.review-modal')
+@php
+session()->forget('orderCompleted');
+session()->forget('orderReference');
+@endphp
 @endif
 
 <!-- Main Section -->
@@ -272,4 +280,26 @@
         text-decoration: underline;
     }
 </style>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Ensure jQuery is included -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Trigger the success modal if it exists
+        var successModal = document.getElementById('successModal');
+        if (successModal) {
+            var modal = new bootstrap.Modal(successModal);
+            modal.show();
+        }
+
+        // Trigger review modal if the order is completed (using Session::flash)
+        @if(Session::has('orderCompleted'))
+        setTimeout(function() {
+            var reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+            reviewModal.show();
+        }, 500); // Add delay to allow redirection and modal trigger
+        @endif
+    });
+</script>
+
 @endsection

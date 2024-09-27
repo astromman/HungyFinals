@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewOrderPlaced;
 use App\Models\Building;
 use App\Models\Category;
 use App\Models\Credential;
@@ -24,6 +25,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Srmklive\PayPal\Services\PayPal as PayPalClient;
 use Laravel\Ui\Presets\React;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
 
 class BuyerController extends Controller
 {
@@ -64,8 +67,8 @@ class BuyerController extends Controller
             ->where('products.status', 'Available')
             ->where('products.is_deleted', false)
             ->where('orders.user_id', $userId)
-            ->where('orders.at_cart', true) // Only get orders still in the cart
-            ->where('orders.order_status', 'At Cart') // Orders that are in cart state
+            // ->where('orders.at_cart', true) // Only get orders still in the cart
+            // ->where('orders.order_status', 'At Cart') // Orders that are in cart state
             ->orderBy('orders.updated_at', 'desc')
             ->get();
 
@@ -168,6 +171,10 @@ class BuyerController extends Controller
     public function searchItem(Request $request)
     {
         $searchTerm = $request->input('query');
+
+        if ($searchTerm == "") {
+            return redirect()->back();
+        }
 
         // Search for shops
         $shops = Shop::join('user_profiles', 'shops.user_id', 'user_profiles.id')
@@ -734,6 +741,20 @@ class BuyerController extends Controller
                 $payment->payment_status = 'Pending';
                 $payment->updated_at = now();
                 $payment->save();
+
+                // Update each order's status to "Pending" and assign the order reference
+                foreach ($orders as $order) {
+                    $order->order_status = 'Pending';
+                    $order->order_reference = $orderReference; // Assign the order reference
+                    $order->at_cart = false; // Remove from the cart
+                    $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
+                    $order->created_at = now();
+                    $order->updated_at = now();
+                    $order->save();
+
+                    event(new NewOrderPlaced($order));
+                }
+
             } else {
                 // Handle GCash and PayPal payments
                 $payment = new Payment;
@@ -784,6 +805,18 @@ class BuyerController extends Controller
                         'payment_status' => 'Completed',
                         'updated_at' => now(),
                     ]);
+
+                    // Update each order's status to "Pending" and assign the order reference
+                    foreach ($orders as $order) {
+                        $order->order_status = 'Pending';
+                        $order->order_reference = $orderReference; // Assign the order reference
+                        $order->at_cart = false; // Remove from the cart
+                        $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
+                        $order->created_at = now();
+                        $order->updated_at = now();
+                        $order->save();
+                        event(new NewOrderPlaced($order));
+                    }
                 }
 
                 // Handle PayPal Payment (for demonstration, you can implement PayPal logic here)
@@ -827,6 +860,7 @@ class BuyerController extends Controller
                                     $order->created_at = now();
                                     $order->updated_at = now();
                                     $order->save();
+                                    event(new NewOrderPlaced($order));
                                 }
 
                                 DB::commit();
@@ -837,17 +871,6 @@ class BuyerController extends Controller
                         return redirect()->back()->with('error', $response['message'] ?? 'Something went wrong.');
                     }
                 }
-            }
-
-            // Update each order's status to "Pending" and assign the order reference
-            foreach ($orders as $order) {
-                $order->order_status = 'Pending';
-                $order->order_reference = $orderReference; // Assign the order reference
-                $order->at_cart = false; // Remove from the cart
-                $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
-                $order->created_at = now();
-                $order->updated_at = now();
-                $order->save();
             }
 
             DB::commit();
@@ -937,7 +960,6 @@ class BuyerController extends Controller
         return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
     }
 
-
     public function paymentFailed()
     {
         return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
@@ -1013,14 +1035,13 @@ class BuyerController extends Controller
         return view('main.buyer.qpayment');
     }
 
-
     public function track_order(Request $request, $orderRef)
     {
         $userId = $request->session()->get('loginId');
 
         $user = UserProfile::where('id', $userId)->first();
 
-        // $orderRef = Crypt::decrypt($orderRef);
+        $orderRef = Crypt::decrypt($orderRef);
 
         // dd($orderRef);
 
@@ -1052,19 +1073,22 @@ class BuyerController extends Controller
             )
             ->where('orders.at_cart', false)
             ->where('orders.order_status', '!=', 'Completed')
-            ->where('orders.order_reference', Crypt::decrypt($orderRef))
+            ->where('orders.order_reference', $orderRef)
             ->where('orders.user_id', $userId)
             ->orderBy('orders.updated_at', 'desc')
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
 
         if ($orders->first() && $orders->first()->order_status == 'Completed') {
-            dd($orders);
+            Session::flash('orderCompleted', true);
+            Session::flash('orderReference', $orderRef);
             return redirect()->route('landing.page');
         }
 
         if ($orders->isEmpty()) {
             // dd($orders);
+            Session::flash('orderCompleted', true);
+            Session::flash('orderReference', $orderRef);
             return redirect()->route('landing.page');
         }
 
@@ -1086,7 +1110,7 @@ class BuyerController extends Controller
                 ->get();
         }
 
-        return view('main.buyer.trackorder', compact('orders', 'user'));
+        return view('main.buyer.trackorder', compact('orders', 'user', 'orderRef'));
     }
 
     public function order_history(Request $request)
@@ -1129,5 +1153,94 @@ class BuyerController extends Controller
         }
 
         return view('main.buyer.order-history', compact('orders'));
+    }
+
+    // REVIEW COMPLETED ORDER ☜(ﾟヮﾟ☜)
+    public function store_review(Request $request)
+    {
+        $userId = $request->session()->get('loginId');
+
+        try {
+            // Start transaction
+            DB::beginTransaction();
+
+            // Step 1: Validate the incoming review data
+            $request->validate([
+                'order_reference' => 'required|string', // Validate the order reference
+                'review_text' => 'required|string|max:255',
+                'rating' => 'required|integer|between:1,5',
+            ]);
+
+            // Step 2: Find the actual order by its reference code
+            $order = Order::where('order_reference', $request->input('order_reference'))
+                ->where('user_id', $userId) // Ensure the order belongs to the logged-in user
+                ->first();
+
+            if (!$order) {
+                // If the order doesn't exist or doesn't belong to this user, return with an error
+                return redirect()->back()->with('error', 'Invalid order reference or permission denied!');
+            }
+
+            // Step 3: Fetch all products associated with this order
+            $products = Order::join('products', 'orders.product_id', '=', 'products.id')
+                ->where('orders.order_reference', $order->order_reference)
+                ->select('products.id as product_id') // Select all product IDs
+                ->get();
+
+            if ($products->isEmpty()) {
+                // If no products are found for the order, return with an error
+                return redirect()->back()->with('error', 'No products found for this order.');
+            }
+
+            // Step 4: Loop through each product and create a review for each one
+            foreach ($products as $product) {
+                // Check if a review already exists for this order and product (optional)
+                $existingReview = Review::where('order_id', $order->id)
+                    ->where('product_id', $product->product_id)
+                    ->where('user_id', $userId)
+                    ->first();
+
+                if (!$existingReview) {
+                    // Step 5: Save the review in the database for each product
+                    $review = new Review;
+                    $review->order_id = $order->id; // Use the actual order ID
+                    $review->product_id = $product->product_id; // Store the product ID
+                    $review->review_text = $request->input('review_text');
+                    $review->rating = $request->input('rating');
+                    $review->user_id = $userId;
+                    $review->created_at = now();
+                    $review->updated_at = now();
+                    $review->save();
+                }
+            }
+
+            // Commit the transaction
+            DB::commit();
+
+            // Redirect with success message
+            return redirect()->route('landing.page')->with('success', 'Thank you for your review!');
+        } catch (\Exception $e) {
+            // Rollback the transaction in case of any errors
+            DB::rollBack();
+
+            // Log the error for debugging
+            Log::error('Review Submission Error: ' . $e->getMessage());
+
+            // Return back with a general error message
+            return redirect()->back()->with('error', 'There was an issue submitting your review. Please try again.');
+        }
+    }
+
+    //DISPLAY REVIEWS OF EACH PRODUCT IN THE MODAL
+    public function getProductReviews($productId)
+    {
+        // Fetch reviews for the specified product, along with the user's username
+        $reviews = Review::join('user_profiles', 'reviews.user_id', '=', 'user_profiles.id')
+            ->where('reviews.product_id', $productId)
+            ->select('reviews.*', 'user_profiles.username') // Select reviews and username
+            ->get();
+
+        // Return the reviews as JSON response to be used in the frontend
+        return response()->json($reviews);
     }
 }
