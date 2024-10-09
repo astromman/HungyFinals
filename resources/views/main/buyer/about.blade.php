@@ -1,4 +1,4 @@
-@extends('layouts.buyer.buyerMaster')
+@extends('layouts.buyer.buyermaster')
 
 @section('content')
 <!-- Hero Section -->

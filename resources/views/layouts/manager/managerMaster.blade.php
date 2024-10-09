@@ -164,6 +164,11 @@
             border: none;
         }
 
+        h1 {
+            font-weight: bold;
+            font-size: 2.8rem;
+        }
+
         :root {
             --clr-primary: #7380ec;
             --clr-danger: #ff7782;
@@ -188,42 +193,6 @@
             --box-shadow: 0 2rem 3rem var(--clr-light);
         }
 
-        /* dark theme */
-        .dark-theme-variables {
-            --clr-color-background: #181a1e;
-            --clr-white: #202528;
-            --clr-light: rgba(0, 0, 0, 0.4);
-            --clr-dark: #edeffd;
-            --clr-dark-variant: #677483;
-            --box-shadow: 0 2rem 3rem var(--clr-light);
-        }
-
-        /* * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            border: 0;
-            text-decoration: none;
-            list-style: none;
-            appearance: none;
-        } */
-
-        .container-dash {
-            /* display: grid; */
-            width: 96%;
-            gap: 1.8rem;
-            grid-template-columns: 3fr 1fr;
-            margin: 0 auto;
-        }
-
-        a {
-            color: var(--clr-dark);
-        }
-
-        a .alert .alert-primary {
-            text-decoration: none;
-        }
-
         h4 {
             font-weight: 0.8rem;
         }
@@ -236,39 +205,15 @@
             font-size: 0.75rem;
         }
 
-        .profile-photo img {
-            width: 2.8rem;
-            height: 2.8rem;
-            overflow: hidden;
-            border-radius: 50%;
-        }
-
         .text-muted {
             color: var(--clr-info-dark);
         }
 
-        /* p {
-            color: var(--clr-dark-variant);
-        } */
-
-        b {
-            color: var(--clr-dark);
-        }
-
-        .primary {
-            color: var(--clr-primary);
-        }
-
-        .success {
-            color: var(--clr-success);
-        }
-
-        .danger {
-            color: var(--clr-danger);
-        }
-
-        .warning {
-            color: var(--clr-warning);
+        .container-dash {
+            width: 96%;
+            gap: 1.8rem;
+            grid-template-columns: 3fr 1fr;
+            margin: 0 auto;
         }
 
         /* Main content styles */
@@ -304,7 +249,7 @@
             padding: var(--card-padding);
             border-radius: var(--card-border-radius);
             margin-top: 1rem;
-            box-shadow: var(--box-shadow);
+            /* box-shadow: var(--box-shadow); */
             transition: all 0.3s ease;
         }
 
@@ -444,53 +389,6 @@
             margin: 1rem;
         }
 
-        /* Right Sidebar */
-        .right-sidebar {
-            margin-top: 1.4rem;
-            margin-bottom: 1.4rem;
-        }
-
-        .right-sidebar>div {
-            background-color: var(--clr-white);
-            padding: var(--card-padding);
-            border-radius: var(--card-border-radius);
-            box-shadow: var(--box-shadow);
-            transition: all 0.3s ease;
-        }
-
-        .right-sidebar h2 {
-            padding-bottom: 10px;
-            padding-top: 20px;
-        }
-
-        /* recent updates */
-        .recent-update ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-
-        .recent-update ul li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .recent-update ul li img {
-            width: 2.8rem;
-            height: 2.8rem;
-            border-radius: 50%;
-            margin-right: 0.5rem;
-        }
-
-        .recent-update ul li span {
-            margin-right: 0.5rem;
-        }
-
-        .recent-update ul li p {
-            margin: 0;
-            font-size: 15px;
-        }
-
         /* sales analytics */
         .sales-analytics {
             margin-bottom: 13px;
@@ -519,7 +417,7 @@
             height: 100% !important;
             /* Ensure the canvas fills the container */
         }
-        
+
         .charts {
             display: flex;
             justify-content: space-between;
@@ -558,7 +456,109 @@
             font-size: 50px;
         }
 
-        
+        /* Responsive Styles */
+        @media screen and (max-width: 1200px) {
+            .container {
+                width: 94%;
+                grid-template-columns: 1fr;
+            }
+
+            main .insights {
+                grid-template-columns: repeat(1, 1fr);
+            }
+
+            .charts {
+                flex-direction: column;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                width: 100%;
+                grid-template-columns: 1fr;
+            }
+
+            .charts {
+                flex-direction: column;
+            }
+
+            .chart-container {
+                padding: 30px;
+                height: auto;
+                /* Adjust height */
+            }
+
+            canvas {
+                max-height: 250px;
+                /* Max height for better fit on mobile */
+            }
+        }
+
+        /* Responsive Styles */
+        @media screen and (max-width: 1200px) {
+            .container {
+                width: 94%;
+                grid-template-columns: 1fr;
+            }
+
+            main .insights {
+                grid-template-columns: repeat(1, 1fr);
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                width: 100%;
+                grid-template-columns: 1fr;
+            }
+
+            main .insights {
+                padding: 40px;
+            }
+
+            main .recent_order {
+                padding: 30px;
+                margin: 0 auto;
+            }
+        }
+
+        /* Responsive Styles */
+        @media screen and (max-width: 1200px) {
+            .container {
+                width: 94%;
+                grid-template-columns: 1fr;
+            }
+
+            main .insights {
+                grid-template-columns: repeat(1, 1fr);
+            }
+
+            .charts {
+                flex-direction: column;
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                width: 100%;
+                grid-template-columns: 1fr;
+            }
+
+            .charts {
+                flex-direction: column;
+            }
+
+            .chart-container {
+                padding: 30px;
+                height: auto;
+                /* Adjust height */
+            }
+
+            canvas {
+                max-height: 250px;
+                /* Max height for better fit on mobile */
+            }
+        }
     </style>
 
 </head>

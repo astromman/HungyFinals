@@ -1,101 +1,6 @@
 @extends('layouts.buyer.buyermaster')
 
 @section('content')
-
-@if(session('error'))
-<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="successModalLabel">
-                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> System
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {{ session('error') }}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-@if(session('success'))
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="successModalLabel">
-                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> System
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {{ session('success') }}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.reload();">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-@if(session('success'))
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        successModal.show();
-    });
-</script>
-@endif
-
-@if($orders->first() && $orders->first()->payment_status == 'Rejected')
-<!-- Modal for Order Status -->
-<div class="modal fade" id="orderStatusModal" tabindex="-1" aria-labelledby="orderStatusModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="orderStatusModalLabel">
-                    <i class="bi bi-info-circle text-warning"></i> Order Update
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    Your proof of payment has been rejected by {{ $orders->first()->shop_name }}. For the reason: {{$orders->first()->feedback}}
-                    <br>
-                    Order returned to cart. Please resubmit your proof of payment.
-                </div>
-                <div class="text-center">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-@if($orders->first() && $orders->first()->payment_status == 'Rejected')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var orderStatusModal = new bootstrap.Modal(document.getElementById('orderStatusModal'));
-        orderStatusModal.show();
-    });
-</script>
-@endif
-
-@if(Session::has('orderCompleted'))
-@include('main.buyer.review-modal')
-@php
-session()->forget('orderCompleted');
-session()->forget('orderReference');
-@endphp
-@endif
-
 <!-- Main Section -->
 <div class="container my-5 flex-grow-1">
     <div class="row">
@@ -148,10 +53,7 @@ session()->forget('orderReference');
                 @if(is_null($canteen->building_image))
                 <div class="position-relative" style="height: 150px; overflow: hidden;">
                     <div class="position-absolute w-100 h-100"
-                        style="background-image: url('{{ asset('images/bg/default_shop_image.png') }}'); 
-                    background-size: cover; 
-                    background-repeat: no-repeat; 
-                    background-position: center;">
+                        style="background-image: url('{{ asset('images/bg/default_shop_image.png') }}'); background-size: cover; background-repeat: no-repeat; background-position: center;">
                     </div>
                     <!-- Gradient Overlay -->
                     <div class="position-absolute w-100 h-100"
@@ -199,6 +101,20 @@ session()->forget('orderReference');
         @endforeach
     </div>
 </div>
+
+<!-- <script>
+    // Enable pusher logging - don't include this in production
+    Pusher.logToConsole = true;
+
+    var pusher = new Pusher('2ff5cb15f12633d6b419', {
+        cluster: 'mt1'
+    });
+
+    var channel = pusher.subscribe('my-channel');
+    channel.bind('my-event', function(data) {
+        alert(JSON.stringify(data));
+    });
+</script> -->
 
 <!-- CSS for adjustments -->
 <style>
@@ -281,9 +197,9 @@ session()->forget('orderReference');
     }
 </style>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Ensure jQuery is included -->
+<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> Ensure jQuery is included -->
 
-<script>
+<!-- <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Trigger the success modal if it exists
         var successModal = document.getElementById('successModal');
@@ -293,13 +209,13 @@ session()->forget('orderReference');
         }
 
         // Trigger review modal if the order is completed (using Session::flash)
-        @if(Session::has('orderCompleted'))
+        @if(session('orderCompleted'))
         setTimeout(function() {
             var reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
             reviewModal.show();
         }, 500); // Add delay to allow redirection and modal trigger
         @endif
     });
-</script>
+</script> -->
 
 @endsection

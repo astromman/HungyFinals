@@ -1,7 +1,7 @@
 @extends('layouts.admin.adminMaster')
 
 @section('content')
-<div class="container-fluid pt-5">
+<div class="container pt-5">
     <div class="container pt-5">
         <h2>Welcome Admin, {{ $userProfile->username }}</h2>
         @if (session('error'))
@@ -105,14 +105,14 @@
         border: 1px solid #5479f7;
     }
 
-    .container {
+    /* .container {
         width: 600px;
         max-width: 600px;
         background-color: white;
         border-radius: 8px;
         padding: 20px;
         box-sizing: border-box;
-    }
+    } */
 
     h2 {
         display: flex;

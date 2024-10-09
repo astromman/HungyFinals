@@ -3,19 +3,39 @@
 
 <head>
     <title>Email Verification OTP</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" class="href">
+
+    <style>
+        .title {
+            background-color: #0B1E59;
+            font-family: Poppins, sans-serif;
+            color: white;
+            padding: 1rem;
+        }
+
+        .title h1 {
+            margin-bottom: 0;
+        }
+
+        .subtitle {
+            margin-top: 0;
+            font-size: 13px;
+        }
+    </style>
+
 </head>
 
 <body>
-    <h1 class="text-center">Welcome, Klasmeyt!</h1>
-    <div class="d-flex justify-content-center align-items-center" style="background-color: #0B1E59; height: 200px;">
-        <img src="images/logo/logohf1.png" alt="images/logo/logohf1.png" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
+    <div class="title">
+        <h1>Hungry Falcons</h1>
+        <p class="subtitle">Online Ordering Platform</p>
     </div>
-
-    <h2>Hello {{ $user->first_name }},</h2>
+    
+    <h2>Welcome, Klasmeyt {{ $user->first_name }}!</h2>
+    <p>Thank you for registering.</p>
     <p>Your One-Time Password (OTP) for verifying your email address is:</p>
     <h1>{{ $otp }}</h1>
-    <p>This OTP is valid for 10 minutes.</p>
+    <p>This OTP is valid for 5 minutes.</p>
+    <p>Best Regards,<br>Hungry Falcons Team</p>
 </body>
 
 </html>

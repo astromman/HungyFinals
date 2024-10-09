@@ -109,24 +109,24 @@
                                     <td>{{ $category->type_name }}</td>
                                     <!-- <td>{{ $category->created_at }}</td>
                                     <td>{{ $category->updated_at }}</td> -->
-                                    <td>
-                                        <div class="row">
-                                            <div class="col-lg-6 d-flex align-items-center">
+                                    <td class="">
+                                        <div class="d-flex justify-content-center align-items-center">
+                                            <div class="col-6">
                                                 <a
                                                     href="{{ route('edit.button.category', $category->id) }}"
-                                                    class="btn-sm w-100 {{ $shopDetails->is_reopen ? 'disabled-link' : '' }}"
+                                                    class="btn btn-sm w-100 {{ $shopDetails->is_reopen ? 'disabled-link' : '' }}"
                                                     title="Edit"
                                                     onclick="{{ $shopDetails->is_reopen ? 'return false;' : '' }}">
                                                     <i class="bi bi-pencil-fill"></i>
                                                 </a>
                                             </div>
-                                            <div class="col-lg-6 d-flex align-items-center">
+                                            <div class="col-6">
                                                 <form action="{{ route('delete.category', $category->id) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button
                                                         type="submit"
-                                                        class="btn-sm w-100"
+                                                        class="btn btn-sm w-100 border-0"
                                                         title="Delete"
                                                         onclick="return confirm('Are you sure you want to delete this category?')"
                                                         {{ $shopDetails->is_reopen ? 'disabled' : '' }}>

@@ -14,12 +14,34 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Illuminate\Support\Facades\Mail;
 
 class AdminController extends Controller
 {
     public function admin_dashboard()
     {
-        return view('main.admin.admin');
+        // Query to get total completed orders per shop, grouped by building and counting unique order references
+        $completedOrders = DB::table('orders')
+            ->join('products', 'orders.product_id', 'products.id')
+            ->join('shops', 'products.shop_id', '=', 'shops.id')
+            ->join('buildings', 'shops.building_id', '=', 'buildings.id')
+            ->select('buildings.building_name', 'shops.shop_name', DB::raw('COUNT(DISTINCT orders.order_reference) as total_orders'))
+            ->where('orders.order_status', 'Completed')
+            ->groupBy('buildings.id')
+            ->get();
+
+        // Query for total sales per canteen, grouped by date (for line chart)
+        $salesData = DB::table('orders')
+            ->join('products', 'orders.product_id', 'products.id')
+            ->join('shops', 'products.shop_id', '=', 'shops.id')
+            ->join('buildings', 'shops.building_id', '=', 'buildings.id')
+            ->select('buildings.building_name', DB::raw('DATE(orders.created_at) as order_date'), DB::raw('SUM(orders.total) as total_sales'))
+            ->where('orders.order_status', 'Completed')
+            ->groupBy('buildings.building_name', DB::raw('DATE(orders.created_at)'), 'orders.order_reference')
+            ->orderBy('order_date')
+            ->get();
+
+        return view('main.admin.admin', compact('completedOrders', 'salesData'));
     }
 
     public function audit_logs()
@@ -206,7 +228,7 @@ class AdminController extends Controller
             }
 
             $building = new Building();
-            $building->building_name = $request->building_name;
+            $building->building_name = str_replace(' ', '', $request->building_name);
             $building->building_image = $image;
             $building->building_description = $request->building_description;
             $building->created_at = date('Y-m-d H:i:s');
@@ -310,6 +332,7 @@ class AdminController extends Controller
             ->where('user_type_id', 5)
             ->orderBy('user_profiles.created_at', 'desc')
             ->get();
+
         $buildings = Building::all();
         return view('main.admin.adminAddManager', compact('user', 'buildings'));
     }
@@ -320,12 +343,13 @@ class AdminController extends Controller
             $validator = Validator::make($request->all(), [
                 'first_name' => 'required',
                 'last_name' => 'required',
-                'username' => 'required|unique:user_profiles,username',
+                'username' => 'required|email|unique:user_profiles,username',
                 'building_id' => 'required',
             ], [
                 'first_name.required' => 'First name is required.',
                 'last_name.required' => 'Last name is required.',
                 'username.required' => 'Username is required.',
+                'username.email' => 'Invalid email address.',
                 'username.unique' => 'Username already exists.',
                 'building_id.required' => 'Building is required.',
             ]);
@@ -340,16 +364,19 @@ class AdminController extends Controller
 
             $user = new UserProfile();
             $user->user_type_id = 5;
-            $user->first_name = $request->first_name;
-            $user->last_name = $request->last_name;
-            $user->email = 'Not Available';
-            $user->username = $request->username;
+            $user->first_name = ucfirst(strtolower($request->first_name));
+            $user->last_name = ucfirst(strtolower($request->last_name));
+            $user->email = str_replace(' ', '', $request->username);
+            $user->username = str_replace(' ', '', $request->username);
             $user->default_pass = $generatedPassword;
             $user->contact_num = 'Not Available';
             $user->created_at = now();
             $user->updated_at = now();
             $user->manager_building_id = $request->building_id;
             $user->save();
+
+            // Fetch building data
+            $building = Building::find($request->building_id);
 
             $credentials = new Credential();
             $credentials->user_id = $user->id;
@@ -361,6 +388,9 @@ class AdminController extends Controller
 
             DB::commit();
 
+            // Send email with credentials
+            $this->sendManagerCredentials($user, $generatedPassword, $building->building_name);
+
             // Redirect back to the manager account list with the success message and the generated password
             return redirect()->route('manager.account')->with('success', 'Manager account created successfully.');
         } catch (QueryException $e) {
@@ -370,6 +400,21 @@ class AdminController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }
+    }
+
+    private function sendManagerCredentials($manager, $password, $canteen)
+    {
+        $data = [
+            'manager' => $manager,
+            'password' => $password,
+            'canteen' => $canteen
+        ];
+
+        Mail::send('main.admin.manager_credentials', $data, function ($message) use ($manager) {
+            $message->to($manager->email, $manager->first_name . ' ' . $manager->last_name)
+                ->subject('Your Manager Account Credentials');
+            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
+        });
     }
 
     private function generatePassword()
@@ -430,9 +475,10 @@ class AdminController extends Controller
             DB::beginTransaction();
 
             $user = UserProfile::findOrFail($id);
-            $user->first_name = $request->first_name;
-            $user->last_name = $request->last_name;
+            $user->first_name = ucfirst(strtolower($request->first_name));
+            $user->last_name = ucfirst(strtolower($request->last_name));
             $user->manager_building_id = $request->building_id;
+            $user->save();
 
             // Check if a new password should be generated
             if ($request->has('regenerate_password')) {
@@ -458,6 +504,7 @@ class AdminController extends Controller
             }
 
             DB::commit();
+
             return redirect()->route('manager.account')->with('success', 'User updated successfully.');
         } catch (QueryException $e) {
             DB::rollBack();

@@ -3,10 +3,14 @@
 @section('content')
 <div class="container">
     <h1>Password reset</h1>
-    <p style="font-size: 15px;">We sent a code to <strong>genejustine@gmail.com</strong></p>
-    <form>
-        <label for="email" style="font-size: 11px; font-weight: bold;">Authentication code</label>
-        <input type="email" id="email" placeholder="Enter the code" required>
+    <p style="font-size: 15px;">We sent a code to your email. {{ $censoredEmail }}</p>
+    <form method="POST" action="{{ route('verify.reset.otp') }}">
+        @csrf
+        <label for="otp">Authentication code</label>
+        <input type="text" id="otp" name="otp" class="form-control" placeholder="Enter the code" required>
+        @error('otp')
+        <span class="invalid-feedback">{{ $message }}</span>
+        @enderror
         <button type="submit">Continue</button>
     </form>
 

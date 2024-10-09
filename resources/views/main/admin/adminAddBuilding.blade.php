@@ -1,8 +1,8 @@
 @extends('layouts.admin.adminMaster')
 
 @section('content')
-<div class="container-fluid pt-3">
-    <div class="py-2 px-5">
+<div class="pb-5">
+    <div class="">
         <h2>Add New Category</h2>
     </div>
     @if (session('error'))
@@ -171,4 +171,6 @@
         </div>
     </div>
 </div>
+
+
 @endsection

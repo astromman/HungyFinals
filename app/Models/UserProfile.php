@@ -11,6 +11,8 @@ class UserProfile extends Model
 {
     use HasFactory;
 
+    protected $table = 'user_profiles';
+
     protected $fillable = [
         'google_id',
         'user_type_id',
@@ -20,6 +22,7 @@ class UserProfile extends Model
         'contact_num',
         'username',
         'email',
+        'email_verified_at'
     ];
 
     public function userType()

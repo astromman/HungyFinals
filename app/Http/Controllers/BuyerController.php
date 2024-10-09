@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\NewOrderNotification;
 use App\Events\NewOrderPlaced;
 use App\Models\Building;
 use App\Models\Category;
@@ -30,7 +31,6 @@ use Illuminate\Support\Facades\Session;
 
 class BuyerController extends Controller
 {
-    //
     public function landing_page(Request $request)
     {
         $canteens = Building::all();
@@ -77,7 +77,13 @@ class BuyerController extends Controller
 
     public function about_us_page()
     {
+
         return view('main.buyer.about');
+    }
+
+    public function gestAboutPage()
+    {
+        return view('main.buyer.guestabout');
     }
 
     public function my_favorites(Request $request)
@@ -170,41 +176,62 @@ class BuyerController extends Controller
     //SEARCH FUNCTION (❁´◡`❁)
     public function searchItem(Request $request)
     {
-        $searchTerm = $request->input('query');
+        $searchTerm = $request->input('query');  // User search term
+        $type = $request->input('type', 'all');  // Filter by type (shop or product)
+        $category = $request->input('category', 'all');  // Filter by category (category_id)
+        $price = $request->input('price', 'low_to_high');  // Price filter (low to high or high to low)
 
-        if ($searchTerm == "") {
-            return redirect()->back();
+        // Initialize empty collections for shops and products
+        $shops = collect();
+        $products = collect();
+
+        // Filter for shops
+        if ($type == 'all' || $type == 'shop') {
+            $shops = Shop::join('buildings', 'shops.building_id', 'buildings.id')
+                ->select('shops.*', 'buildings.building_name as designated_canteen')
+                ->where('shops.status', 'Verified')
+                ->where(function ($query) use ($searchTerm) {
+                    $query->where('shops.shop_name', 'LIKE', '%' . $searchTerm . '%')
+                        ->orWhere('buildings.building_name', 'LIKE', '%' . $searchTerm . '%');
+                })
+                ->get();
         }
 
-        // Search for shops
-        $shops = Shop::join('user_profiles', 'shops.user_id', 'user_profiles.id')
-            ->join('buildings', 'shops.building_id', 'buildings.id')
-            ->select(
-                'shops.*',
-                'shops.shop_name',
-                'user_profiles.contact_num',
-                'buildings.building_name as designated_canteen'
-            )
-            ->where('shop_name', 'LIKE', '%' . $searchTerm . '%')
-            ->orWhere('buildings.building_name', 'LIKE', '%' . $searchTerm . '%')
-            ->get();
+        // Filter for products
+        if ($type == 'all' || $type == 'product') {
+            $productsQuery = Product::join('categories', 'products.category_id', '=', 'categories.id')
+                ->select('products.*', 'categories.type_name as category_name')
+                // ->where('categories.type_name', 'LIKE', '%' . $searchTerm . '%')
+                ->where('products.product_name', 'LIKE', '%' . $searchTerm . '%');
 
-        // Search for products
-        $products = Product::join('categories', 'products.category_id', '=', 'categories.id')
-            ->select(
-                'products.*',
-                'categories.type_name as category_name'
-            )
-            ->where('products.product_name', 'LIKE', '%' . $searchTerm . '%')  // Corrected column name
-            ->orWhere('categories.type_name', 'LIKE', '%' . $searchTerm . '%')
-            ->get();
+            // Filter by category (using the category_id)
+            if ($category !== 'all') {
+                $productsQuery->where('categories.id', '=', $category);  // Ensure filtering by category id
+            }
 
-        $reviews = Review::all();
+            // Filter by price (Low to High or High to Low)
+            if ($price == 'low_to_high') {
+                $productsQuery->orderBy('products.price', 'asc');
+            } elseif ($price == 'high_to_low') {
+                $productsQuery->orderBy('products.price', 'desc');
+            }
 
-        // Group products by category
+            $products = $productsQuery->get();
+        }
+
+        // If it's an AJAX request, return JSON
+        if ($request->ajax()) {
+            return response()->json([
+                'shops' => $shops,
+                'products' => $products,
+            ]);
+        }
+
+        // Render the normal search results page if not AJAX
         $groupedProducts = $products->groupBy('category_name');
+        $categories = Category::select('type_name', 'id')->groupBy('type_name')->get();
 
-        return view('main.buyer.search-results', compact('shops', 'groupedProducts', 'searchTerm', 'reviews'));
+        return view('main.buyer.search-results', compact('shops', 'groupedProducts', 'searchTerm', 'categories'));
     }
 
     public function my_profile(Request $request)
@@ -499,7 +526,7 @@ class BuyerController extends Controller
 
             // Store the quantity in the session along with the success message
             return redirect()->back()->with([
-                'successAddToCart' => 'Item added to cart!',
+                'addToCart' => 'Item added to cart!',
                 'qty' => $qty
             ]);
         } catch (Exception $e) {
@@ -538,7 +565,7 @@ class BuyerController extends Controller
 
         $order = Order::where('order_status', 'At Cart')
             ->where('user_id', $userId)
-            ->where('at_cart', false)
+            ->where('at_cart', true)
             ->findOrFail($orderId);
         $order->delete();
 
@@ -553,7 +580,7 @@ class BuyerController extends Controller
             ->where('orders.user_id', $userId)
             ->where('products.shop_id', $shopId)
             ->where('order_status', 'At Cart')
-            ->where('at_cart', false)
+            ->where('at_cart', true)
             ->delete();
 
         return response()->json(['success' => true]);
@@ -571,11 +598,11 @@ class BuyerController extends Controller
         $canteen = Building::where('id', $shop->building_id)->first();
 
         if (!$shopId) {
-            return redirect()->route('landing.page')->with('error', 'Error with the shop, please try again later.');
+            return redirect()->route('shop.cart')->with('shopIdError', 'Error with the shop, please try again later.');
         }
 
         if ($shop && $shop->is_reopen == false) {
-            return redirect()->route('landing.page')->with('error', 'Shop suddenly closed. Making order to this shop is currently unavailable. Please try again later.');
+            return redirect()->route('shop.cart')->with('shopClosed', 'Shop suddenly closed. Making orders to this shop is currently unavailable. Please try again later.');
         }
 
         // Get only the orders for this user and shop
@@ -665,7 +692,8 @@ class BuyerController extends Controller
             DB::beginTransaction();
 
             // Get all orders for this shop that are in the user's cart
-            $orders = Order::join('products', 'orders.product_id', 'products.id')
+            $orders = Order::with(['productOrder', 'userProfile', 'payment'])
+                ->join('products', 'orders.product_id', 'products.id')
                 ->join('shops', 'products.shop_id', 'shops.id')
                 ->join('buildings', 'shops.building_id', 'buildings.id')
                 ->select(
@@ -726,174 +754,67 @@ class BuyerController extends Controller
             }
 
             // Get the payment method from the request
-            $paymentType = $request->input('payment_method');
 
-            // Handle QR payment: Check if the user uploaded the screenshot
-            if ($paymentType === 'qr') {
-                $paymentId = $request->session()->get('payment_screenshot');
-                if (!$paymentId) {
-                    return redirect()->back()->with('error', 'Please upload your payment screenshot.');
-                }
+            $paymentId = $request->session()->get('payment_screenshot');
 
-                // Retrieve the screenshot payment and update the amount
-                $payment = Payment::find($paymentId);
-                $payment->amount = $totalAmount;
-                $payment->payment_status = 'Pending';
-                $payment->updated_at = now();
-                $payment->save();
+            if (!$paymentId) {
+                return redirect()->back()->with('error', 'Please upload your payment screenshot.');
+            }
 
-                // Update each order's status to "Pending" and assign the order reference
-                foreach ($orders as $order) {
-                    $order->order_status = 'Pending';
-                    $order->order_reference = $orderReference; // Assign the order reference
-                    $order->at_cart = false; // Remove from the cart
-                    $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
-                    $order->created_at = now();
-                    $order->updated_at = now();
-                    $order->save();
+            // Retrieve the screenshot payment and update the amount
+            $payment = Payment::find($paymentId);
+            $payment->amount = $totalAmount;
+            $payment->payment_status = 'Pending';
+            $payment->updated_at = now();
+            $payment->save();
 
-                    event(new NewOrderPlaced($order));
-                }
+            // Update each order's status to "Pending" and assign the order reference
+            foreach ($orders as $order) {
+                $order->order_status = 'Pending';
+                $order->order_reference = $orderReference; // Assign the order reference
+                $order->at_cart = false; // Remove from the cart
+                $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
+                $order->created_at = now();
+                $order->updated_at = now();
+                $order->save();
 
-            } else {
-                // Handle GCash and PayPal payments
-                $payment = new Payment;
-                $payment->payment_id = null;
-                $payment->payer_email = $user->email;
-                $payment->amount = $totalAmount;
-                $payment->currency = 'PHP';
-                $payment->payment_type = $paymentType;
-                $payment->payment_status = 'Pending';
-                $payment->created_at = now();
-                $payment->updated_at = now();
-                $payment->save();
-
-                $paymentID = $payment->id;
-
-                // Handle GCash Payment
-                if ($paymentType === 'gcash') {
-                    $client = new Client();
-                    $response = $client->post('https://api.paymongo.com/v1/sources', [
-                        'auth' => [config('app.paymongo_secret_key'), ''],
-                        'json' => [
-                            'data' => [
-                                'attributes' => [
-                                    'amount' => $totalAmountInCentavos, // Amount in centavos
-                                    'redirect' => [
-                                        'success' => route('track.this.order', ['orderRef' => Crypt::encrypt($orderReference)]),
-                                        'failed' => route('payment.failed'),
-                                    ],
-                                    'type' => $paymentType,
-                                    'currency' => 'PHP',
-                                ]
-                            ]
-                        ]
-                    ]);
-
-                    $responseData = json_decode($response->getBody(), true);
-                    $sourceId = $responseData['data']['id'];
-                    $checkoutUrl = $responseData['data']['attributes']['redirect']['checkout_url'];
-
-                    if (!$checkoutUrl) {
-                        return redirect()->back()->with('error', 'Failed to get GCash payment URL.');
-                    }
-
-                    $payment = Payment::where('id', $paymentID)->first();
-                    // Update payment record
-                    $payment->update([
-                        'payment_id' => $sourceId,
-                        'payment_status' => 'Completed',
-                        'updated_at' => now(),
-                    ]);
-
-                    // Update each order's status to "Pending" and assign the order reference
-                    foreach ($orders as $order) {
-                        $order->order_status = 'Pending';
-                        $order->order_reference = $orderReference; // Assign the order reference
-                        $order->at_cart = false; // Remove from the cart
-                        $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
-                        $order->created_at = now();
-                        $order->updated_at = now();
-                        $order->save();
-                        event(new NewOrderPlaced($order));
-                    }
-                }
-
-                // Handle PayPal Payment (for demonstration, you can implement PayPal logic here)
-                elseif ($paymentType === 'paypal') {
-                    // Initialize PayPal API request
-                    $provider = new PayPalClient;
-                    $provider->setApiCredentials(config('paypal'));
-                    $token = $provider->getAccessToken();
-                    $provider->setAccessToken($token);
-
-                    $response = $provider->createOrder([
-                        "intent" => "CAPTURE",
-                        "purchase_units" => [
-                            0 => [
-                                "amount" => [
-                                    "currency_code" => "PHP",
-                                    "value" => number_format($totalAmount, 2, '.', '')
-                                ]
-                            ]
-                        ],
-                        "application_context" => [
-                            "cancel_url" => route('payment.failed'),
-                            "return_url" => route('payment.success', ['orderRef' => Crypt::encrypt($orderReference)])
-                        ]
-                    ]);
-
-                    if (isset($response['id']) && $response['status'] === 'CREATED') {
-                        foreach ($response['links'] as $link) {
-                            if ($link['rel'] === 'approve') {
-                                $approvalUrl = $link['href'];
-                                $payment = Payment::where('id', $paymentID)->first();
-                                $payment->payment_id = strval($response['id']);
-                                $payment->update();
-
-                                // Update each order's status to "Pending" and assign the order reference
-                                foreach ($orders as $order) {
-                                    $order->order_status = 'Pending';
-                                    $order->order_reference = $orderReference; // Assign the order reference
-                                    $order->at_cart = false; // Remove from the cart
-                                    $order->payment_id = $payment->id; // Payment method (optional: if you're handling it)
-                                    $order->created_at = now();
-                                    $order->updated_at = now();
-                                    $order->save();
-                                    event(new NewOrderPlaced($order));
-                                }
-
-                                DB::commit();
-                                return redirect($approvalUrl); // Redirect to PayPal approval page
-                            }
-                        }
-                    } else {
-                        return redirect()->back()->with('error', $response['message'] ?? 'Something went wrong.');
-                    }
-                }
+                // event(new NewOrderNotification([$order => 'order']));
+                event(new NewOrderNotification(
+                    [
+                        'order_reference' => $order->order_reference,
+                        'first_name' => $order->userProfile->first_name,
+                        'last_name' => $order->userProfile->last_name,
+                        'created_at' => $order->created_at,
+                        'payment_status' => $payment->payment_status,
+                        'payment_type' => $payment->payment_type,
+                        'total' => $order->total,
+                        'products' => $order->productOrder, // Include all products for this order
+                    ]
+                ));
             }
 
             DB::commit();
 
             // Clear session for payment screenshot after placing the order
-            if ($paymentType === 'qr') {
-                $request->session()->forget('payment_screenshot');
-            }
-
-            // Redirect for GCash payment if applicable
-            if ($paymentType === 'gcash' && isset($checkoutUrl)) {
-                return redirect($checkoutUrl);
-            }
-
-            // Redirect to payment queue for QR payment
-            if ($paymentType === 'qr') {
-                return redirect()->route('payment.queue', ['orderRef' => Crypt::encrypt($orderReference)]);
-            }
+            $request->session()->forget('payment_screenshot');
+            return redirect()->route('payment.queue', ['orderRef' => Crypt::encrypt($orderReference)]);
         } catch (Exception $e) {
             DB::rollBack();
             dd($e);
             return redirect()->back()->with('error', 'Failed to place the order. Please try again.');
         }
+    }
+
+    public function notifyNewOrder(Request $request)
+    {
+        // Logic to notify the seller, e.g., you can store the new order in the session
+        $orderReference = $request->input('order_reference');
+
+        // Logic to fetch and process the new order
+        $order = Order::where('order_reference', $orderReference)->first();
+        // You can store this order information in the session or log it for real-time updates
+
+        return response()->json(['success' => true]);
     }
 
     public function submitPaymentScreenshot(Request $request, $shopId)
@@ -1023,7 +944,9 @@ class BuyerController extends Controller
 
         // If the payment status is 'Rejected', redirect to the cart page
         if (!$order) {
-            return redirect()->route('landing.page');
+            return redirect()->route('landing.page')->with([
+                'paymentRejected' => 'Submitted screen shot was rejected. Please checkout your order again with the correct screen shot.'
+            ]);
         }
 
         // If the payment status is 'Completed', redirect to the order tracking page
@@ -1080,16 +1003,18 @@ class BuyerController extends Controller
             ->get();
 
         if ($orders->first() && $orders->first()->order_status == 'Completed') {
-            Session::flash('orderCompleted', true);
-            Session::flash('orderReference', $orderRef);
-            return redirect()->route('landing.page');
+            // Session::flash('orderCompleted', true);
+            return redirect()->route('landing.page')->with([
+                'orderCompleted' => true,
+                'orderReference' => $orderRef,
+            ]);
         }
 
         if ($orders->isEmpty()) {
-            // dd($orders);
-            Session::flash('orderCompleted', true);
-            Session::flash('orderReference', $orderRef);
-            return redirect()->route('landing.page');
+            return redirect()->route('landing.page')->with([
+                'orderCompleted' => true,
+                'orderReference' => $orderRef,
+            ]);
         }
 
         foreach ($orders as $order) {

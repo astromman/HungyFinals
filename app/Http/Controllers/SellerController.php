@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Models\ProductOrder;
 use App\Models\Shop;
 use App\Models\UserProfile;
+use Carbon\Carbon;
+use CommonUtility;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -20,15 +22,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 class SellerController extends Controller
 {
+    // Controller Method
+    public function clearModalFlag()
+    {
+        session()->forget('modal_shown');
+        return response()->json(['message' => 'Modal flag cleared']);
+    }
+
     public function seller_dashboard(Request $request)
     {
         $sellerId = $request->session()->get('loginId'); // Assuming seller is logged in and you get their ID
         // dd($sellerId);
-        $shopId = Shop::where('user_id', $sellerId)->first()->id;
+        $shop = Shop::where('user_id', $sellerId)->first();
 
         // Yesterday's date range
         // $yesterdayStart = now()->subDay()->startOfDay();
@@ -65,9 +76,9 @@ class SellerController extends Controller
         // Query to get the sum of sold items for each category in the seller's shop
         $categoriesData = DB::table('categories')
             ->join('products', 'categories.id', '=', 'products.category_id')
-            ->join('orders', 'orders.product_id', 'products.id')
-            ->select('categories.type_name', DB::raw('SUM(products.sold) as total_sold'))
-            ->where('categories.shop_id', $shopId)
+            ->join('orders', 'products.id', 'orders.product_id')
+            ->select('categories.type_name', DB::raw('SUM(orders.quantity) as total_sold'))
+            ->where('products.shop_id', $shop->id)
             ->where('orders.order_status', 'Completed')
             ->groupBy('categories.type_name')
             ->pluck('total_sold', 'categories.type_name')
@@ -76,12 +87,23 @@ class SellerController extends Controller
         // Fetch Total Sold Items
         $totalSoldItems = array_sum(array_values($categoriesData));
 
+        // Fetch Most Sold Products for Bar Chart
+        $mostSoldProducts = DB::table('products')
+            ->join('shops', 'products.shop_id', '=', 'shops.id')
+            ->join('orders', 'products.id', 'orders.product_id')
+            ->select('products.product_name', 'products.sold')
+            ->where('shops.user_id', $sellerId)
+            ->where('orders.order_status', 'Completed')
+            ->distinct()
+            ->orderBy('products.sold', 'desc')
+            ->get();
+
         // BAR GRAPH (Modified to count unique order_reference)
         $dailyOrders = DB::table('orders')
             ->join('products', 'orders.product_id', '=', 'products.id')
             ->join('shops', 'products.shop_id', '=', 'shops.id')
             ->select(DB::raw('DATE(orders.created_at) as order_date'), DB::raw('COUNT(DISTINCT orders.order_reference) as total_orders'))
-            ->where('products.shop_id', $shopId)
+            ->where('products.shop_id', $shop->id)
             ->where('orders.order_status', '!=', 'At Cart')
             ->groupBy('order_date')
             ->orderBy('order_date', 'ASC')
@@ -99,7 +121,10 @@ class SellerController extends Controller
             ->orderBy('sale_date')
             ->get();
 
+        // where created_at >= $from && created_at <= $to
+
         return view('main.seller.seller', compact(
+            'shop',
             'pending',
             'totalNumberOfOrders',
             'totalIncome',
@@ -107,6 +132,7 @@ class SellerController extends Controller
             'dailyOrders',
             'totalSoldItems',
             'salesPerShop',
+            'mostSoldProducts'
         ));
     }
 
@@ -234,6 +260,14 @@ class SellerController extends Controller
             $shop->is_reopen = $request->is_reopen;
             $shop->updated_at = now();
             $shop->save();
+
+            // $isNewShop = false;
+            // if ($shop && Carbon::parse($shop->created_at)->gt(Carbon::now()->subMinutes(10))) {
+            //     session()->put('isNewShop', true);
+            //     $isNewShop = true;
+            // } else {
+            //     session()->put('isNewShop', false);
+            // }   
 
             // Redirect back with success message
             return response()->json(['success' => true]);
@@ -375,9 +409,11 @@ class SellerController extends Controller
 
         $hasProducts = Product::where('shop_id', $shopDetails->id)->value('id');
 
+        $hasCategories = Category::where('shop_id', $shopDetails->id)->value('id');
+
         $categories = Category::where('shop_id', $shopDetails->id)->get();
 
-        return view('main.seller.addProduct', compact('products', 'shopDetails', 'categories', 'category_id', 'hasProducts'));
+        return view('main.seller.addProduct', compact('products', 'shopDetails', 'categories', 'category_id', 'hasProducts', 'hasCategories'));
     }
 
     public function add_products(Request $request)
@@ -659,7 +695,14 @@ class SellerController extends Controller
         $shop = Shop::where('user_id', $userId)->first();
 
         try {
-            $validator = Validator::make($request->all(), [
+            $type_name = $request->type_name;
+
+            if (!str_ends_with($type_name, 's')) {
+                $type_name .= 's';
+            }
+
+            // Now perform validation with the modified type_name
+            $validator = Validator::make(['type_name' => $type_name], [
                 'type_name' => [
                     'required',
                     Rule::unique('categories')->where(function ($query) use ($shop) {
@@ -677,8 +720,10 @@ class SellerController extends Controller
 
             DB::beginTransaction();
 
+
+
             $category = new Category();
-            $category->type_name = $request->type_name;
+            $category->type_name = ucwords(strtolower($type_name));
             $category->shop_id = $shop->id;
             $category->created_at = now();
             $category->updated_at = now();
@@ -855,9 +900,39 @@ class SellerController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Order status updated.');
+            // Check if the order is marked as "Completed" and send the email
+            if ($order->order_status == 'Completed') {
+                try {
+                    // Fetch order details and buyer information
+                    $buyer = UserProfile::find($order->user_id);
+                    $orderDetails = Order::with(['productOrder', 'product.shop'])
+                        ->join('payments', 'orders.payment_id', 'payments.id')
+                        ->select(
+                            'orders.*',
+                            'payments.payment_type'
+                        )
+                        ->where('order_reference', $orderRef)
+                        ->get();
+
+                    // Send the email
+                    Mail::send('main.seller.order-receipt', ['buyer' => $buyer, 'orderDetails' => $orderDetails], function ($message) use ($buyer, $order) {
+                        $message->to($buyer->email)
+                            ->subject('Your reciept for Order ' . $order->order_reference . ' ');
+                    });
+                } catch (\Exception $e) {
+                    // Log the error or show it in the response
+                    dd($e);
+                    return redirect()->back()->with('error', 'Order updated but failed to send email.');
+                }
+            }
+
+            return redirect()->back()->with([
+                'updateOrder' => 'Order status updated.',
+                'orderStatus' => $order->order_status
+            ]);
         } catch (Exception $e) {
             DB::rollBack();
+            // dd($e);
             return redirect()->back()->with('error', 'Something went wrong while updating the order.');
         }
     }
@@ -930,7 +1005,7 @@ class SellerController extends Controller
         $payment->payment_status = 'Completed';
         $payment->save();
 
-        return redirect()->back()->with('success', 'Payment confirmed successfully.');
+        return redirect()->back()->with('confirmPayment', 'Payment confirmed successfully.');
     }
 
     public function rejectPayment(Request $request)
@@ -982,7 +1057,6 @@ class SellerController extends Controller
             return redirect()->back()->with('error', 'Failed to reject payment: ' . $e->getMessage());
         }
     }
-
 
     // VERIFICATION
     public function verified(Request $request)

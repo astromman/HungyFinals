@@ -16,7 +16,9 @@
                     {{ $order->designated_canteen }}
                 </small>
             </span>
-            <span>Order Ref: <small class="fw-bold">{{ $order->order_reference }}</small></span>
+            <span>Order Reference <br>
+                <small class="fw-bold">{{ $order->order_reference }}</small>
+            </span>
         </div>
 
         <div class="py-3 text-center text-success">

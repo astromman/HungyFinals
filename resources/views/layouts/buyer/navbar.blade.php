@@ -16,10 +16,10 @@
                     <a class="nav-link" href="{{ route('about.us.page') }}">About Us</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" data-bs-target="more-items" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         More
                     </a>
-                    <ul id="more-items" class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
                         <li><a class="dropdown-item" href="{{ route('buyer.order.history') }}">Order History</a></li>
                         <li><a class="dropdown-item" href="{{ route('my.favorites') }}">Favorites</a></li>
                     </ul>
@@ -28,20 +28,16 @@
             <div class="three-buttons d-flex align-items-center nav-icons">
                 @php
                 $userId = session()->get('loginId');
-
                 $ordersInCart = App\Models\Order::where('user_id', $userId)
                 ->where('at_cart', true)
                 ->get();
-
                 $sumInCart = $ordersInCart->count();
-
                 $submittedOrders = App\Models\Order::where('user_id', $userId)
                 ->where('order_status', '!=', 'Completed')
                 ->where('order_status', '!=', 'At Cart')
                 ->where('at_cart', false)
                 ->groupBy('order_reference')
                 ->get();
-
                 $sumOfOrders = $submittedOrders->count();
                 @endphp
                 <a class="nav-link position-relative" href="{{ route('shop.cart') }}">
@@ -74,5 +70,123 @@
         </div>
     </div>
 </nav>
+
 <!-- Include the Offcanvas -->
 @include('layouts.buyer.cart-offcanvas')
+
+@php
+$userId = session()->get('loginId');
+
+if (!$userId) {
+return redirect()->route('user.logout')->with('error', 'Invalid request!');
+}
+
+// Fetch all orders in cart, using LEFT JOIN to handle orders without payment info
+$orders = App\Models\Order::leftJoin('products', 'orders.product_id', 'products.id')
+->leftJoin('payments', 'orders.payment_id', 'payments.id')
+->leftJoin('categories', 'products.category_id', 'categories.id')
+->leftJoin('shops', 'products.shop_id', 'shops.id')
+->leftJoin('buildings', 'shops.building_id', 'buildings.id')
+->select(
+'orders.*',
+'products.product_name',
+'products.product_description',
+'products.image',
+'products.price',
+'products.category_id',
+'products.shop_id',
+'products.status',
+'products.is_deleted',
+'categories.type_name',
+'shops.shop_name',
+'buildings.building_name as designated_canteen',
+'payments.payment_status', // Include payment details if exists
+'payments.feedback',
+)
+->where('products.status', 'Available')
+->where('products.is_deleted', false)
+->where('orders.user_id', $userId)
+->where('orders.at_cart', true) // Only get orders still in the cart
+->where('orders.order_status', 'At Cart') // Orders that are in cart state
+->orderBy('orders.updated_at', 'desc')
+->get();
+if (!$orders) {
+return redirect()->route('landing.page')->with([
+'paymentRejected' => 'Submitted screen shot was rejected. Please checkout your order again with the correct screen shot.'
+]);
+}
+@endphp
+
+@if(session('paymentRejected'))
+<script>
+    Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "{{ session('paymentRejected') }}",
+        showCancelButton: false,
+        confirmButtonText: 'OK'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Redirect to the 'my.cart' route when OK is clicked
+            window.location.href = "{{ route('shop.cart') }}";
+        }
+    });
+</script>
+@endif
+
+@if(session('shopClosed'))
+<script>
+    Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "{{ session('shopClosed') }}",
+        showCancelButton: false,
+        confirmButtonText: 'OK'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Redirect to the 'my.cart' route when OK is clicked
+            window.location.href = "{{ route('shop.cart') }}";
+        }
+    });
+</script>
+@endif
+
+@if(session('shopIdError'))
+<script>
+    Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "{{ session('shopIdError') }}",
+        showCancelButton: false,
+        confirmButtonText: 'OK'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Redirect to the 'my.cart' route when OK is clicked
+            window.location.href = "{{ route('shop.cart') }}";
+        }
+    });
+</script>
+@endif
+
+@if(session('orderCompleted'))
+@include('main.buyer.review-modal')
+@endif
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        @if(session('success'))
+        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
+        successModal.show();
+        @endif
+
+        @if(session('error'))
+        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
+        @endif
+
+        @if(session('orderCompleted'))
+        var reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+        reviewModal.show();
+        @endif
+    });
+</script>

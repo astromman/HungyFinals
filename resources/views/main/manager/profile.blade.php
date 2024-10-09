@@ -88,6 +88,8 @@
         document.getElementById('editButton').style.display = 'inline-block';
         document.getElementById('saveButton').style.display = 'none';
         document.getElementById('cancelButton').style.display = 'none';
+
+        location.reload();
     }
 
     // Submit the form when the Save button is clicked

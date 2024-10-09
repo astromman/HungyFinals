@@ -8,10 +8,11 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Foundation\Events\Dispatchable;
 
 class NewOrderPlaced implements ShouldBroadcast
 {
-    use InteractsWithSockets, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $order;
 
@@ -22,14 +23,17 @@ class NewOrderPlaced implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        // Broadcast to a specific seller’s private channel
-        return new PrivateChannel('orders.' . $this->order->shop_id);
+        // Get the shop_id via the product associated with the order
+        $shopId = $this->order->product->shop_id; // Ensure relationship exists between Order and Product
+
+        // Broadcast to a specific shop’s private channel
+        return new PrivateChannel('orders.' . $shopId);
     }
 
     public function broadcastWith()
     {
         return [
-            'order' => $this->order,
+            'order' => $this->order->load('product'), // Make sure products are included
         ];
     }
 }

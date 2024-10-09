@@ -58,7 +58,7 @@
 
                                 <li>Password must be at least 8 characters long.</li>
                                 <li>Password must contain at least one(1) uppercase letter, one(1) numerical character.</li>
-                                <li>Must have atleast one(1) special character.</li>
+                                <li>Must have at least one(1) special character.</li>
                             </div>
                         </form>
                     </div>

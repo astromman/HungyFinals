@@ -70,7 +70,13 @@
                                 </a>
                                 <a href="{{ asset('storage/permits/' . $applicationData->contract) }}" download class="btn btn-link">Download</a>
                             </div>
-
+                            <div class="col-lg-3 px-2 text-center">
+                                Sanitary Permit
+                                <a href="{{ asset('storage/permits/' . $applicationData->sanitary) }}" target="_blank">
+                                    <embed src="{{ asset('storage/permits/' . $applicationData->sanitary) }}" width="100%" height="400px" style="object-fit: contain;" />
+                                </a>
+                                <a href="{{ asset('storage/permits/' . $applicationData->sanitary) }}" download class="btn btn-link">Download</a>
+                            </div>
                         </div>
                         <div class="text-center mt-3 pe-5">
                             <div class="d-flex justify-content-end align-items-end">
@@ -124,6 +130,10 @@
                                             <input type="checkbox" id="reject_contract" name="rejected_files[]" value="AdU contract">
                                             <label for="reject_contract">AdU Contract</label>
                                         </div>
+                                        <div>
+                                            <input type="checkbox" id="reject_sanitary" name="rejected_files[]" value="sanitary">
+                                            <label for="reject_sanitary">Sanitary Permit</label>
+                                        </div>
                                     </div>
 
                                     <button type="submit" class="btn btn-danger w-100">Submit</button>
@@ -153,7 +163,7 @@
                     setTimeout(() => {
                         row.style.width = "100%";
                         row.style.marginLeft = "0";
-                    }); // Delay to ensure the element is considered "displayed" before transitioning
+                    });
                 } else {
                     row.style.width = "0";
                     row.style.marginLeft = "100%";

@@ -57,7 +57,7 @@
                         @csrf
                         @method('DELETE')
                         <div class="d-flex justify-content-center align-items-center">
-                            <button type="submit" class="btn btn-side rounded-pill" title="Delete" onclick="return confirm('Are you sure you want to delete this canteen?')">
+                            <button type="submit" class="btn btn-side rounded-pill" title="Delete" onclick="return confirm('Are you sure you want to delete this product?')">
                                 <i class="bi bi-trash-fill" style="color: #050144;"></i>
                             </button>
                         </div>

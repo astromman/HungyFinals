@@ -31,7 +31,7 @@
                     </select>
                 </form>
             </div>
-            @if(!$shopDetails->is_reopen)
+            @if(!$shopDetails->is_reopen && $hasCategories)
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
                 <div class="row">
                     <div class="col-lg-2">
@@ -105,9 +105,6 @@
                     <p>{{ $displayProduct->product_description }}</p>
                     <div class="product-bottom-details d-flex justify-content-between align-items-center">
                         <div class="product-price">₱{{ $displayProduct->price }}</div>
-                        <div class="product-links">
-                            <a href="javascript:void(0);" class="toggle-favorite"><i class="fa fa-heart"></i></a>
-                        </div>
                     </div>
                 </div>
             </div>

@@ -4,61 +4,31 @@
 <div class="container pt-2">
     @if(!$applicationId)
     <!-- Title -->
-    <div class="ps-5 pb-3">
+    <div class="pb-1">
         <h2><b>Shop Verification</b></h2>
         <p>To use the system, please resubmit all the following permits needed.</p>
     </div>
 
     <div class="row justify-content-center">
         <!-- sub title inside the card/white-bg -->
-        <div class="card col-lg-10 shadow-lg rounded-4">
+        <div class="card col-lg-10 shadow rounded-4">
             <div class="container pt-3">
                 <h2>Upload all the following files</h2>
             </div>
 
-            <!-- progress tracker here -->
-            <!-- <div class="container con-pb py-3">
-                <div class="main">
-                    <ul class="progressbar">
-                        <li>
-                            <i class="icons awesome fa-solid fa-user"></i>
-                            <div class="step first active">
-                                <p>1</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Upload Files</p>
-                        </li>
-                        <li>
-                            <i class="icons awesome fa-solid fa-coins"></i>
-                            <div class="step second">
-                                <p>2</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Processing</p>
-                        </li>
-                        <li>
-                            <i class="icons awesome fa-solid fa-house"></i>
-                            <div class="step third">
-                                <p>3</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Complete</p>
-                        </li>
-                    </ul>
-                </div>
-            </div> -->
-
-            <div class="p-5">
+            <div class="px-lg-5 px-2 pt-3 mb-0">
                 @include('main.unverified.protobar')
             </div>
 
             <!-- form here -->
-            <div class="col-10 container justify-content-center align-items-center">
+            <div class="pt-0 col-10 container justify-content-center align-items-center">
                 <form method="POST" action="{{ route('submit.application') }}" enctype="multipart/form-data">
                     @csrf
                     <!-- First row -->
-                    <div class="mb-3">
-                        <label class="form-label">Shop Name</label>
+                    <h4>Shop Details</h4>
+                    <hr class="mt-0">
+                    <div class="mb-2">
+                        <label class="form-label">Shop Name <span class="text-danger">*</span></label>
                         <input name="shop_name" class="form-control @error('shop_name') is-invalid @enderror" value="{{ old('shop_name') }}" type="text">
                         <small class="text-muted">Please insert your registered shop name. If you have changes, please contact your manager.</small>
                         @error('shop_name')
@@ -66,62 +36,70 @@
                         @enderror
                     </div>
 
-                    <div class="row mb-2">
-                        <div class="mb-3 col-lg-6">
-                            <label class="form-label">Person in charge's email</label>
-                            <input name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" type="text">
-                            <small class="text-muted">This email is for the person in charge in handling online transaction.</small>
-                            @error('email')
-                            <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3 col-lg-6">
-                            <label class="form-label">E-Wallet Number</label>
+                    <div class="row d-flex align-items-center mb-3">
+                        <div class="col-lg-6 col-12">
+                            <label class="form-label">E-Wallet Number <span class="text-danger">*</span></label>
                             <input name="contact_num" class="form-control @error('contact_num') is-invalid @enderror" value="{{ old('contact_num') }}" type="text">
-                            <small class="text-muted">Please insert your E-wallet number such as Gcash, Paypal, etc.</small>
+                            <small class="text-muted">Please insert your E-wallet number such as Gcash.</small>
                             @error('contact_num')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
+                        <div class="col-lg-6 col-12">
+                            <label for="formFile" class="form-label">Shop Payment QR <span class="text-danger">*</span>(Image Only)</label>
+                            <input
+                                name="qr_image"
+                                class="form-control"
+                                type="file"
+                                id="formFile"
+                                {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
+                            <small class="text-muted">Please insert your Payment QR here.</small>
+                        </div>
                     </div>
 
-                    <div class="row mb-2">
-                        <div class="mb-3 col-lg-6">
-                            <label for="formFile" class="form-label">Mayor's Permit <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
+                    <h4 class="mb-0">Documents</h4>
+                    <small class="text-muted">Note: If you are uploading file with more than 1 page, submit it into PDF format. JPEG and PNG format are also allowed.</small>
+                    <hr>
+                    <div class="row">
+                        <div class="mb-3 col-lg-4">
+                            <label for="formFile" class="form-label">Mayor's Permit <span class="text-danger">*</span></label>
                             <input name="mayors" class="form-control @error('mayors') is-invalid @enderror" type="file" id="formFile">
-                            <small class="text-muted">If you are uploading file with more than 1 page, submit it into PDF format.</small>
                             @error('mayors')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
 
-                        <div class="mb-3 col-lg-6">
-                            <label for="formFile" class="form-label">BIR <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
+                        <div class="mb-3 col-lg-4">
+                            <label for="formFile" class="form-label">BIR <span class="text-danger">*</span></label>
                             <input name="bir" class="form-control @error('bir') is-invalid @enderror" type="file" id="formFile">
-                            <small class="text-muted">If you are uploading file with more than 1 page, submit it into PDF format.</small>
                             @error('bir')
+                            <small class="text-danger">{{ $message }}</small>
+                            @enderror
+                        </div>
+
+                        <div class="mb-3 col-lg-4">
+                            <label for="formFile" class="form-label">DTI <span class="text-danger">*</span></label>
+                            <input name="dti" class="form-control @error('dti') is-invalid @enderror" type="file" id="formFile">
+                            @error('dti')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
                     </div>
 
                     <!-- Second row -->
-                    <div class="row mb-2">
+                    <div class="row">
                         <div class="mb-3 col-lg-6">
-                            <label for="formFile" class="form-label">DTI <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
-                            <input name="dti" class="form-control @error('dti') is-invalid @enderror" type="file" id="formFile">
-                            <small class="text-muted">If you are uploading file with more than 1 page, submit it into PDF format.</small>
-                            @error('dti')
+                            <label for="formFile" class="form-label">Adamson Contract <span class="text-danger">*</span></label>
+                            <input name="contract" class="form-control @error('contract') is-invalid @enderror" type="file" id="formFile">
+                            @error('contract')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
 
                         <div class="mb-3 col-lg-6">
-                            <label for="formFile" class="form-label">Adamson Contract <span class="text-danger">*</span>(PDF, JPEG, PNG Only)</label>
-                            <input name="contract" class="form-control @error('contract') is-invalid @enderror" type="file" id="formFile">
-                            <small class="text-muted">If you are uploading file with more than 1 page, submit it into PDF format.</small>
-                            @error('contract')
+                            <label for="formFile" class="form-label">Sanitary Permit <span class="text-danger">*</span></label>
+                            <input name="sanitary" class="form-control @error('sanitary') is-invalid @enderror" type="file" id="formFile">
+                            @error('sanitary')
                             <small class="text-danger">{{ $message }}</small>
                             @enderror
                         </div>
@@ -129,7 +107,7 @@
 
 
                     <!-- Submit button -->
-                    <div class="pb-2 text-center">
+                    <div class="py-2 text-center">
                         <button type="submit" class="btn btn-primary btn-rounded w-100 rounded-pill mb-3">Submit</button>
                     </div>
                 </form>
@@ -150,38 +128,6 @@
             <div class="container pt-3">
                 <h2>Processing your Application</h2>
             </div>
-
-            <!-- progress tracker here -->
-            <!-- <div class="container con-pb pt-3">
-                <div class="main">
-                    <ul class="progressbar">
-                        <li>
-                            <i class="icons awesome fa-solid fa-user"></i>
-                            <div class="step first active">
-                                <p>1</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Upload Files</p>
-                        </li>
-                        <li>
-                            <i class="icons awesome fa-solid fa-coins"></i>
-                            <div class="step second active">
-                                <p class="numbertwo">2</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Processing</p>
-                        </li>
-                        <li>
-                            <i class="icons awesome fa-solid fa-house"></i>
-                            <div class="step third">
-                                <p>3</p>
-                                <i class="awesome fa-solid fa-check"></i>
-                            </div>
-                            <p class="label">Complete</p>
-                        </li>
-                    </ul>
-                </div>
-            </div> -->
 
             <div class="p-5">
                 @include('main.unverified.protobar')
@@ -236,13 +182,13 @@
                 <div class="alert alert-danger" role="alert">
                     <p>Your previous application has been rejected.</p>
                     <strong>Manager's Feedback:</strong>
+                    <p class="mb-0 text-capitalize">
+                        Rejected Files:
+                        {{ $applicationId->rejected_files }}
+                    </p>
                     <p class="mb-0">
                         Reason:
                         {{ $applicationId->feedback }}
-                    </p>
-                    <p class="mb-0">
-                        Rejected Files:
-                        {{ $applicationId->rejected_files}}
                     </p>
                 </div>
                 <form method="POST" action="{{ route('resubmit.application') }}" enctype="multipart/form-data">
@@ -284,6 +230,16 @@
                         <label for="contract" class="form-label">AdU Contract (PDF, JPEG, PNG Only)</label>
                         <input name="contract" class="form-control @error('contract') is-invalid @enderror" type="file" id="contract">
                         @error('contract')
+                        <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                    @endif
+
+                    @if(str_contains($applicationId->rejected_files, 'Sanitary Permit') || str_contains($applicationId->rejected_files, 'sanitary'))
+                    <div class="mb-3">
+                        <label for="sanitary" class="form-label">Sanitary Permit (PDF, JPEG, PNG Only)</label>
+                        <input name="sanitary" class="form-control @error('sanitary') is-invalid @enderror" type="file" id="sanitary">
+                        @error('sanitary')
                         <small class="text-danger">{{ $message }}</small>
                         @enderror
                     </div>

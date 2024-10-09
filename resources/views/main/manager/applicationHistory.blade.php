@@ -63,6 +63,9 @@
                                             </button>
                                         </td>
                                     </tr>
+
+
+
                                     <!-- Modal for displaying documents -->
                                     <div class="modal fade" id="documentsModal-{{ $applicationData->id }}" tabindex="-1" aria-labelledby="documentsModalLabel-{{ $applicationData->id }}" aria-hidden="true">
                                         <div class="modal-dialog modal-xl">
@@ -72,34 +75,50 @@
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <div class="row text-center">
-                                                        <div class="col-lg-3">
+                                                    <div class="row text-center g-3"> <!-- Added gutter spacing here -->
+                                                        <!-- Mayor's Permit -->
+                                                        <div class="col">
                                                             <strong>Mayor's Permit</strong>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->mayors) }}" target="_blank">
                                                                 <embed src="{{ asset('storage/permits/' . $applicationData->mayors) }}" width="100%" height="400px" style="object-fit: contain;" />
                                                             </a>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->mayors) }}" download class="btn btn-link">Download</a>
                                                         </div>
-                                                        <div class="col-lg-3">
+
+                                                        <!-- BIR -->
+                                                        <div class="col">
                                                             <strong>BIR</strong>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->bir) }}" target="_blank">
                                                                 <embed src="{{ asset('storage/permits/' . $applicationData->bir) }}" width="100%" height="400px" style="object-fit: contain;" />
                                                             </a>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->bir) }}" download class="btn btn-link">Download</a>
                                                         </div>
-                                                        <div class="col-lg-3">
+
+                                                        <!-- DTI -->
+                                                        <div class="col">
                                                             <strong>DTI</strong>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->dti) }}" target="_blank">
                                                                 <embed src="{{ asset('storage/permits/' . $applicationData->dti) }}" width="100%" height="400px" style="object-fit: contain;" />
                                                             </a>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->dti) }}" download class="btn btn-link">Download</a>
                                                         </div>
-                                                        <div class="col-lg-3">
+
+                                                        <!-- AdU Contract -->
+                                                        <div class="col">
                                                             <strong>AdU Contract</strong>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->contract) }}" target="_blank">
                                                                 <embed src="{{ asset('storage/permits/' . $applicationData->contract) }}" width="100%" height="400px" style="object-fit: contain;" />
                                                             </a>
                                                             <a href="{{ asset('storage/permits/' . $applicationData->contract) }}" download class="btn btn-link">Download</a>
+                                                        </div>
+
+                                                        <!-- Sanitary Permit -->
+                                                        <div class="col">
+                                                            <strong>Sanitary Permit</strong>
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->sanitary) }}" target="_blank">
+                                                                <embed src="{{ asset('storage/permits/' . $applicationData->sanitary) }}" width="100%" height="400px" style="object-fit: contain;" />
+                                                            </a>
+                                                            <a href="{{ asset('storage/permits/' . $applicationData->sanitary) }}" download class="btn btn-link">Download</a>
                                                         </div>
                                                     </div>
                                                 </div>

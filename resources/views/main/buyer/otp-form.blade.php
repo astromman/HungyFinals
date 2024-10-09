@@ -4,6 +4,11 @@
         <strong>{{ session('success') }}</strong>
     </div>
     @endif
+    @if (session('error'))
+    <div class="alert alert-info" role="alert">
+        <strong>{{ session('error') }}</strong>
+    </div>
+    @endif
     <h1>Enter OTP:</h1>
     <p style="font-size: 15px;">We sent a code to your email. {{ $censoredEmail }}</p>
     <form action="{{ route('verify.otp.post') }}" method="POST">
@@ -57,6 +62,14 @@
         font-size: 14px;
         text-align: left;
         margin-bottom: 5px;
+    }
+
+    input[type="email"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
     }
 
     input[type="text"] {

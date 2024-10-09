@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Hungry Falcons</title>
@@ -11,18 +12,23 @@
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" class="href">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@48,400,0,0" />
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1"></script>
 
-    <!-- Scripts -->
-    @vite(['resources/sass/app.scss', 'resources/js/app.js'])
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+    <!-- Bootstrap Bundle with Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Sweet Alert -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.1/dist/sweetalert2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.1/dist/sweetalert2.all.min.js"></script>
 
     <style>
         body {
@@ -129,10 +135,6 @@
         .text-muted {
             color: var(--clr-info-dark);
         }
-
-        /* p {
-            color: var(--clr-dark-variant);
-        } */
 
         b {
             color: var(--clr-dark);
@@ -480,15 +482,6 @@
             transition: 0.3s;
         }
 
-        /* .sidebar a {
-            padding: 8px 23px;
-            text-decoration: none;
-            font-size: 16px;
-            color: white;
-            display: block;
-            transition: 0.3s;
-        } */
-
         .sidebar a:hover {
             color: #5479f7;
         }
@@ -668,9 +661,6 @@
             color: #8DC3F2;
             transition: 0.3s;
         }
-
-        /* .product-details h4 a:hover {
-        } */
 
         .product-details p {
             font-size: 15px;
@@ -993,6 +983,7 @@
             display: flex;
             justify-content: space-between;
             gap: 2rem;
+            /* padding-top: 2rem; */
             padding-bottom: 2rem;
         }
 
@@ -1032,12 +1023,128 @@
             color: #0B1E59;
             font-size: 50px
         }
+
+        /* Toastr Notification Styles */
+        .toast {
+            background-color: #8DC3F2 !important;
+            /* Set the desired background color */
+            opacity: 1 !important;
+            /* Ensure full opacity */
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+            /* Optional shadow for better visibility */
+        }
+
+        .toast-info {
+            background-color: #8DC3F2 !important;
+            /* Set the background for info type notifications */
+            color: white !important;
+            /* Ensure text color is set for contrast */
+            opacity: 1 !important;
+            /* Ensure no transparency */
+        }
+
+        .toast-info .toast-message {
+            display: flex;
+            align-items: center;
+        }
+
+        .toast-info .toast-message i {
+            margin-right: 10px;
+        }
+
+        .toast-info .toast-message .notification-content {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+        }
+
+        /* Ensure the entire Toastr container has no transparency */
+        .toast:hover {
+            opacity: 1 !important;
+            /* Remove any hover transparency */
+        }
     </style>
 
 </head>
 
 <body>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     @include('layouts.seller.sidebar')
+
+    <!-- Main Content Area -->
+    <div class="content-area">
+        @yield('content')
+
+        <!-- Toastr JavaScript -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+        <!-- Pusher -->
+        <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+        <!-- Script For notification -->
+        <script>
+            Pusher.logToConsole = true;
+
+            // Initialize Pusher
+            var pusher = new Pusher('32acbce4969b2fe50044', {
+                cluster: 'mt1'
+            });
+
+            // Subscribe to the channel
+            var channel = pusher.subscribe('notification');
+
+            // Array to store the order references that have already triggered notifications
+            var notifiedOrders = [];
+
+            // Bind to the event
+            channel.bind('new-order.notification', function(order) {
+
+                // Display Toastr notification with icons and inline content
+                if (order && !notifiedOrders.includes(order.order.order_reference)) {
+                    // Add the order reference to the list of notified orders
+                    notifiedOrders.push(order.order.order_reference);
+
+                    // this will display the new row
+                    // kaylangan kung anong itsura sa ui, ganun din sa script
+                    // '<tr> </tr>' 
+                    // id of table .prepend
+
+                    toastr.info(
+                        ' <div class="notification-content"> ' +
+                        ' <i class="fas fa-user"></i> <span> ' + order.order.order_reference + ' </span> ' +
+                        ' <i class="fas fa-book" style="margin-left: 20px;"></i> <span> </span> ' +
+                        ' </div> ',
+                        'New Order', {
+                            closeButton: true,
+                            progressBar: true,
+                            timeOut: 0, // Set timeOut to 0 to make it persist until closed
+                            extendedTimeOut: 0, // Ensure the notification stays open
+                            positionClass: 'toast-top-right',
+                            enableHtml: true,
+                            toastClass: 'toast toast-info',
+                            onclick: function() {
+                                window.location.href = "{{ route('my.orders') }}"; // Redirect to my.orders route
+                            }
+                        }
+                    );
+                } else {
+                    console.error('Invalid data received:', order);
+                }
+            });
+
+            // Debugging line
+            pusher.connection.bind('connected', function() {
+                console.log('Pusher connected');
+            });
+        </script>
+
+        <!-- Bootstrap Bundle with Popper.js -->
+        <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> -->
+    </div>
+
+    <!-- Custom JS -->
+    <!-- @vite(['resources/js/app.js']) -->
 
 </body>
 

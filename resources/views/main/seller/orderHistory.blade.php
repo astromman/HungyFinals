@@ -48,7 +48,7 @@
                         data-bs-target="#orderDetails{{ $order->id }}"
                         aria-expanded="false"
                         aria-controls="orderDetails{{ $order->id }}">
-                        {{ $order->updated_at }}
+                        {{ $order->updated_at->format('M d Y, h:i A') }}
                     </td>
                     <td class="text-center text-uppercase"
                         data-bs-toggle="collapse"
@@ -159,6 +159,7 @@
                         </div>
                     </div>
                 </div>
+                
                 @empty
                 <tr>
                     <td class="text-center" colspan="9">No orders found.</td>

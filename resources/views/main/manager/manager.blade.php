@@ -6,7 +6,7 @@
         <h1>Dashboard</h1>
 
         <div class="insights">
-            <div class="sales">
+            <div class="sales shadow">
                 <i class="bi bi-envelope-paper-fill"></i>
                 <div class="middle">
                     <div class="left">
@@ -17,7 +17,7 @@
                 <small>Last 24 Hours</small>
             </div>
 
-            <div class="expenses">
+            <div class="expenses shadow">
                 <i class="bi bi-shop"></i>
                 <div class="middle">
                     <div class="left">
@@ -28,7 +28,7 @@
                 <small>Last 24 Hours</small>
             </div>
 
-            <div class="income">
+            <div class="income shadow">
                 <i class="bi bi-patch-check-fill"></i>
                 <div class="middle">
                     <div class="left">
@@ -44,17 +44,22 @@
 
     <!-- Start Pie and Bar Charts Side by Side -->
     <h2>Analytics</h2>
-    <div class="charts">
-        <div class="chart-container shadow pb-5">
-            <h3>Total orders per shop</h3>
-            <canvas id="myPieChart"></canvas>
-        </div>
+    <div class="row">
+        <div class="charts col-4">
+            <div class="chart-container shadow pb-5">
+                <h3>Total orders per shop</h3>
+                <canvas id="myPieChart"></canvas>
+            </div>
 
-        <div class="chart-container shadow pb-5">
-            <h3>Sales per shop</h3>
-            <canvas id="myLineChart"></canvas>
+        </div>
+        <div class="charts col-8">
+            <div class="chart-container shadow pb-5">
+                <h3>Sales per shop</h3>
+                <canvas id="myLineChart"></canvas>
+            </div>
         </div>
     </div>
+
     <!-- End Pie and Bar Charts -->
 
     <!-- Doughnut Chart for Total Orders per Shop -->
@@ -65,7 +70,7 @@
 
         const pieCtx = document.getElementById('myPieChart').getContext('2d');
         const myPieChart = new Chart(pieCtx, {
-            type: 'doughnut',
+            type: 'pie',
             data: {
                 labels: pieLabels,
                 datasets: [{
@@ -77,7 +82,13 @@
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'right', // Vertical legend
+                    }
+                }
             }
         });
     </script>

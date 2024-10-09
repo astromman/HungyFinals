@@ -29,7 +29,7 @@
         </div>
 
         <button class="btn btn-side btn-toggle rounded collapsed" data-bs-toggle="collapse" data-bs-target="#shop-collapse">
-            <i class="bi bi-side bi-cart-check"></i>
+            <i class="bi bi-shop"></i>
             SHOP
         </button>
         <div class="collapse show ps-3" id="shop-collapse">
@@ -43,6 +43,86 @@
         <a class="btn-side" href="{{ route('verified') }}"><i class="bi bi-side bi-check2-square"></i> VERIFICATION</a>
     </div>
 
+    @php
+    use Carbon\Carbon;
+    $userId = session()->get('loginId');
+    $shop = App\Models\Shop::where('user_id', $userId)->first();
+    $permits = App\Models\Permit::where('shop_id', $shop->id)->where('status', 'Approved')->first();
+
+    // Check if the shop is new (within the last 50 minutes)
+    $isNewShop = false;
+    if ($shop && Carbon::parse($permits->updated_at)->gt(Carbon::now()->subMinutes(30))) {
+    session()->put('isNewShop', true);
+    $isNewShop = true;
+    } else {
+    session()->put('isNewShop', false);
+    }
+    @endphp
+
+    <!-- First Ever Modal -->
+    <div class="modal fade" id="firstModalEver" tabindex="-1" aria-labelledby="firstModalEver" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="firstModalEverLabel">Shop Update</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>
+                        <strong>Shop temporarily closed.</strong>
+                    </h4>
+                    <div class="alert alert-primary">
+                        <h4>
+                            <strong>Welcome to our platform!</strong>
+                        </h4>
+                        Set up your shop and products to start receiving orders.
+                        After you have set up your shop, you can open it by clicking at the Profile Button located at the
+                        Top right of your screen.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Status Update -->
+    <div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title" id="statusModalLabel">Shop Update</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="location.reload();"></button>
+                </div>
+                @if($shop->is_reopen)
+                <div class="modal-body">
+                    <h4>
+                        <strong>Shop temporarily closed.</strong>
+                    </h4>
+                    <div class="alert alert-primary">
+                        You can re-open it again anytime soon. Updating exsisting orders are disabled as well.
+                        Shop will not be recieving orders for the mean time.
+                    </div>
+                </div>
+                @else
+                <div class="modal-body">
+                    <h4>
+                        <strong>Shop is now open.</strong>
+                    </h4>
+                    <div class="alert alert-primary">
+                        Editing products, categories, and shop details are disabled while your shop is open.
+                        You can now recieve orders.
+                    </div>
+                </div>
+                @endif
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.reload();">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid">
@@ -50,10 +130,6 @@
             <a class="navbar-brand" href="{{ route('seller.dashboard') }}">Hungry Falcons</a>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    @php
-                    $userId = session()->get('loginId');
-                    $shop = App\Models\Shop::where('user_id', $userId)->first();
-                    @endphp
                     <li class="px-3 nav-item d-flex align-items-center">
                         <div class="text-white" id="userDropdown" data-bs-toggle="dropdown">
                             {{ $shop->shop_name }}
@@ -76,7 +152,7 @@
                                 </li>
                                 <hr>
                                 <li><a class="dropdown-item" href="{{ route('seller.change.password') }}">Change Password</a></li>
-                                <li><a class="dropdown-item" href="{{ route('user.logout') }}">Logout</a></li>
+                                <li><a class="dropdown-item" href="{{ route('user.logout') }}" onclick="sessionStorage.removeItem('modalClosed');">Logout</a></li>
                             </ul>
                         </div>
                     </li>
@@ -86,47 +162,10 @@
     </nav>
 </div>
 
-<!-- Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1" aria-labelledby="statusModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title" id="statusModalLabel">Shop Update</h3>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="location.reload();"></button>
-            </div>
-            @if($shop->is_reopen)
-            <div class="modal-body">
-                <h4>
-                    <strong>Shop temporarily closed.</strong>
-                </h4>
-                <div class="alert alert-primary">
-                    You can re-open it again anytime soon. Updating exsisting orders are disabled as well.
-                    Shop will not be recieving orders for the mean time.
-                </div>
-            </div>
-            @else
-            <div class="modal-body">
-                <h4>
-                    <strong>Shop is now open.</strong>
-                </h4>
-                <div class="alert alert-primary">
-                    Editing products, categories, and shop details are disabled while your shop is open.
-                    You can now recieve orders.
-                </div>
-            </div>
-            @endif
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.reload();">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- Bootstrap Bundle with Popper.js -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> -->
 
-<!-- Main Content Area -->
-<div class="content-area">
-    @yield('content')
-</div>
-
+<!-- Sidebar scripts -->
 <script>
     function toggleStoreStatus(checkbox) {
         const statusLabel = document.getElementById('storeStatusLabel');
@@ -140,9 +179,30 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Status Modal: Display and Refresh on Close
         @if(session('status_updated'))
         var statusModal = new bootstrap.Modal(document.getElementById('statusModal'));
         statusModal.show();
+
+        // Listen for the hidden.bs.modal event (fired when modal is fully hidden)
+        document.getElementById('statusModal').addEventListener('hidden.bs.modal', function() {
+            console.log("Modal was closed, reloading the page...");
+            location.reload(); // Reload the page when the modal is closed
+        });
+        @endif
+
+        // First Modal for New Shop
+        @if(session('isNewShop'))
+        if (!sessionStorage.getItem('modalClosed')) {
+            var firstModalEver = new bootstrap.Modal(document.getElementById('firstModalEver'));
+            firstModalEver.show();
+
+            // Listen for the hidden.bs.modal event (fired when modal is fully hidden)
+            document.getElementById('firstModalEver').addEventListener('hidden.bs.modal', function() {
+                sessionStorage.setItem('modalClosed', 'true'); // Set sessionStorage to prevent modal from reappearing
+                console.log('First time modal closed.');
+            });
+        }
         @endif
     });
 

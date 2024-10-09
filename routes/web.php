@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BuyerController;
+use App\Http\Controllers\CommonUtilityController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\UnverifiedController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\Translation\Loader\CsvFileLoader;
@@ -22,15 +24,11 @@ use Symfony\Component\Translation\Loader\CsvFileLoader;
 |
 */
 
-Route::get('/test', function () {
-    // return view('main.buyer.qpayment');
-    Mail::raw('This is a test email using Mailjet', function ($message) {
-        $message->to('lloyd.adrian.lindo@adamson.edu.ph')
-            ->subject('Test Mail from Hungry Falcons');
-    });
-});
-
 Route::get('/logout', [LoginController::class, 'logout'])->name('user.logout');
+
+Route::get('/test', function() {
+    return view('test.content');
+});
 
 Route::group([
     'prefix' => '/',
@@ -39,19 +37,28 @@ Route::group([
         'guest',
     ]
 ], function () {
+    Route::get('/', [LoginController::class, 'index'])->name('guest.page');
+
     Route::get('/login', [LoginController::class, 'login_form'])->name('login.form');
     Route::post('/login', [LoginController::class, 'login_post'])->name('login.post');
 
     Route::get('/register', [LoginController::class, 'register_form'])->name('register.form');
     Route::post('/register', [LoginController::class, 'register_post'])->name('register.post');
 
-    Route::get('/verify-otp', [LoginController::class, 'showOtpForm'])->name('verify.otp');
+    Route::get('/_about-us', [BuyerController::class, 'gestAboutPage'])->name('guest.about.us.page');
+
+    Route::get('/verify-otp', [LoginController::class, 'showOtpForm'])->name('show.otp.form');
     Route::post('/verify-otp', [LoginController::class, 'verifyOtp'])->name('verify.otp.post');
     Route::get('/resend-otp', [LoginController::class, 'resendOtp'])->name('resend.otp');
 
     Route::get('/forgot-password', [LoginController::class, 'forgot_pass_form'])->name('forgot.pass.form');
-    Route::get('/forgot-password/verifiaction', [LoginController::class, 'forgot_pass_verification_form'])->name('forgot.pass.verification.form');
-    Route::get('/forgot-password/new-password', [LoginController::class, 'forgot_pass_new_pass_form'])->name('forgot.pass.new.pass.form');
+    Route::post('/forgot-password', [LoginController::class, 'sendResetLinkEmail'])->name('forgot.pass.email');
+
+    Route::get('/otp-verification', [LoginController::class, 'showOtpVerificationForm'])->name('otp.verification.form');
+    Route::post('/otp-verification', [LoginController::class, 'verifyResetOtp'])->name('verify.reset.otp');
+    Route::get('/new-password', [LoginController::class, 'showNewPasswordForm'])->name('new.password.form');
+    Route::post('/new-password', [LoginController::class, 'resetPassword'])->name('reset.password');
+    Route::get('/helloworld', [CommonUtilityController::class, 'helloWorld']);
 
     Route::get('/auth/google/redirect', [LoginController::class, 'googleRedirect'])->name('google.redirect');
     Route::get('/auth/google/callback', [LoginController::class, 'googleCallback'])->name('google.callback');
@@ -97,6 +104,7 @@ Route::group([
     Route::delete('/cart/remove-items/{shopId}', [BuyerController::class, 'removeItems'])->name('remove.items');
 
     Route::get('/checkout/{shopId}', [BuyerController::class, 'checkoutOrders'])->name('checkout.orders');
+    Route::post('/seller/notify-new-order', [BuyerController::class, 'notifyNewOrder'])->name('seller.notify.new.order');
     Route::post('/submit-payment-screenshot/{shopId}', [BuyerController::class, 'submitPaymentScreenshot'])->name('submit.payment.screenshot');
     Route::post('/checkout/place-order/{shopId}', [BuyerController::class, 'placeOrder'])->name('place.order');
     Route::get('/payment/success', [BuyerController::class, 'paymentSuccess'])->name('payment.success');
@@ -127,7 +135,7 @@ Route::group([
 ], function () {
     Route::get('/verification', [UnverifiedController::class, 'resubmission_form'])->name('resubmission.form');
     Route::post('/verification', [UnverifiedController::class, 'submit_application'])->name('submit.application');
-    Route::post('/verifiaction', [UnverifiedController::class, 'resubmit_application'])->name('resubmit.application');
+    Route::post('/verification/resubmit', [UnverifiedController::class, 'resubmit_application'])->name('resubmit.application');
 
     Route::get('/change-password', [UnverifiedController::class, 'unv_change_password'])->name('unv.change.password');
     Route::post('/change-password', [UnverifiedController::class, 'update_password'])->name('unv.update.password');
@@ -143,6 +151,8 @@ Route::group([
     ]
 ], function () {
     Route::get('/dashboard', [SellerController::class, 'seller_dashboard'])->name('seller.dashboard');
+
+    Route::post('/clear-modal-flag', [SellerController::class, 'clearModalFlag'])->name('clear.modal.flag');
 
     Route::get('/change-password', [SellerController::class, 'seller_change_password'])->name('seller.change.password');
     Route::post('/change-password', [SellerController::class, 'update_password'])->name('seller.update.password');
@@ -166,6 +176,7 @@ Route::group([
     Route::delete('/delete-categories/{id}', [SellerController::class, 'delete_category'])->name('delete.category');
 
     Route::get('/my-orders', [SellerController::class, 'my_orders'])->name('my.orders');
+    Route::get('/seller/check-new-orders', [SellerController::class, 'checkNewOrders'])->name('seller.check.new.orders');
     Route::post('/update-order/{orderRef}', [SellerController::class, 'updateOrder'])->name('update.order');
     Route::post('/confirm-payment', [SellerController::class, 'confirmPayment'])->name('confirm.payment');
     Route::post('/reject-payment', [SellerController::class, 'rejectPayment'])->name('reject.payment');
@@ -237,4 +248,9 @@ Route::group([
     Route::get('/managers-accounts/edit/{id}', [AdminController::class, 'edit_button_manager_account'])->name('edit.button.manager.account');
     Route::put('/managers-accounts/edit/{id}', [AdminController::class, 'edit_manager_account'])->name('edit.manager.account');
     Route::delete('/managers-accounts/delete/{id}', [AdminController::class, 'delete_manager'])->name('delete.manager');
+});
+
+// images when deployed
+Route::get('/foo', function () {
+    Artisan::call('storage:link');
 });

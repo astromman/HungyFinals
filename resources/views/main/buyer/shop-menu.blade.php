@@ -1,26 +1,6 @@
 @extends('layouts.buyer.buyermaster')
 
 @section('content')
-<!-- Success Modal -->
-@if (session('success'))
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="successModalLabel">Success</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {{ session('qty') > 1 ? 'Items' : 'Item' }} added to cart!
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
 <div class="container my-4">
     <div class="row">
         <div class="mb-2">
@@ -51,21 +31,21 @@
 
             <!-- Gradient Overlay -->
             <div class="position-absolute w-100 h-100"
-                style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)); 
+                style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)); 
                 z-index: 1;">
             </div>
 
             <!-- Content -->
             <div class="position-absolute bottom-0 w-100 p-5"
-                style="z-index: 1; color: white; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);">
+                style="z-index: 1; color: white; text-shadow: 2px 2px 4px rgba(0, 0, 0, 1);">
                 <table>
                     <tbody>
                         <tr>
                             <td>
-                                <h1>{{ $shops->shop_name }}</h1>
+                                <h1 class="text-white">{{ $shops->shop_name }}</h1>
                             </td>
-                            <td class="px-2">
-                                <div class="px-1 rounded-2 shadow bg-success">
+                            <td class="px-2 canteen-badge">
+                                <div class="px-1 rounded-2 shadow bg-success text-white">
                                     <span>{{ $shops->designated_canteen }}</span>
                                 </div>
                                 ‎
@@ -167,6 +147,18 @@
     @include('main.buyer.product-modal')
 
 </div>
+
+@if(session('addToCart'))
+<script>
+    Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "{{ session('qty') > 1 ? 'Items' : 'Item' }} added to cart!",
+        showConfirmButton: true,
+        allowOutsideClick: true
+    });
+</script>
+@endif
 
 <!-- JavaScript for handling modal and favorites -->
 <script>
@@ -337,6 +329,186 @@
         /* Ensure the line spans the entire width */
         margin: 0;
         /* Remove default margins */
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+
+        .col-12,
+        .col-md-6,
+        .col-lg-3 {
+            width: 100% !important;
+            padding-left: 80px !important;
+            margin-bottom: 10px !important;
+        }
+
+        /* Ensure full-width for the product wrapper on mobile */
+        .product-wrapper {
+            width: 74.2% !important;
+            padding: 10px !important;
+        }
+
+        /* Adjust the image container */
+        .product-tumb {
+            height: 150px !important;
+        }
+
+        .product-details h4 {
+            font-size: 1.1rem !important;
+        }
+
+        .product-details p {
+            font-size: 0.9rem !important;
+        }
+
+        .product-price {
+            font-size: 1rem !important;
+        }
+
+        .favorite-btn {
+            font-size: 12px !important;
+            padding: 4px 8px !important;
+        }
+
+        .full-width-line {
+            width: 100% !important;
+        }
+    }
+
+    /* Media query for mobile devices */
+    @media (max-width: 768px) {
+
+        /* Shop banner adjustments */
+        .container.position-relative {
+            width: 94% !important;
+            height: 220px !important;
+            /* Reduce height for mobile */
+            overflow: hidden;
+            padding: 0 !important;
+            /* Remove padding */
+            margin: 10 !important;
+            /* Remove margin */
+        }
+
+        .position-absolute.bottom-0.w-100.p-5 {
+            padding: 10px !important;
+            text-align: left !important;
+            /* Ensure text is left-aligned */
+            padding-left: 15px !important;
+            /* Remove left padding */
+            margin-left: 0px !important;
+            /* Ensure no margin is causing spacing */
+        }
+    }
+
+    /* h1 {
+        font-size: 1.3rem !important;
+    } */
+
+    .highlight-text {
+        font-size: 0.8rem !important;
+        /* Smaller font size for bio text */
+    }
+
+    /* Adjust padding for product cards on mobile */
+    .product-wrapper {
+        padding: 10px !important;
+        margin: 0 !important;
+        /* Ensure no extra margins between cards */
+    }
+
+    /* Image container inside product cards */
+    .product-tumb {
+        height: 150px !important;
+        /* Reduce height for mobile */
+    }
+
+    /* Adjust product details for mobile */
+    .product-details h4 {
+        font-size: 1.1rem !important;
+        /* Adjust product name size */
+    }
+
+    .product-details p {
+        font-size: 0.9rem !important;
+        /* Adjust product description size */
+    }
+
+    /* Product price adjustment */
+    .product-price {
+        font-size: 1rem !important;
+        /* Adjust price size */
+    }
+
+    /* Favorite button adjustments for mobile */
+    .favorite-btn {
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+    }
+
+    /* Category title size */
+    .category-section h2 {
+        font-size: 1.3rem !important;
+        /* Adjust category title size */
+    }
+
+    /* Horizontal line adjustments */
+    .category-section hr {
+        margin: 5px 0 !important;
+    }
+
+
+    /* Additional adjustments for extra small screens */
+    @media (max-width: 576px) {
+        .container.position-relative {
+            height: 180px !important;
+            /* Further reduce height for smaller screens */
+        }
+
+        .position-absolute.bottom-0.w-100.p-5 {
+            padding: 5px !important;
+            /* Further reduce padding */
+        }
+
+        /* h1 {
+            font-size: 1rem !important;
+        } */
+
+        .text-white {
+            font-size: 0.8rem !important;
+        }
+
+        .highlight-text {
+            font-size: 0.7rem !important;
+        }
+
+        /* Adjustments for product image height */
+        .product-tumb {
+            height: 120px !important;
+        }
+
+        /* Product details adjustments */
+        .product-details h4 {
+            font-size: 0.9rem !important;
+        }
+
+        .product-details p {
+            font-size: 0.8rem !important;
+        }
+
+        /* Adjustments for favorite button and price */
+        .favorite-btn {
+            font-size: 10px !important;
+            padding: 3px 6px !important;
+        }
+
+        .product-price {
+            font-size: 0.9rem !important;
+        }
+
+        .canteen-badge {
+            font-size: 0.7rem !important;
+        }
     }
 </style>
 

@@ -37,17 +37,22 @@ class CustomAuthMiddleware
             if (!$user) {
                 return redirect()->route('login.form')->withErrors(['error' => 'Invalid username or password']);
             }
-
+            
             $credentials = Credential::where('user_id', $user->id)->where('is_deleted', 0)->orderBy('created_at', 'desc')->first();
 
             if (!$credentials || !Hash::check($password, $credentials->password)) {
                 return redirect()->route('login.form')->withErrors(['error' => 'Invalid username or password']);
             }
 
-            $request->session()->put('user', $user);
-            $request->session()->put('loginId', $user->id);
-            $request->session()->put('username', $user->username);
-            $request->session()->put('email', $user->email);
+            // Only store the session if the user is verified
+            if ($user->email_verified_at) {
+                $request->session()->put('user', $user);
+                $request->session()->put('loginId', $user->id);
+                $request->session()->put('username', $user->username);
+                $request->session()->put('email', $user->email);
+            } else {
+                return redirect()->route('show.otp.form')->withErrors(['error' => 'Please verify your email first.']);
+            }
 
             return $next($request);
         } catch (\Exception $e) {

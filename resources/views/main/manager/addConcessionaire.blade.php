@@ -32,7 +32,7 @@
 
                             <!-- Username -->
                             <div class="mb-2">
-                                <label for="username" class="form-label">Username</label>
+                                <label for="username" class="form-label">Email</label>
                                 <input name="username" class="form-control @error('username') is-invalid @enderror" value="{{ old('username') }}" type="text" id="username">
                                 @error('username')
                                 <span class="invalid-feedback">{{ $message }}</span>
@@ -90,38 +90,40 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr class="text-center">
-                                    <th scope="col">Username</th>
-                                    <th scope="col">Default Password</th>
-                                    <th scope="col">Shop Name</th>
-                                    <th scope="col">Status</th>
+                                    <!-- <th scope="col">Username</th> -->
+                                    <!-- <th scope="col">Default Password</th> -->
+                                    <th class="text-start" scope="col">Email / Username</th>
+                                    <th class="text-center" scope="col">Account Status</th>
+                                    <th class="text-start" scope="col">Shop Name</th>
+                                    <th scope="col">Shop Status</th>
                                     <th scope="col">Canteen</th>
-                                    <th scope="col">Phone Number</th>
-                                    <th scope="col">Email</th>
+                                    <!-- <th scope="col">Phone Number</th> -->
                                     <th scope="col">Date Created</th>
-                                    <th scope="col">Date Updated</th>
+                                    <!-- <th scope="col">Date Updated</th> -->
                                     <th scope="col">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="borderless">
                                 @forelse ($user as $concessionaire)
                                 <tr class="text-center">
-                                    <td>{{ $concessionaire->username }}</td>
-                                    <td>{{ $concessionaire->default_pass }}</td>
-                                    <td>{{ $concessionaire->shop_name }}</td>
+                                    <!-- <td>{{ $concessionaire->username }}</td> -->
+                                    <!-- <td>{{ $concessionaire->default_pass }}</td> -->
+                                    <td class="text-start">{{ $concessionaire->shop_email }}</td>
+                                    <td class="text-center">{{ $concessionaire->is_active ? 'Not Active' : 'Active' }}</td>
+                                    <td class="text-start">{{ $concessionaire->shop_name }}</td>
                                     <td>{{ $concessionaire->status }}</td>
                                     <td>{{ $concessionaire->building_name }}</td>
-                                    <td>{{ $concessionaire->shop_contact_num }}</td>
-                                    <td>{{ $concessionaire->shop_email }}</td>
-                                    <td>{{ $concessionaire->user_date_created }}</td>
-                                    <td>{{ $concessionaire->user_date_updated }}</td>
+                                    <!-- <td>{{ $concessionaire->shop_contact_num }}</td> -->
+                                    <td>{{ $concessionaire->created_at->format('M d Y, h:i A') }}</td>
+                                    <!-- <td>{{ $concessionaire->user_date_updated }}</td> -->
                                     <td>
-                                        <div class="d-flex">
-                                            <div>
+                                        <div class="d-flex justify-content-center align-items-center">
+                                            <div class="col-6">
                                                 <a href="{{ route('edit.button.cons.account', ['userId' => Crypt::encrypt($concessionaire->user_id)]) }}" class="btn btn-sm w-100" title="Edit">
                                                     <i class="bi bi-pencil-fill"></i>
                                                 </a>
                                             </div>
-                                            <div>
+                                            <div class="col-6">
                                                 <form action="{{ route('delete.concessionaires.account', $concessionaire->id) }}" method="POST" class="d-inline">
                                                     @csrf
                                                     @method('DELETE')

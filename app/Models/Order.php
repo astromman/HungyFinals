@@ -9,22 +9,25 @@ class Order extends Model
 {
     use HasFactory;
 
-    // // Define the products relationship (Many-to-Many)
-    // public function products()
-    // {
-    //     return $this->belongsToMany(Product::class, 'order_product', 'order_id', 'product_id')
-    //         ->withPivot('quantity', 'price'); // Assuming pivot contains quantity and price
-    // }
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id', 'id');
+    }
 
-    // // Example: If Order belongs to a User (like a buyer)
-    // public function user()
-    // {
-    //     return $this->belongsTo(User::class);
-    // }
+    public function productOrder()
+    {
+        return $this->belongsTo(ProductOrder::class, 'product_orders_id', 'id');
+    }
 
-    // // Example: If Order belongs to a specific Shop (indirectly via Product)
-    // public function shop()
-    // {
-    //     return $this->hasOneThrough(Shop::class, Product::class, 'id', 'id', 'product_id', 'shop_id');
-    // }
+    // Example: If Order belongs to a User (like a buyer)
+    public function userProfile()
+    {
+        return $this->belongsTo(UserProfile::class, 'user_id', 'id');
+    }
+    
+    public function payment()
+    {
+        return $this->belongsTo(Payment::class, 'payment_id', 'id');
+    }
+
 }

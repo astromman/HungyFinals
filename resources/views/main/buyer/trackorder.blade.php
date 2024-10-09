@@ -26,7 +26,13 @@
                     {{ $order->designated_canteen }}
                 </small>
             </span>
-            <span>Order Ref: <small class="fw-bold">{{ $order->order_reference }}</small></span>
+            <span>
+                Order Reference
+                <br>
+                <small class="fw-bold">
+                    {{ $order->order_reference }}
+                </small>
+            </span>
         </div>
 
         <div class="py-2">
@@ -64,9 +70,6 @@
         </div>
     </div>
     @endforeach
-    <!-- <div class="text-end">
-        <h4 class="btn btn-primary">TOTAL AMOUNT : ₱ 55.00</h4>
-    </div> -->
 </div>
 
 <style>

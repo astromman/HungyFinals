@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -198,17 +199,19 @@ class ManagerController extends Controller
 
         $user = UserProfile::join('buildings', 'user_profiles.seller_building_id', '=', 'buildings.id')
             ->join('shops', 'user_profiles.id', '=', 'shops.user_id')
+            ->join('credentials', 'user_profiles.id', 'credentials.user_id')
             ->select(
                 'user_profiles.*',
                 'user_profiles.id as user_id',
                 'user_profiles.user_type_id as user_type',
                 'user_profiles.email as shop_email',
                 'user_profiles.contact_num as shop_contact_num',
-                'user_profiles.created_at as user_date_created',
+                'user_profiles.created_at',
                 'user_profiles.updated_at as user_date_updated',
                 'buildings.building_name as building_name',
                 'shops.shop_name as shop_name',
                 'shops.status as status',
+                'credentials.is_deleted as is_active',
             )
             ->where('seller_building_id', $userBuildingId->manager_building_id)
             ->where(function ($query) {
@@ -216,6 +219,7 @@ class ManagerController extends Controller
                     ->orwhere('user_type_id', 2)
                     ->orwhere('user_type_id', 3);
             })
+            ->where('credentials.is_deleted', false)
             ->orderBy('user_profiles.created_at', 'desc')
             ->get();
 
@@ -230,16 +234,10 @@ class ManagerController extends Controller
 
         try {
             $validator = Validator::make($request->all(), [
-                'username' => [
-                    'required',
-                    Rule::unique('user_profiles')->where(function ($query) use ($managerBuildingId) {
-                        return $query->where('seller_building_id', $managerBuildingId);
-                    }),
-                ],
+                'username' => 'required|email|unique:user_profiles,username',
             ], [
-                'first_name.required' => 'First name is required.',
-                'last_name.required' => 'Last name is required.',
                 'username.required' => 'Username is required.',
+                'username.email' => 'Must be a valid email address.',
                 'username.unique' => 'Username already exists.',
             ]);
 
@@ -256,14 +254,16 @@ class ManagerController extends Controller
             $user->user_type_id = 2;
             $user->first_name = 'Not Available';
             $user->last_name = 'Not Available';
-            $user->email = 'Not Available';
-            $user->username = $request->username;
+            $user->email = str_replace(' ', '', $request->username);
+            $user->username = str_replace(' ', '', $request->username);
             $user->default_pass = $generatedPassword;
             $user->contact_num = 'Not Available';
             $user->created_at = date('Y-m-d H:i:s');
             $user->updated_at = date('Y-m-d H:i:s');
-            $user->seller_building_id = $managerBuilding->manager_building_id;
+            $user->seller_building_id = $managerBuildingId;
             $user->save();
+
+            $canteen = Building::where('id', $managerBuildingId)->first()->building_name;
 
             // is_reopen column is false by default
             $shop = new Shop();
@@ -285,12 +285,31 @@ class ManagerController extends Controller
             $credentials->save();
 
             DB::commit();
+
+            // Send email with credentials
+            $this->sendConcessionaireCredentials($user, $generatedPassword, $canteen);
+
             return redirect()->route('concessionaires.account')->with('success', 'Concessionaire account created.');
         } catch (Exception $e) {
             dd($e);
             DB::rollBack();
             return redirect()->route('concessionaires.account')->with('error', $e->getMessage());
         }
+    }
+
+    private function sendConcessionaireCredentials($concessionaire, $password, $canteen)
+    {
+        $data = [
+            'concessionaire' => $concessionaire,
+            'password' => $password,
+            'canteen' => $canteen
+        ];
+
+        Mail::send('main.manager.concessionaire_credentials', $data, function ($message) use ($concessionaire) {
+            $message->to($concessionaire->username)
+                ->subject('Your Concessionaire Account Credentials');
+            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
+        });
     }
 
     private function generatePassword()
@@ -357,7 +376,7 @@ class ManagerController extends Controller
                 $credentials = new Credential();
                 $credentials->user_id = $id;
                 $credentials->password = Hash::make($newPassword);
-                $credentials->updated_at = date('Y-m-d H:i:s');
+                $credentials->updated_at = now();
                 $credentials->save();
             }
 

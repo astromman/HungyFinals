@@ -81,9 +81,6 @@
                         <p>{{ $product->product_description }}</p>
                         <div class="product-bottom-details d-flex justify-content-between align-items-center">
                             <div class="product-price">₱{{ $product->price }}</div>
-                            <div class="product-links">
-                                <a href="javascript:void(0);" class="toggle-favorite"><i class="fa fa-heart"></i></a>
-                            </div>
                         </div>
                     </div>
                 </div>

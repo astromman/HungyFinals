@@ -1,10 +1,7 @@
 @extends('layouts.seller.sellerMaster')
 
 @section('content')
-<div class="container-fluid pt-3">
-    <div class="text-center py-2 px-5">
-        <h2>My Profile</h2>
-    </div>
+<div class="container-fluid pt-5">
     <div class="row pt-3 justify-content-center">
         <div class="col-lg-5">
             <div class="card shadow-lg rounded-4 mb-4">

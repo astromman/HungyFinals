@@ -109,7 +109,7 @@
                         <small class="text-muted">
                             {{ $order->category_name}}
                         </small>
-                        
+
                     </div>
                 </div>
                 <div class="col-2 d-flex align-items-center justify-content-end">
@@ -130,22 +130,33 @@
 
         <!-- 7th Div -->
         <div class="border rounded p-3 my-3 bg-white" style="border: 1px solid #ccc; border-radius: 5px;">
-            <div class="row mb-2">
-                <div class="col-12">Payment method</div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div>Proof of Payment</div>
+                @if(session('screenshot_uploaded'))
+                <div id="checkmark" class="text-success">
+                    <i class="fa fa-check-circle" aria-hidden="true"></i>
+                </div>
+                @else
+                <div id="checkmark" class="text-success" style="display: none;">
+                    <i class="fa fa-check-circle" aria-hidden="true"></i>
+                </div>
+                @endif
             </div>
-            <div class="row">
+            <!-- Trigger the QR Modal -->
+            <button id="uploadProofBtn" class="btn btn-primary w-100">Upload Proof of Payment</button>
+            <!-- <div class="row">
                 <select id="payment-method" name="payment_method" class="form-select">
                     <option value="gcash">💵 GCash</option>
                     <option value="paypal">💳 Paypal</option>
                     <option value="qr"> QR</option>
                 </select>
-            </div>
+            </div> -->
         </div>
 
         <!-- 8th Div -->
         <div class="border rounded p-3 my-3 bg-white d-flex justify-content-between align-items-center" style="border: 1px solid #ccc; border-radius: 5px;">
             <div class="col-12">
-                <div class="d-flex justify-content-between align-items center mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>Total</div>
                     <div class="fw-bold">{{ '₱ ' . number_format($shopTotal, 2) }}</div>
                 </div>
@@ -153,7 +164,6 @@
                 <form action="{{ route('place.order', Crypt::encrypt($shop->id)) }}" method="POST">
                     @csrf
                     <!-- Hidden input for payment_method -->
-                    <input type="hidden" id="payment-method-hidden" name="payment_method" value="gcash"> <!-- Default value -->
                     <button type="submit" id="place-order-btn" class="btn btn-primary w-100">Place Order</button>
                 </form>
                 @endif
@@ -194,24 +204,15 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const placeOrderBtn = document.getElementById('place-order-btn');
-        const paymentMethodSelect = document.getElementById('payment-method');
-        const paymentMethodHiddenInput = document.getElementById('payment-method-hidden');
+        const uploadProofBtn = document.getElementById('uploadProofBtn');
         const qrModal = new bootstrap.Modal(document.getElementById('qrModal'));
+        const checkmark = document.getElementById('checkmark');
 
-        placeOrderBtn.disabled = false;
+        placeOrderBtn.disabled = true;
 
-        // Handle payment method change
-        paymentMethodSelect.addEventListener('change', function() {
-            // Update the hidden input value when the selection changes
-            paymentMethodHiddenInput.value = this.value;
-
-            if (this.value === 'qr') {
-                // Disable place order and show QR modal
-                placeOrderBtn.disabled = true;
-                qrModal.show();
-            } else {
-                placeOrderBtn.disabled = false;
-            }
+        // Show QR modal when 'Upload Proof of Payment' button is clicked
+        uploadProofBtn.addEventListener('click', function() {
+            qrModal.show();
         });
 
         // Handle screenshot submission
@@ -227,8 +228,12 @@
                 },
             }).then(response => {
                 if (response.ok) {
-                    placeOrderBtn.disabled = false; // Enable place order after successful upload
+                    // Enable place order after successful upload
+                    placeOrderBtn.disabled = false;
                     qrModal.hide(); // Close the modal
+
+                    // Show the green checkmark
+                    checkmark.style.display = 'block';
                 } else {
                     alert('Failed to upload screenshot, please try again.');
                 }

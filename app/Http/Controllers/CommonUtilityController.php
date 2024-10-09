@@ -26,4 +26,9 @@ class CommonUtilityController extends Controller
         $audit->updated_at = now();
         $audit->save();
     }
+
+    public function helloWorld()
+    {
+        return ('HelloWorld <br>You\'ve discorved my easter egg. <br>4:12 Non-Stop Hamilton musical (I\'m the Hamilton of this system) <br>Contact me for your prize<br>09195193885 / lloydadrianlindo25@gmail.com <br>- Lindope 10/01/2024');
+    }
 }

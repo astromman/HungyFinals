@@ -3,62 +3,6 @@
 @extends('layouts.buyer.buyermaster')
 
 @section('content')
-
-@if(session('error'))
-<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="successModalLabel">
-                    <i class="bi bi-exclamation-triangle-fill text-warning"></i> System
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                {{ session('error') }}
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-@if($orders->first() && $orders->first()->payment_status == 'Rejected')
-<div class="modal fade" id="orderStatusModal" tabindex="-1" aria-labelledby="orderStatusModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="orderStatusModalLabel">
-                    <i class="bi bi-info-circle text-warning"></i> Order Update
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    Your proof of payment has been rejected by {{ $orders->first()->shop_name }}. For the reason: {{$orders->first()->feedback}}
-                    <br>
-                    Order returned to cart. Please resubmit your proof of payment.
-                </div>
-                <div class="text-center">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endif
-
-@if($orders->first() && $orders->first()->payment_status == 'Rejected')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var orderStatusModal = new bootstrap.Modal(document.getElementById('orderStatusModal'));
-        orderStatusModal.show();
-    });
-</script>
-@endif
-
 <div class="content">
     <div class="container">
         <div class="row align-items-center mt-4">
@@ -110,7 +54,7 @@
                     @foreach($orders as $order)
                     @php $shopTotal += $order->total; @endphp
                     <div class="product-item d-flex justify-content-center align-items-center">
-                        <div class="product-img d-flex align-items-center ">
+                        <div class="product-img d-flex align-items-center">
                             <img src="{{ asset('storage/products/' . $order->image) }}" alt="{{ $order->product_name }}" class="img-fluid bg-secondary-subtle rounded">
                         </div>
                         <div class="product-details">
@@ -129,7 +73,7 @@
                                         </form>
                                     </div>
                                     <div class="me-3">
-                                        <form action="{{ route('remove.item', $order->id) }}" class="remove-item-form" data-item-id="{{ $order->id }}">
+                                        <form action="{{ route('remove.item', $order->id) }}" method="DELETE" class="remove-item-form" data-item-id="{{ $order->id }}">
                                             @csrf
                                             @method('DELETE')
                                             <button type="button" class="btn btn-outline-danger btn-sm remove-item-btn" title="Remove item">
@@ -146,7 +90,7 @@
                     @endforeach
                 </div>
                 <div class="d-flex justify-content-end my-4">
-                    <div class="d-flex align-items-center ">
+                    <div class="d-flex align-items-center">
                         <h5 class="mx-2 mb-0"><strong>Total: <span class="overall-total">₱ {{ number_format($shopTotal, 2) }}</span></strong></h5>
                         <a href="{{ route('checkout.orders', ['shopId' => Crypt::encrypt($shopId)]) }}" class="btn btn-success">
                             <i class="fa fa-shopping-cart"></i> Checkout
@@ -156,31 +100,23 @@
             </div>
             @endforeach
         </div>
+
         @endif
     </div>
 </div>
 
-@if(session('error'))
+<!-- Script for protocart -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        successModal.show();
-    });
-</script>
-@endif
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
         // Handle item removal using AJAX
         document.querySelectorAll('.remove-item-btn').forEach(function(button) {
             button.addEventListener('click', function(event) {
-                event.preventDefault(); // Prevent the default form submission
+                event.preventDefault();
+                event.stopPropagation(); // Prevent accordion activation
 
                 const form = button.closest('form');
                 const itemId = form.getAttribute('data-item-id');
-
-                const noItemPerShop = document.querySelector('.total-item-perShop');
-                let totalItems = parseInt(noItemPerShop.getAttribute('data-total-item'));
 
                 fetch(form.getAttribute('action'), {
                         method: 'DELETE',
@@ -191,29 +127,50 @@
                     .then((response) => response.json())
                     .then((data) => {
                         if (data.success) {
-                            button.closest('.product-item').remove();
+                            // Remove the item from the cart UI
+                            const productItem = button.closest('.product-item');
+                            productItem.remove();
 
-                            totalItems -= 1;
-                            noItemPerShop.setAttribute('data-total-item', totalItems);
-
-                            const shopWrapper = form.closest(`.cart-wrapper`);
-                            const itemsPerShop = document.querySelector(`#collapseShop${shopWrapper.getAttribute('data-shop-id')}`);
-
-                            if (totalItems < 1) {
-                                shopWrapper.remove();
-                                itemsPerShop.remove();
-                            } else {
-                                recalculateShopTotal(button);
-                            }
+                            // Recalculate totals
+                            recalculateShopTotal(button);
+                            recalculateOverallTotal();
                         }
                     });
             });
         });
 
+        // Recalculate shop total after an item is removed or updated
+        function recalculateShopTotal(button) {
+            let shopTotal = 0;
+            const shopSection = button.closest('.collapse');
+
+            shopSection.querySelectorAll('.subtotal').forEach(function(subtotalElement) {
+                let subtotal = parseFloat(subtotalElement.textContent.replace(/[₱,]/g, ''));
+                shopTotal += subtotal;
+            });
+
+            // Update the shop total on the page
+            shopSection.querySelector('.overall-total').textContent = '₱' + shopTotal.toFixed(2);
+        }
+
+        // Function to recalculate the overall cart total (for all shops)
+        function recalculateOverallTotal() {
+            let overallTotal = 0;
+
+            document.querySelectorAll('.overall-total').forEach(function(shopTotalElement) {
+                let shopTotal = parseFloat(shopTotalElement.textContent.replace(/[₱,]/g, ''));
+                overallTotal += shopTotal;
+            });
+
+            // Update the grand total near the checkout button
+            document.querySelector('.checkout .overall-total').textContent = '₱' + overallTotal.toFixed(2);
+        }
+
         // Handle shop removal
         document.querySelectorAll('.remove-shop-btn').forEach(function(button) {
             button.addEventListener('click', function(event) {
                 event.preventDefault();
+                event.stopPropagation(); // Prevent accordion activation
 
                 const form = button.closest('form');
                 const shopId = form.getAttribute('data-shop-id');
@@ -234,24 +191,13 @@
                                 shopWrapper.remove();
                                 itemsPerShop.remove();
                             }
+
+                            // Optionally, recalculate the overall total after removing the shop
+                            recalculateOverallTotal();
                         }
                     });
             });
         });
-
-        // Recalculate shop total after an item is removed or updated
-        function recalculateShopTotal(button) {
-            let shopTotal = 0;
-            const shopSection = button.closest('.collapse');
-
-            shopSection.querySelectorAll('.subtotal').forEach(function(subtotalElement) {
-                let subtotal = parseFloat(subtotalElement.textContent.replace(/[₱,]/g, ''));
-                shopTotal += subtotal;
-            });
-
-            // Update the shop total on the page
-            shopSection.querySelector('.overall-total').textContent = '₱' + shopTotal.toFixed(2);
-        }
 
         // Handle quantity increase and decrease
         document.querySelectorAll('.btn-increase-cart, .btn-decrease-cart').forEach(function(button) {
