@@ -372,32 +372,20 @@
 
     <!-- Product Section -->
     <section class="product-section">
-        <h2>Our Products</h2>
-        <p>From premium ingredients to mouth-watering dishes, we have a wide variety of meals to suit your taste. Take your pick from our collection of top sellers and start your day the right way!</p>
-        <div class="products">
-            <div class="product-card">
-                <img src="image1.jpg" alt="Product 1">
-                <h3>Best Seller</h3>
-                <p>Nike Zoom Vomero 5</p>
-                <p class="price">₱4,000</p>
-                <button>Add to Cart</button>
-            </div>
-            <div class="product-card">
-                <img src="image2.jpg" alt="Product 2">
-                <h3>Best Seller</h3>
-                <p>Nike Air Force 1 '07 Fresh</p>
-                <p class="price">₱4,000</p>
-                <button>Add to Cart</button>
-            </div>
-            <div class="product-card">
-                <img src="image3.jpg" alt="Product 3">
-                <h3>Best Seller</h3>
-                <p>Nike Air Max Dn SE</p>
-                <p class="price">₱4,000</p>
-                <button>Add to Cart</button>
-            </div>
+    <h2>Our Products</h2>
+    <p>From premium ingredients to mouth-watering dishes, we have a wide variety of meals to suit your taste. Take your pick from our collection of top sellers and start your day the right way!</p>
+    <div class="products">
+        @foreach($products->take(3) as $product) <!-- Limits to the first 3 products -->
+        <div class="product-card">
+            <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->product_name }}">
+            <h3>{{ $product->product_name }}</h3>
+            <p>{{ $product->description }}</p>
+            <p class="price">₱{{ $product->price }}</p>
+            <button>Add to Cart</button>
         </div>
-    </section>
+        @endforeach
+    </div>
+</section>
 
     <section class="about-us">
         <h2>Canteen Shops</h2>

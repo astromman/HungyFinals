@@ -31,7 +31,7 @@
 
             <!-- Gradient Overlay -->
             <div class="position-absolute w-100 h-100"
-                style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)); 
+                style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)); 
                 z-index: 1;">
             </div>
 
@@ -62,13 +62,6 @@
                     <div class="position-absolute w-100 h-100"
                         style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3));">
                     </div>
-                    <!-- Title and Icon -->
-                    <!-- <div class="position-relative text-white p-3" style="z-index: 1;">
-                        <div class="d-flex justify-content-center align-items-center">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                        </div>
-                        <h5 class="card-title">{{ $shop->shop_name }}</h5>
-                    </div> -->
                 </div>
                 @else
                 <div class="position-relative" style="height: 150px; overflow: hidden;">
@@ -82,28 +75,23 @@
                     <div class="position-absolute w-100 h-100"
                         style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3));">
                     </div>
-                    <!-- Title and Icon -->
-                    <!-- <div class="position-relative text-white p-3" style="z-index: 1;">
-                        <div class="d-flex justify-content-center align-items-center">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                        </div>
-                        <h5 class="card-title">{{ $shop->shop_name }}</h5>
-                    </div> -->
                 </div>
                 @endif
 
                 @if($shop->is_reopen)
                 <a href="{{ route('visit.shop', ['id' => $shop->id, 'shop_name' => Str::slug($shop->shop_name)]) }}" class="text-dark stretched-link" style="text-decoration: none;">
-                    <!-- <i class="fa-solid fa-store"></i> -->
                     <div class="card-body d-flex flex-column justify-content-between" style="height: 100px;">
                         <h5 class=" card-title">{{ $shop->shop_name }}</h5>
-                        <p class="card-text">Mon - Fri</p>
+                        <div class="p-1 d-flex justify-content-between align-items-center">
+                            <small class="card-text text-muted"><i class="bi bi-clock-fill text-primary-emphasis"></i> Prep time: <span class="text-primary-emphasis">{{ $shop->preparation_time }} {{ $shop->preparation_time > 1 ? 'mins' : 'min' }}</span></small>
+                            <small class="card-text text-muted text-left">Rating: <span class="text-warning">5.4</span><i class="bi bi-star-fill text-warning ps-1"></i> </small>
+                        </div>
                     </div>
                 </a>
-                @else
+                @else <!-- unclickable -->
                 <div class="card-body d-flex flex-column justify-content-between" style="height: 100px;">
                     <h5 class=" card-title">{{ $shop->shop_name }}</h5>
-                    <p class="card-text">Closed</p>
+                    <p class="p-2 card-text text-danger">Closed</p>
                 </div>
                 @endif
             </div>

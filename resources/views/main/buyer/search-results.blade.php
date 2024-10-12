@@ -45,8 +45,8 @@
     </div>
 
     <!-- Filter Section -->
-    <div  class="row mb-4">
-        <div class="col-md-4">
+    <div class="row mb-4">
+        <div class="col-md-4 col-4">
             <label for="filterType" class="form-label">Filter by Type</label>
             <select id="filterType" class="form-select">
                 <option value="all">All</option>
@@ -57,7 +57,7 @@
                 @endforeach --}}
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 col-4">
             <label for="filterCategory" class="form-label">Filter by Category</label>
             <select id="filterCategory" class="form-select">
                 <option value="all">All Categories</option>
@@ -66,7 +66,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 col-4">
             <label for="filterPrice" class="form-label">Filter by Price</label>
             <select id="filterPrice" class="form-select">
                 <option value="low_to_high">Low to High</option>
@@ -78,117 +78,149 @@
     <div id="resultsContainer" class="row">
         <!-- Filtered results will be injected here by AJAX -->
 
-
-    <!-- Shops Results -->
-    @if($shops->isNotEmpty())
-    <div class="shops-section my-5">
-        <h3 class="text-secondary">Shops</h3>
-        <hr>
-        <div class="row">
-            @foreach ($shops as $shop)
-            <div class="col-md-6 col-lg-3 mb-4">
-                <div class="card shadow-sm h-100">
-                    <div class="card-header p-0">
-                        <div class="position-relative" style="height: 200px; overflow: hidden;">
-                            @if ($shop->shop_image == 'Not Available')
-                            <img src="{{ asset('images/bg/default_shop_image.png') }}" class="w-100 h-100"
-                                style="object-fit: cover;" alt="Default Image">
-                            @else
-                            <img src="{{ asset('storage/shop/' . $shop->shop_image) }}" class="w-100 h-100"
-                                style="object-fit: cover;" alt="{{ $shop->shop_name }}">
-                            @endif
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">{{ $shop->shop_name }}</h5>
-                        <p>{{ $shop->shop_bio }}</p>
-                        <p><strong>Contact:</strong> {{ $shop->contact_num }}</p>
-                        <a href="{{ route('visit.shop', ['id' => $shop->id, 'shop_name' => Str::slug($shop->shop_name)]) }}"
-                            class="btn btn-outline-primary">Visit Shop</a>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-        </div>
-    </div>
-    @else
-    <h4 class="text-secondary">No Shops Found</h4>
-    @endif
-
-    <!-- Products Results -->
-    @if($groupedProducts->isNotEmpty())
-    <div class="products-section my-5">
-        <h3 class="text-secondary">Products</h3>
-        <hr>
-
-        <!-- Loop through product categories -->
-        @foreach ($groupedProducts as $categoryName => $products)
-        <div class="category-section my-5">
-            <h4 class="text-secondary">{{ $categoryName }}</h4>
+        <!-- Shops Results -->
+        @if($shops->isNotEmpty())
+        <div class="shops-section my-5">
+            <h3 class="text-secondary">Shops</h3>
             <hr>
             <div class="row">
-                @foreach ($products as $product)
-                <!-- Product Card -->
-                <div class="col-md-6 col-lg-3 mb-4">
-                    <div class="product-wrapper">
-                        <div class="product-card position-relative border shadow" data-bs-toggle="modal"
-                            data-bs-target="#productModal" data-id="{{ $product->id }}"
-                            data-name="{{ $product->product_name }}" data-description="{{ $product->product_description }}"
-                            data-price="{{ $product->price }}" data-category="{{ $product->category_name }}"
-                            data-image="{{ asset('storage/products/' . $product->image) }}">
-
-                            <!-- Badge for product status -->
-                            @if (!$product->is_deleted)
-                            <div class="badge bg-success position-absolute">
-                                {{ $product->status }}
+                @foreach ($shops as $shop)
+                <div class="col-md-3 mb-4">
+                    <div class="card h-100 shadow" style="width: 100%;">
+                        <!-- Background Image Container -->
+                        @if($shop->shop_image == 'Not Available')
+                        <div class="position-relative" style="height: 150px; overflow: hidden;">
+                            <div class="position-absolute w-100 h-100"
+                                style="background-image: url('{{ asset('images/bg/default_shop_image.png') }}'); 
+                    background-size: cover; 
+                    background-repeat: no-repeat; 
+                    background-position: center;">
                             </div>
-                            @else
-                            <div class="badge bg-danger position-absolute">
-                                {{ $product->status }}
-                            </div>
-                            @endif
-
-                            <!-- Image Container -->
-                            <div class="product-tumb w-100" style="height: 200px;">
-                                <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->product_name }}"
-                                    class="img-fluid w-100 h-100" style="object-fit: cover;">
-                            </div>
-
-                            <!-- Product Details -->
-                            <div class="product-details p-3">
-                                <span class="product-catagory d-block">{{ $product->category_name }}</span>
-                                <h4 class="mt-2">{{ $product->product_name }}</h4>
-                                <p>{{ $product->product_description }}</p>
-                                <hr class="full-width-line">
+                            <!-- Gradient Overlay -->
+                            <div class="position-absolute w-100 h-100"
+                                style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3));">
                             </div>
                         </div>
-
-                        <!-- Add to Favorites Form -->
-                        <div class="add-to-favorites mt-2">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <!-- Price -->
-                                <div class="product-price" style="padding-left: 18px;">₱{{ $product->price }}</div>
-
-                                <!-- Add to Favorites Button -->
-                                <form id="favoriteForm" method="POST" action="{{ route('favorites.add') }}"
-                                    class="favorite-form" style="padding-right: 20px;">
-                                    @csrf
-                                    <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                    <button type="submit" class="btn favorite-btn">
-                                        <i class="fa fa-heart"></i>
-                                    </button>
-                                </form>
+                        @else
+                        <div class="position-relative" style="height: 150px; overflow: hidden;">
+                            <div class="position-absolute w-100 h-100"
+                                style="background-image: url('{{ asset('storage/shop/' . $shop->shop_image) }}'); 
+                    background-size: cover; 
+                    background-repeat: no-repeat; 
+                    background-position: center;">
+                            </div>
+                            <!-- Gradient Overlay -->
+                            <div class="position-absolute w-100 h-100"
+                                style="background: linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3));">
                             </div>
                         </div>
+                        @endif
 
+                        @if($shop->is_reopen)
+                        <div class="badge bg-success">
+                            {{ $shop->designated_canteen }}
+                        </div>
+                        <a href="{{ route('visit.shop', ['id' => $shop->id, 'shop_name' => Str::slug($shop->shop_name)]) }}" class="text-dark stretched-link" style="text-decoration: none;">
+                            <div class="card-body d-flex flex-column justify-content-between" style="height: 100px;">
+                                <h5 class=" card-title">{{ $shop->shop_name }}</h5>
+                                <div class="p-2 d-flex justify-content-between align-items-center">
+                                    <small class="card-text text-muted"><i class="bi bi-clock-fill text-primary-emphasis pe-1"></i> Prep time: <span class="text-primary-emphasis">{{ $shop->preparation_time }} {{ $shop->preparation_time > 1 ? 'mins' : 'min' }}</span></small>
+                                    <small class="card-text text-muted text-left"><i class="bi bi-star-fill text-warning pe-1"></i> Rating: <span class="text-warning">5.4</span></small>
+                                </div>
+                            </div>
+                        </a>
+                        @else <!-- unclickable -->
+                        <div class="badge bg-success">
+                            {{ $shop->designated_canteen }}
+                        </div>
+                        <div class="card-body d-flex flex-column justify-content-between" style="height: 100px;">
+                            <h5 class=" card-title">{{ $shop->shop_name }}</h5>
+                            <p class="p-2 card-text text-danger">Closed</p>
+                        </div>
+                        @endif
                     </div>
                 </div>
                 @endforeach
             </div>
         </div>
-        @endforeach
+        @else
+        <h4 class="text-secondary">No Shops Found</h4>
+        @endif
+
+        <!-- Products Results -->
+        @if($groupedProducts->isNotEmpty())
+        <div class="products-section my-5">
+            <h3 class="text-secondary">Products</h3>
+            <hr>
+
+            <!-- Loop through product categories -->
+            @foreach ($groupedProducts as $categoryName => $products)
+            <div class="category-section my-5">
+                <h4 class="text-secondary">{{ $categoryName }}</h4>
+                <hr>
+                <div class="row">
+                    @foreach ($products as $product)
+                    <!-- Product Card -->
+                    <div class="col-md-6 col-lg-3 mb-4">
+                        <div class="product-wrapper">
+                            <div class="product-card position-relative border shadow" data-bs-toggle="modal"
+                                data-bs-target="#productModal" data-id="{{ $product->id }}"
+                                data-name="{{ $product->product_name }}" data-description="{{ $product->product_description }}"
+                                data-price="{{ $product->price }}" data-category="{{ $product->category_name }}"
+                                data-image="{{ asset('storage/products/' . $product->image) }}">
+
+                                <!-- Badge for product status -->
+                                @if (!$product->is_deleted)
+                                <div class="badge bg-success position-absolute">
+                                    {{ $product->status }}
+                                </div>
+                                @else
+                                <div class="badge bg-danger position-absolute">
+                                    {{ $product->status }}
+                                </div>
+                                @endif
+
+                                <!-- Image Container -->
+                                <div class="product-tumb w-100" style="height: 200px;">
+                                    <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->product_name }}"
+                                        class="img-fluid w-100 h-100" style="object-fit: cover;">
+                                </div>
+
+                                <!-- Product Details -->
+                                <div class="product-details p-3">
+                                    <span class="product-catagory d-block">{{ $product->category_name }}</span>
+                                    <h4 class="mt-2">{{ $product->product_name }}</h4>
+                                    <p>{{ $product->product_description }}</p>
+                                    <hr class="full-width-line">
+                                </div>
+                            </div>
+
+                            <!-- Add to Favorites Form -->
+                            <div class="add-to-favorites mt-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <!-- Price -->
+                                    <div class="product-price" style="padding-left: 18px;">₱{{ $product->price }}</div>
+
+                                    <!-- Add to Favorites Button -->
+                                    <form id="favoriteForm" method="POST" action="{{ route('favorites.add') }}"
+                                        class="favorite-form" style="padding-right: 20px;">
+                                        @csrf
+                                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                                        <button type="submit" class="btn favorite-btn">
+                                            <i class="fa fa-heart"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endforeach
+        </div>
     </div>
-</div>
     @else
     <h4 class="text-secondary">No Products Found</h4>
     @endif
@@ -221,7 +253,7 @@
                     type: type,
                     category: category,
                     price: price,
-                    query: "{{ $searchTerm }}"  // Include the search term in the request
+                    query: "{{ $searchTerm }}" // Include the search term in the request
                 },
                 success: function(response) {
                     // Clear current results
@@ -296,7 +328,7 @@
             });
         }
     });
-    </script>
+</script>
 
 
 
@@ -304,7 +336,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        if ('{{ session('success') }}') {
+        if ('{{ session('
+            success ') }}') {
             successModal.show();
         }
 

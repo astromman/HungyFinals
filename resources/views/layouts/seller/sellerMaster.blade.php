@@ -13,6 +13,10 @@
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.css">
+    <!--=============== CSS ===============-->
+    <link rel="stylesheet" href="assets/css/styles.css">
+
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
@@ -98,13 +102,6 @@
             appearance: none;
         }
 
-        .container-dash {
-            width: 96%;
-            gap: 1.8rem;
-            /* grid-template-columns: 3fr 1fr; */
-            margin: 0 auto;
-        }
-
         a {
             color: var(--clr-dark);
         }
@@ -159,7 +156,7 @@
         /* Main content styles */
         main {
             margin-top: 1.4rem;
-            width: 100%;
+            /* width: 100%; */
         }
 
         main input {
@@ -329,24 +326,6 @@
             margin: 1rem;
         }
 
-        /* Right Sidebar */
-        .right-sidebar {
-            margin-top: 1.4rem;
-        }
-
-        .right-sidebar>div {
-            background-color: var(--clr-white);
-            padding: var(--card-padding);
-            border-radius: var(--card-border-radius);
-            box-shadow: var(--box-shadow);
-            transition: all 0.3s ease;
-        }
-
-        .right-sidebar h2 {
-            padding-bottom: 10px;
-            padding-top: 20px;
-        }
-
         /* recent updates */
         .recent-update ul {
             list-style-type: none;
@@ -423,108 +402,6 @@
                 padding: 30px;
                 margin: 0 auto;
             }
-        }
-
-        .navbar-sidebar-container {
-            display: flex;
-        }
-
-        .btn-side {
-            padding: 10px 23px;
-            text-decoration: none;
-            color: white;
-            font-size: 20px;
-            display: block;
-            transition: 0.3s;
-            outline: none;
-            border: none;
-        }
-
-        .btn-side:hover {
-            color: #5479f7;
-        }
-
-        .btn-side:focus {
-            outline: none;
-            border: none;
-        }
-
-        .sidebar {
-            height: 100vh;
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #050144;
-            overflow-x: hidden;
-            transition: 0.3s;
-            padding-top: 80px;
-            z-index: 1;
-        }
-
-        .dashboard {
-            padding: 10px 23px;
-            text-decoration: none;
-            color: white;
-            font-size: 20px;
-            display: block;
-            transition: 0.3s;
-            outline: none;
-            border: none;
-        }
-
-        .sidebar .li-a {
-            padding: 8px 23px;
-            text-decoration: none;
-            font-size: 16px;
-            color: white;
-            display: block;
-            transition: 0.3s;
-        }
-
-        .sidebar a:hover {
-            color: #5479f7;
-        }
-
-        .sidebar .closebtn {
-            position: absolute;
-            top: 0;
-            right: 25px;
-            font-size: 36px;
-            margin-left: 50px;
-        }
-
-        .navbar {
-            margin-left: 250px;
-            width: calc(100% - 250px);
-            background-color: #050144;
-            padding: 10px 20px;
-            z-index: 1000;
-            position: fixed;
-            top: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: margin-left 0.3s, width 0.3s;
-        }
-
-        .navbar .navbar-brand,
-        .navbar .navbar-nav .nav-link {
-            color: white;
-        }
-
-        .content-area {
-            margin-left: 250px;
-            padding: 80px 20px 20px 20px;
-            transition: margin-left 0.3s;
-        }
-
-        .hamburger {
-            font-size: 20px;
-            cursor: pointer;
-            color: white;
-            display: none;
-            margin-right: 15px;
         }
 
         @media screen and (max-width: 768px) {
@@ -1072,76 +949,6 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     @include('layouts.seller.sidebar')
-
-    <!-- Main Content Area -->
-    <div class="content-area">
-        @yield('content')
-
-        <!-- Toastr JavaScript -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-
-        <!-- Pusher -->
-        <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-        <!-- Script For notification -->
-        <script>
-            Pusher.logToConsole = true;
-
-            // Initialize Pusher
-            var pusher = new Pusher('32acbce4969b2fe50044', {
-                cluster: 'mt1'
-            });
-
-            // Subscribe to the channel
-            var channel = pusher.subscribe('notification');
-
-            // Array to store the order references that have already triggered notifications
-            var notifiedOrders = [];
-
-            // Bind to the event
-            channel.bind('new-order.notification', function(order) {
-
-                // Display Toastr notification with icons and inline content
-                if (order && !notifiedOrders.includes(order.order.order_reference)) {
-                    // Add the order reference to the list of notified orders
-                    notifiedOrders.push(order.order.order_reference);
-
-                    // this will display the new row
-                    // kaylangan kung anong itsura sa ui, ganun din sa script
-                    // '<tr> </tr>' 
-                    // id of table .prepend
-
-                    toastr.info(
-                        ' <div class="notification-content"> ' +
-                        ' <i class="fas fa-user"></i> <span> ' + order.order.order_reference + ' </span> ' +
-                        ' <i class="fas fa-book" style="margin-left: 20px;"></i> <span> </span> ' +
-                        ' </div> ',
-                        'New Order', {
-                            closeButton: true,
-                            progressBar: true,
-                            timeOut: 0, // Set timeOut to 0 to make it persist until closed
-                            extendedTimeOut: 0, // Ensure the notification stays open
-                            positionClass: 'toast-top-right',
-                            enableHtml: true,
-                            toastClass: 'toast toast-info',
-                            onclick: function() {
-                                window.location.href = "{{ route('my.orders') }}"; // Redirect to my.orders route
-                            }
-                        }
-                    );
-                } else {
-                    console.error('Invalid data received:', order);
-                }
-            });
-
-            // Debugging line
-            pusher.connection.bind('connected', function() {
-                console.log('Pusher connected');
-            });
-        </script>
-
-        <!-- Bootstrap Bundle with Popper.js -->
-        <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script> -->
-    </div>
 
     <!-- Custom JS -->
     <!-- @vite(['resources/js/app.js']) -->

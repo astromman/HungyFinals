@@ -1,8 +1,8 @@
 @extends('layouts.admin.adminMaster')
 
 @section('content')
-<div class="pb-5">
-    <div class="">
+<div class="container-fluid pt-5">
+    <div class="py-2 px-5">
         <h2>Add New Category</h2>
     </div>
     @if (session('error'))
@@ -59,7 +59,7 @@
                             <!-- Submit button -->
                             <div class="mb-4 row text-center">
                                 <div class="col-lg-12">
-                                    <button type="submit" class="btn btn-primary btn-rounded mb-3 w-100">Add</button>
+                                    <button type="submit" class="btn btn-primary btn-rounded mb-3 w-50">Add</button>
                                 </div>
                             </div>
                         </form>
@@ -116,48 +116,42 @@
                     <h3>Canteen List</h3>
                 </div>
                 <div class="card-body">
-                    <div class="table">
-                        <table class="table table-hover">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
                             <thead>
                                 <tr class="text-center">
                                     <th>Name</th>
                                     <th>Image</th>
                                     <th>Description</th>
                                     <th>Date Created</th>
-                                    <th>Date Updated</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody class="borderless">
+                            <tbody>
                                 @foreach ($buildings as $building)
                                 <tr class="text-center">
                                     <td>{{ $building->building_name }}</td>
                                     <td>
                                         @if ($building->building_image == null)
-                                        <img src="{{ asset('images/bg/default_shop_image.png') }}" alt="No Image" style="width: 70px; height: 70px">
+                                        <img src="{{ asset('images/bg/default_shop_image.png') }}" alt="No Image" style="width: 70px; height: 70px" class="img-fluid">
                                         @else
-                                        <img src="{{ asset('storage/canteen/' . $building->building_image) }}" alt="{{ $building->building_name }}" style="width: 70px; height: 70px">
+                                        <img src="{{ asset('storage/canteen/' . $building->building_image) }}" alt="{{ $building->building_name }}" style="width: 70px; height: 70px" class="img-fluid">
                                         @endif
                                     </td>
                                     <td>{{ $building->building_description }}</td>
-                                    <td>{{ $building->created_at }}</td>
-                                    <td>{{ $building->updated_at }}</td>
+                                    <td>{{ $building->created_at->format('Y-m-d') }}</td>
                                     <td>
-                                        <div class="row">
-                                            <div class="col-lg-6 d-flex align-items-center">
-                                                <a href="{{ route('edit.button.building', ['id' => $building->id, 'building_name' => Str::slug($building->building_name)]) }}" class="btn btn-sm btn-edit w-100" title="Edit">
-                                                    <i class="bi bi-pencil-fill"></i>
-                                                </a>
-                                            </div>
-                                            <div class="col-lg-6 d-flex align-items-center">
-                                                <form action="{{ route('delete.building', $building->id) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm w-100" title="Delete" onclick="return confirm('Are you sure you want to delete this canteen?')">
-                                                        <i class="bi bi-trash-fill"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
+                                        <div class="d-flex justify-content-center">
+                                            <a href="{{ route('edit.button.building', ['id' => $building->id, 'building_name' => Str::slug($building->building_name)]) }}" class="btn btn-sm btn-warning me-2" title="Edit">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            <form action="{{ route('delete.building', $building->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this canteen?')">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
@@ -165,12 +159,10 @@
                             </tbody>
                         </table>
                     </div>
-
                 </div>
             </div>
         </div>
+
     </div>
 </div>
-
-
 @endsection

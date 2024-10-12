@@ -12,24 +12,28 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class NewOrderNotification implements ShouldBroadcastNow
+class PaymentStatusUpdated implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $order;
+    public $paymentStatus;
+    public $feedback;
 
-    public function __construct(Order $order)
+    public function __construct(Order $order, $paymentStatus, $feedback = null)
     {
         $this->order = $order;
+        $this->paymentStatus = $paymentStatus;
+        $this->feedback = $feedback;
     }
 
     public function broadcastOn()
     {
-        return new Channel('notification.' . $this->order->product->shop->id);
+        return new PrivateChannel('payment.' . $this->order->user_id);
     }
 
     public function broadcastAs()
     {
-        return 'new-order.notification';
+        return 'payment.status.updated';
     }
 }

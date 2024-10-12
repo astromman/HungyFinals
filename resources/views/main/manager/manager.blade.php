@@ -44,6 +44,29 @@
 
     <!-- Start Pie and Bar Charts Side by Side -->
     <h2>Analytics</h2>
+
+    <!-- Datepickers for Start Date and End Date -->
+    <!-- <form method="GET" action="{{ route('manager.dashboard') }}">
+        <div class="row mb-4">
+            <div class="col-4">
+                <label for="startDate">Filter By Date</label>
+                <input type="date" id="startDate" name="start_date" class="form-control" value="{{ request('start_date') }}">
+            </div>
+            <div class="col-4">
+                <label for="month">Filter by Month</label>
+                <select id="month" name="month" class="form-control">
+                    <option value="">Select Month</option>
+                    @foreach(range(1, 12) as $month)
+                        <option value="{{ $month }}" {{ request('month') == $month ? 'selected' : '' }}>
+                            {{ \Carbon\Carbon::create()->month($month)->format('F') }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </form> -->
+
     <div class="row">
         <div class="charts col-4">
             <div class="chart-container shadow pb-5">

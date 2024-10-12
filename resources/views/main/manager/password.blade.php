@@ -1,18 +1,17 @@
 @extends('layouts.manager.managerMaster')
 
 @section('content')
-<div class="container-fluid pt-3">
-    <div class="text-center py-2 px-5">
-        <h2>My Profile</h2>
+<div class="pt-5">
+    <div class="text-center pt-4">
+        <h2> Password</h2>
     </div>
     <div class="row pt-3 justify-content-center">
-        <div class="col-lg-5">
             <div class="card shadow-lg rounded-4 mb-4">
                 <div class="pt-3 text-center">
                     <h3>Change Password</h3>
                 </div>
                 <div class="pt-3 d-flex justify-content-center align-items-center">
-                    <div class="col-lg-11">
+                    <div class="col-lg-10">
                         @if (session('success'))
                         <div class="alert alert-info" role="alert">
                             <strong>{{ session('success') }}</strong>
@@ -47,7 +46,7 @@
 
                             <!-- Submit button -->
                             <div class="mb-1 text-center">
-                                <button type="submit" class="btn btn-primary rounded-pill py-2 w-100 mb-2">Save</button>
+                                <button type="submit" class="btn btn-primary rounded-pill py-2 w-75 mb-2">Save</button>
                             </div>
 
                             <div class="alert alert-primary">
@@ -64,7 +63,6 @@
                     </div>
                 </div>
             </div>
-        </div>
     </div>
 </div>
 @endsection

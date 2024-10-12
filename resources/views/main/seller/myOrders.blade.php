@@ -1,7 +1,7 @@
 @extends('layouts.seller.sellerMaster')
 
 @section('content')
-<div class="container-fluid pt-3">
+<div class="pt-3">
     <div class="py-2">
         <h2>My Orders</h2>
     </div>
@@ -42,8 +42,7 @@
                         <td class="text-center text-uppercase accordion-toggle" data-bs-toggle="collapse" data-bs-target="#orderDetails{{ $order->id }}" aria-expanded="false" aria-controls="orderDetails{{ $order->id }}">
                             {{ $order->payment_type }}
                         </td>
-                        <td class="text-center" {{ $order->payment_type != 'qr' ? 'data-bs-toggle=collapse data-bs-target=#orderDetails' . $order->id : '' }}>
-                            @if($order->payment_type == 'qr')
+                        <td class="text-center">
                             <button type="button" class="btn p-1 {{ $order->payment_status == 'Pending' ? 'bg-warning-subtle' : 'bg-success-subtle' }} w-100 rounded-pill"
                                 data-bs-toggle="modal"
                                 data-bs-target="#viewPaymentModal"
@@ -52,12 +51,9 @@
                                 data-order-reference="{{ $order->order_reference }}"
                                 data-payment-status="{{ $order->payment_status }}">
                                 <strong class="{{ $order->payment_status == 'Pending' ? 'text-warning' : 'text-success' }} text-uppercase">
-                                    View Payment
+                                    View
                                 </strong>
                             </button>
-                            @elseif(($order->payment_type == 'gcash' || $order->payment_type == 'paypal'))
-                            {{ $order->payment_id }}
-                            @endif
                         </td>
                         <td class="text-center">
                             <form id="orderStatusForm{{ $order->order_reference }}" method="POST" action="{{ route('update.order', $order->order_reference) }}">
@@ -158,7 +154,10 @@
                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <img id="paymentImage" src="" class="img-fluid" alt="Payment Image">
+                                    <!-- Make the image clickable to open in a new tab -->
+                                    <a id="paymentImageLink" href="" target="_blank">
+                                        <img id="paymentImage" src="" class="img-fluid" alt="Payment Image">
+                                    </a>
                                     <!-- Hidden field to store the payment status -->
                                     <input type="hidden" id="paymentStatus" value="">
                                     <p class="text-center">Order Reference: <span id="orderReference"></span></p>
@@ -299,6 +298,7 @@
 
             var modal = $(this);
             modal.find('#paymentImage').attr('src', paymentImage); // Set the image in the modal
+            modal.find('#paymentImageLink').attr('href', paymentImage); // Set the href for clickable image
             modal.find('#orderId').val(orderId); // Set order ID for the confirm form
             modal.find('#orderReference').text(orderReference);
             modal.find('#paymentStatus').val(paymentStatus);

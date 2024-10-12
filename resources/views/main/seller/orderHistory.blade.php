@@ -66,8 +66,7 @@
                         aria-controls="orderDetails{{ $order->id }}">
                         {{ $order->payment_type }}
                     </td>
-                    <td class="text-center" {{ $order->payment_type != 'qr' ? 'data-bs-toggle=collapse data-bs-target=#orderDetails' . $order->id : '' }}>
-                        @if($order->payment_type == 'qr')
+                    <td class="text-center">
                         <button type="button" class="btn  {{ $order->payment_status == 'Pending' ? 'bg-primary-subtle' : 'bg-success-subtle' }} w-100 rounded-pill"
                             data-bs-toggle="modal"
                             data-bs-target="#viewPaymentModal"
@@ -75,12 +74,9 @@
                             data-order-id="{{ $order->id }}"
                             data-payment-status="{{ $order->payment_status }}">
                             <strong class="{{ $order->payment_status == 'Pending' ? 'text-primary' : 'text-success' }} text-uppercase">
-                                View Payment
+                                View
                             </strong>
                         </button>
-                        @elseif(($order->payment_type == 'gcash' || $order->payment_type == 'paypal'))
-                        {{ $order->payment_id }}
-                        @endif
                     </td>
                     <td class="text-center text-uppercase"
                         data-bs-toggle="collapse"

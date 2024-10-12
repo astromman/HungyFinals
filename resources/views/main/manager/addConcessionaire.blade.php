@@ -41,7 +41,7 @@
 
                             <!-- Submit button -->
                             <div class="mb-3 text-center">
-                                <button type="submit" class="btn btn-primary btn-rounded w-100 mb-3">Add</button>
+                                <button type="submit" class="btn btn-primary btn-rounded w-50 mb-3">Add</button>
                             </div>
                         </form>
                         @elseif($userData)
@@ -86,59 +86,46 @@
                     <h3>Concessionaires List</h3>
                 </div>
                 <div class="card-body">
-                    <div class="table">
-                        <table class="table table-hover">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
                             <thead>
                                 <tr class="text-center">
-                                    <!-- <th scope="col">Username</th> -->
-                                    <!-- <th scope="col">Default Password</th> -->
                                     <th class="text-start" scope="col">Email / Username</th>
                                     <th class="text-center" scope="col">Account Status</th>
                                     <th class="text-start" scope="col">Shop Name</th>
                                     <th scope="col">Shop Status</th>
                                     <th scope="col">Canteen</th>
-                                    <!-- <th scope="col">Phone Number</th> -->
                                     <th scope="col">Date Created</th>
-                                    <!-- <th scope="col">Date Updated</th> -->
                                     <th scope="col">Action</th>
                                 </tr>
                             </thead>
-                            <tbody class="borderless">
+                            <tbody>
                                 @forelse ($user as $concessionaire)
                                 <tr class="text-center">
-                                    <!-- <td>{{ $concessionaire->username }}</td> -->
-                                    <!-- <td>{{ $concessionaire->default_pass }}</td> -->
                                     <td class="text-start">{{ $concessionaire->shop_email }}</td>
                                     <td class="text-center">{{ $concessionaire->is_active ? 'Not Active' : 'Active' }}</td>
                                     <td class="text-start">{{ $concessionaire->shop_name }}</td>
                                     <td>{{ $concessionaire->status }}</td>
                                     <td>{{ $concessionaire->building_name }}</td>
-                                    <!-- <td>{{ $concessionaire->shop_contact_num }}</td> -->
                                     <td>{{ $concessionaire->created_at->format('M d Y, h:i A') }}</td>
-                                    <!-- <td>{{ $concessionaire->user_date_updated }}</td> -->
                                     <td>
-                                        <div class="d-flex justify-content-center align-items-center">
-                                            <div class="col-6">
-                                                <a href="{{ route('edit.button.cons.account', ['userId' => Crypt::encrypt($concessionaire->user_id)]) }}" class="btn btn-sm w-100" title="Edit">
-                                                    <i class="bi bi-pencil-fill"></i>
-                                                </a>
-                                            </div>
-                                            <div class="col-6">
-                                                <form action="{{ route('delete.concessionaires.account', $concessionaire->id) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm w-100" title="Delete" onclick="return confirm('Are you sure you want to delete this manager?')">
-                                                        <i class="bi bi-trash-fill"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
+                                        <div class="d-flex justify-content-center">
+                                            <a href="{{ route('edit.button.cons.account', ['userId' => Crypt::encrypt($concessionaire->user_id)]) }}" class="btn btn-sm btn-warning me-2" title="Edit">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </a>
+                                            <form action="{{ route('delete.concessionaires.account', $concessionaire->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this manager?')">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                            </form>
                                         </div>
-
                                     </td>
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="10" class="text-center">No records available.</td>
+                                    <td colspan="7" class="text-center">No records available.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
@@ -147,6 +134,7 @@
                 </div>
             </div>
         </div>
+
     </div>
 </div>
 

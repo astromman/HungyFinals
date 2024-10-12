@@ -21,6 +21,8 @@ class ManagerController extends Controller
 {
     public function manager_dashboard(Request $request)
     {
+        // dd($request->start_date, $request->end_date);
+
         $userId = $request->session()->get('loginId');
 
         $user = UserProfile::where('id', $userId)->first();
@@ -37,15 +39,14 @@ class ManagerController extends Controller
             ->count();
 
         // Fetch total orders per shop (unique order_reference counts as one)
-        $ordersPerShop = DB::table('orders')
+        $ordersPerShopQuery = DB::table('orders')
             ->join('products', 'orders.product_id', 'products.id')
             ->join('shops', 'products.shop_id', 'shops.id')
             ->join('user_profiles', 'shops.user_id', 'user_profiles.id')
             ->where('user_profiles.seller_building_id', $user->manager_building_id)
             ->where('orders.order_status', 'Completed')
             ->select('shops.shop_name', DB::raw('COUNT(DISTINCT orders.order_reference) as total_orders'))
-            ->groupBy('shops.shop_name')
-            ->get();
+            ->groupBy('shops.shop_name');
 
         // Fetch total sales per shop per day
         $salesPerShop = DB::table('orders')
@@ -58,6 +59,41 @@ class ManagerController extends Controller
             ->groupBy('shops.shop_name', 'sale_date')
             ->orderBy('sale_date')
             ->get();
+
+        // Apply date range filter
+        if ($request->start_date && $request->end_date) {
+            $ordersPerShopQuery->whereBetween(DB::raw('DATE(orders.created_at)'), [$request->start_date, $request->end_date]);
+        }
+
+        // Apply month filter if provided
+        if ($request->month) {
+            $ordersPerShopQuery->whereMonth('orders.created_at', $request->month);
+        }
+
+        $ordersPerShop = $ordersPerShopQuery->get();
+
+        // Fetch sales per shop per day with optional date filtering
+        $salesPerShopQuery = DB::table('orders')
+            ->join('products', 'orders.product_id', 'products.id')
+            ->join('shops', 'products.shop_id', 'shops.id')
+            ->join('user_profiles', 'shops.user_id', 'user_profiles.id')
+            ->where('user_profiles.seller_building_id', $user->manager_building_id)
+            ->where('orders.order_status', 'Completed')
+            ->select('shops.shop_name', DB::raw('SUM(orders.total) as total_sales'), DB::raw('DATE(orders.created_at) as sale_date'))
+            ->groupBy('shops.shop_name', 'sale_date')
+            ->orderBy('sale_date');
+
+        // Apply date range filter
+        if ($request->start_date && $request->end_date) {
+            $salesPerShopQuery->whereBetween(DB::raw('DATE(orders.created_at)'), [$request->start_date, $request->end_date]);
+        }
+
+        // Apply month filter if provided
+        if ($request->month) {
+            $salesPerShopQuery->whereMonth('orders.created_at', $request->month);
+        }
+
+        $salesPerShop = $salesPerShopQuery->get();
 
         return view('main.manager.manager',  compact('applications', 'verifiedShops', 'ordersPerShop', 'salesPerShop'));
     }
@@ -454,6 +490,9 @@ class ManagerController extends Controller
                     $permit->is_rejected = 0;
                     $permit->save();
 
+                    // Send email notification
+                    $this->sendApplicationStatus($user, $shop, 'Approved');
+
                     DB::commit();
 
                     return redirect()->route('shops.applications')->with('success', 'Application approved successfully.');
@@ -504,6 +543,11 @@ class ManagerController extends Controller
                     $permit->feedback = $request->feedback;
                     $permit->save();
 
+                    // Send email notification
+                    $user = UserProfile::where('id', $shop->user_id)->first();
+                    // dd($user->email);
+                    $this->sendApplicationStatus($user, $shop, 'Rejected', $request->feedback);
+
                     DB::commit();
                     return redirect()->route('shops.applications')->with('success', 'Application rejected successfully.');
                 } else {
@@ -517,6 +561,22 @@ class ManagerController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'An error occurred: ' . $e->getMessage());
         }
+    }
+
+    private function sendApplicationStatus($user, $shop, $status, $feedback = null)
+    {
+        $data = [
+            'user' => $user,
+            'shop' => $shop,
+            'status' => $status,
+            'feedback' => $feedback
+        ];
+
+        Mail::send('main.manager.application_status_email', $data, function ($message) use ($user, $status) {
+            $message->to($user->email)
+                ->subject("Your Shop Application has been {$status}");
+            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
+        });
     }
 
 

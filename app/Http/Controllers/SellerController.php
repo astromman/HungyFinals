@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderStatusUpdated;
+use App\Events\PaymentStatusUpdated;
 use App\Models\Audit;
 use App\Models\Category;
 use App\Models\Credential;
@@ -464,7 +466,7 @@ class SellerController extends Controller
             $commonUtility = new CommonUtilityController();
             $commonUtility->addAuditTrail($userId, 1, $shop->shop_name . ' Added ' . $description);
 
-            return redirect()->route('my.products')->with('success', 'Product Added successfully.');
+            return redirect()->route('my.products')->with('productAdded', 'Product Added successfully.');
         } catch (QueryException $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Database error: ' . $e->getMessage());
@@ -588,26 +590,6 @@ class SellerController extends Controller
         }
     }
 
-    // public function addAuditTrail($userId, $actionType, $description)
-    // {
-    //     if ($actionType == 1) {
-    //         $action = "ADD";
-    //     } elseif ($actionType == 2) {
-    //         $action = "\UPDATE";
-    //     } elseif ($actionType == 3) {
-    //         $action = "\DELETE";
-    //     }
-
-    //     $audit = new Audit;
-    //     $audit->user_id = $userId;
-    //     $audit->action = $action;
-    //     $audit->description = $description;
-    //     $audit->created_at = now();
-    //     $audit->updated_at = now();
-    //     $audit->save();
-
-    // }
-
     public function delete_products(Request $request, $id)
     {
         $userId = $request->session()->get('loginId');
@@ -625,15 +607,15 @@ class SellerController extends Controller
                 // Delete the image from storage
                 if ($product->image) {
                     Storage::disk('public')->delete('products/' . $product->image);
-                    $description .= "a product named " . $product->product_name;
-                    $product->delete();
                 }
+                $description .= "a product named " . $product->product_name;
+                $product->delete();
             }
 
             $commonUtility = new CommonUtilityController();
             $commonUtility->addAuditTrail($userId, 3, $shop->shop_name . ' Deleted ' . $description);
 
-            return redirect()->route('my.products.table')->with('success', 'Product deleted successfully.');
+            return redirect()->route('my.products')->with('productDeleted', 'Product deleted successfully.');
         } catch (QueryException $e) {
             DB::rollBack();
             $errorInfo = $e->errorInfo[1];
@@ -720,7 +702,7 @@ class SellerController extends Controller
 
             DB::beginTransaction();
 
-
+            $description = "";
 
             $category = new Category();
             $category->type_name = ucwords(strtolower($type_name));
@@ -730,7 +712,12 @@ class SellerController extends Controller
             $category->save();
 
             DB::commit();
-            return redirect()->back()->with('success', 'Category added successfully');
+
+            $description .= "a new category " . $category->type_name;
+            $commonUtility = new CommonUtilityController();
+            $commonUtility->addAuditTrail($userId, 1, $shop->shop_name . ' Added ' . $description);
+
+            return redirect()->back()->with('categoryAdded', 'Category added successfully');
         } catch (QueryException $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Database error: ' . $e->getMessage());
@@ -780,12 +767,24 @@ class SellerController extends Controller
         }
     }
 
-    public function delete_category($id)
+    public function delete_category(Request $request, $id)
     {
+        $userId = $request->session()->get('loginId');
+        $shop = Shop::where('user_id', $userId)->first();
+
         try {
+            $description = "";
+
             $categories = Category::findOrFail($id);
+
+            $description .= "a category named " . $categories->type_name;
+
             $categories->delete();
-            return redirect()->back()->with('success', 'Category deleted successfully');
+
+            $commonUtility = new CommonUtilityController();
+            $commonUtility->addAuditTrail($userId, 3, $shop->shop_name . ' Deleted ' . $description);
+
+            return redirect()->back()->with('categoryDeleted', 'Category deleted successfully');
         } catch (QueryException $e) {
             DB::rollBack();
             $errorInfo = $e->errorInfo[1];
@@ -876,15 +875,19 @@ class SellerController extends Controller
         try {
             DB::beginTransaction();
 
-            $orderReference = Order::where('order_reference', $orderRef)->get();
+            $orderReference = Order::where('order_reference', $orderRef)->groupBy('order_reference')->get();
+            $orderStatus = $request->order_status;
 
             foreach ($orderReference as $order) {
-                $orderStatus = $request->order_status;
-                // dd($orderStatus);
+                Order::where('order_reference', $order->order_reference)->update(['order_status' => $orderStatus, 'updated_at' => now()]);
 
-                $order->order_status = $orderStatus;
-                $order->updated_at = now();
-                $order->save();
+                // Refresh the order instance to get the updated status
+                $order->refresh();
+
+                $encryptedId = Crypt::encrypt($order->order_reference);
+
+                // Trigger Pusher event for real-time notification
+                event(new OrderStatusUpdated($order, $encryptedId));
 
                 $productId = Order::where('order_reference', $orderRef)->first()->product_id;
                 $shopId = Product::where('id', $productId)->first()->shop_id;
@@ -921,7 +924,7 @@ class SellerController extends Controller
                     });
                 } catch (\Exception $e) {
                     // Log the error or show it in the response
-                    dd($e);
+                    // dd($e);
                     return redirect()->back()->with('error', 'Order updated but failed to send email.');
                 }
             }
@@ -1005,6 +1008,9 @@ class SellerController extends Controller
         $payment->payment_status = 'Completed';
         $payment->save();
 
+        // Trigger Pusher event for payment confirmation
+        event(new PaymentStatusUpdated($order, 'Completed'));
+
         return redirect()->back()->with('confirmPayment', 'Payment confirmed successfully.');
     }
 
@@ -1049,6 +1055,9 @@ class SellerController extends Controller
             }
 
             DB::commit();  // Commit the transaction
+
+            // Trigger Pusher event for payment rejection
+            event(new PaymentStatusUpdated($order, 'Rejected', $feedback));
 
             // Redirect back with a success message
             return redirect()->back()->with('success', 'Payment rejected successfully for the order reference: ' . $orderReference . '. Feedback: ' . $feedback);

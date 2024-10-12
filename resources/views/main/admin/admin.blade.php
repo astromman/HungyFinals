@@ -7,10 +7,10 @@
 
         <div class="insights">
             <div class="sales shadow">
-                <i class="bi bi-envelope-paper-fill"></i>
+                <i class="bi bi-person-badge"></i>
                 <div class="middle">
                     <div class="left">
-                        <h3>Applications</h3>
+                        <h3>Managers</h3>
                         <h1> 0 </h1>
                     </div>
                 </div>
@@ -18,10 +18,10 @@
             </div>
 
             <div class="expenses shadow">
-                <i class="bi bi-shop"></i>
+                <i class="bi bi-person-circle"></i>
                 <div class="middle">
                     <div class="left">
-                        <h3>Active Shops</h3>
+                        <h3>Buyers</h3>
                         <h1> 0 </h1>
                     </div>
                 </div>
@@ -45,14 +45,14 @@
     <!-- Start Pie and Bar Charts Side by Side -->
     <h2>Analytics</h2>
     <div class="row">
-        <div class="charts col-4">
+        <div class="charts col-12 col-md-4">
             <div class="chart-container shadow pb-5">
                 <h3>Total orders per Canteen</h3>
                 <canvas id="myPieChart"></canvas>
             </div>
 
         </div>
-        <div class="charts col-8">
+        <div class="charts col-12 col-md-8">
             <div class="chart-container shadow pb-5">
                 <h3>Sales per shop</h3>
                 <canvas id="myLineChart"></canvas>

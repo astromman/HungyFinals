@@ -168,16 +168,23 @@
                     <div class="py-2 form-check form-switch">
                         <!-- This hidden input sends 'Unavailable' if the checkbox is unchecked -->
                         <input type="hidden" name="status" value="Unavailable">
-
                         <input class="form-check-input" type="checkbox" id="editStatus" name="status" value="Available">
                         <label class="form-check-label" for="editStatus">Available</label>
                     </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.reload();">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
                 </form>
+            </div>
+
+            <div class="modal-footer">
+                <!-- Delete Product Form -->
+                <form id="deleteProductForm" action="" method="POST">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this product?')">
+                        Delete
+                    </button>
+                </form>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="location.reload();">Cancel</button>
+                <button type="submit" class="btn btn-primary" form="editProductForm">Save</button>
             </div>
         </div>
     </div>
@@ -249,6 +256,30 @@
     </div>
 </div>
 
+@if(session('productAdded'))
+<script>
+    Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "{{ session('productAdded') }}",
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
+@endif
+
+@if(session('productDeleted'))
+<script>
+    Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "{{ session('productDeleted') }}",
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
+@endif
+
 <script>
     function previewImage() {
         const input = document.getElementById('image-upload');
@@ -300,6 +331,10 @@
             // Clear the file input to allow new image selection
             const input = document.getElementById('editImageUpload');
             input.value = '';
+
+            // Set the delete form action dynamically
+            const deleteForm = document.getElementById('deleteProductForm');
+            deleteForm.action = `{{ route('delete.products', ':id') }}`.replace(':id', productId);
         });
     });
 

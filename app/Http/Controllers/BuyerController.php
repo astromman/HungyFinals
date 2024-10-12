@@ -33,7 +33,7 @@ class BuyerController extends Controller
 {
     public function landing_page(Request $request)
     {
-        $canteens = Building::all();
+        $canteens = Building::with('shops')->get(); // Load canteens with their related shops
         $products = Product::all();
 
         $userId = $request->session()->get('loginId');
@@ -42,37 +42,7 @@ class BuyerController extends Controller
             return redirect()->route('user.logout')->with('error', 'Invalid request!');
         }
 
-        // Fetch all orders in cart, using LEFT JOIN to handle orders without payment info
-        $orders = Order::leftJoin('products', 'orders.product_id', 'products.id')
-            ->leftJoin('payments', 'orders.payment_id', 'payments.id')
-            ->leftJoin('categories', 'products.category_id', 'categories.id')
-            ->leftJoin('shops', 'products.shop_id', 'shops.id')
-            ->leftJoin('buildings', 'shops.building_id', 'buildings.id')
-            ->select(
-                'orders.*',
-                'products.product_name',
-                'products.product_description',
-                'products.image',
-                'products.price',
-                'products.category_id',
-                'products.shop_id',
-                'products.status',
-                'products.is_deleted',
-                'categories.type_name',
-                'shops.shop_name',
-                'buildings.building_name as designated_canteen',
-                'payments.payment_status', // Include payment details if exists
-                'payments.feedback',
-            )
-            ->where('products.status', 'Available')
-            ->where('products.is_deleted', false)
-            ->where('orders.user_id', $userId)
-            // ->where('orders.at_cart', true) // Only get orders still in the cart
-            // ->where('orders.order_status', 'At Cart') // Orders that are in cart state
-            ->orderBy('orders.updated_at', 'desc')
-            ->get();
-
-        return view('main.buyer.landingpage', compact('canteens', 'products', 'orders'));
+        return view('main.buyer.landingpage', compact('canteens', 'products'));
     }
 
     public function about_us_page()
@@ -779,18 +749,7 @@ class BuyerController extends Controller
                 $order->save();
 
                 // event(new NewOrderNotification([$order => 'order']));
-                event(new NewOrderNotification(
-                    [
-                        'order_reference' => $order->order_reference,
-                        'first_name' => $order->userProfile->first_name,
-                        'last_name' => $order->userProfile->last_name,
-                        'created_at' => $order->created_at,
-                        'payment_status' => $payment->payment_status,
-                        'payment_type' => $payment->payment_type,
-                        'total' => $order->total,
-                        'products' => $order->productOrder, // Include all products for this order
-                    ]
-                ));
+                event(new NewOrderNotification($order));
             }
 
             DB::commit();

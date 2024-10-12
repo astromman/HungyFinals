@@ -1,7 +1,7 @@
 @extends('layouts.manager.managerMaster')
 
 @section('content')
-<div class="container-fluid pt-5">
+<div class="pt-5">
     <div class="container pt-5">
         <h2>Welcome Manager, {{ $userProfile->username }}</h2>
         @if (session('error'))
@@ -109,12 +109,12 @@
     }
 
     .container {
-        width: 600px;
-        max-width: 600px;
+        /* width: 600px; */
+        /* max-width: 600px; */
         background-color: white;
         border-radius: 8px;
         padding: 20px;
-        box-sizing: border-box;
+        /* box-sizing: border-box; */
     }
 
     h2 {
@@ -185,7 +185,7 @@
         border-radius: 20px;
         cursor: pointer;
         font-size: 14px;
-        width: 120px;
+        /* width: 120px; */
     }
 
     .cancel-button {
@@ -237,7 +237,7 @@
 
         .edit-button,
         .save-button {
-            width: 100%;
+            /* width: 100%; */
             margin-bottom: 10px;
         }
 
@@ -252,8 +252,9 @@
 
         .change-password-button {
             margin-top: 10px;
-            width: 100%;
+            width: 50%;
         }
     }
 </style>
+
 @endsection

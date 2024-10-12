@@ -10,4 +10,9 @@ class Building extends Model
     use HasFactory;
 
     protected $table = 'buildings';
+
+    public function shops()
+    {
+        return $this->hasMany(Shop::class, 'building_id');
+    }
 }

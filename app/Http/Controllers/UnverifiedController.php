@@ -74,10 +74,10 @@ class UnverifiedController extends Controller
                 'contact_num' => 'required|numeric|digits:11|starts_with:09|unique:user_profiles,contact_num',
                 'qr_image' => 'required|image|mimes:jpeg,png|max:51200',
                 'mayors' => 'required|file|mimes:jpeg,png,pdf|max:51200',
-                'bir' => 'required|file|mimes:jpeg,png,pdf|max:51200',
-                'dti' => 'required|file|mimes:jpeg,png,pdf|max:51200',
-                'contract' => 'required|file|mimes:jpeg,png,pdf|max:51200',
-                'sanitary' => 'required|file|mimes:jpeg,png,pdf|max:51200',
+                'bir' => 'required|file|mimes:jpeg,png,pdf,webp|max:51200',
+                'dti' => 'required|file|mimes:jpeg,png,pdf,webp|max:51200',
+                'contract' => 'required|file|mimes:jpeg,png,pdf,webp|max:51200',
+                'sanitary' => 'required|file|mimes:jpeg,png,pdf,webp|max:51200',
             ], [
                 'shop_name.required' => 'Please enter shop name',
                 'shop_name.unique' => 'Shop name already exists',
@@ -112,6 +112,7 @@ class UnverifiedController extends Controller
             ]);
 
             if ($validator->fails()) {
+                dd($request->file('sanitary'));
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 

@@ -16,6 +16,7 @@
 @php
 $userId = session()->get('loginId');
 $user = App\Models\UserProfile::where('id', $userId)->first();
+$userType = App\Models\UserType::where('id', $user->user_type_id)->first()->type_name;
 @endphp
 <!--=============== SIDEBAR ===============-->
 <nav class="sidebar" id="sidebar">
@@ -26,14 +27,14 @@ $user = App\Models\UserProfile::where('id', $userId)->first();
             </div> -->
 
             <div class="sidebar__info">
-                <h3>Sir admin</h3>
-                <span>adminhf@gmail.com</span>
+                <h3>{{ $user->first_name . ' ' . $user->last_name }}</h3>
+                <span>{{ $userType }}</span>
             </div>
         </div>
 
         <div class="sidebar__content">
             <div>
-                <h3 class="sidebar__title">MANAGE</h3>
+                <h3 class="sidebar__title">MAIN</h3>
 
                 <div class="sidebar__list">
                     <a href="{{ route('admin.dashboard') }}" class="sidebar__link {{ Route::currentRouteName() == 'admin.dashboard' ? 'active-link' : '' }}">
@@ -72,7 +73,7 @@ $user = App\Models\UserProfile::where('id', $userId)->first();
                         <span>My Profile</span>
                     </a>
 
-                    <a href="#" class="sidebar__link {{ Route::currentRouteName() == 'buyers.account' ? 'active-link' : '' }}">
+                    <a href="{{ route('admin.change.password') }}" class="sidebar__link {{ Route::currentRouteName() == 'admin.change.password' ? 'active-link' : '' }}">
                         <i class="ri-mail-unread-fill"></i>
                         <span>Change Password</span>
                     </a>
@@ -81,11 +82,11 @@ $user = App\Models\UserProfile::where('id', $userId)->first();
         </div>
 
         <div class="sidebar__actions">
-            <button>
+            <!-- <button>
                 <i class="ri-moon-clear-fill sidebar__link sidebar__theme" id="theme-button">
                     <span>Theme</span>
                 </i>
-            </button>
+            </button> -->
 
             <a href="{{ route('user.logout') }}" class="sidebar__link">
                 <i class="ri-logout-box-r-fill"></i>
@@ -257,9 +258,9 @@ $user = App\Models\UserProfile::where('id', $userId)->first();
     /*=============== REUSABLE CSS CLASSES ===============*/
     /* .container {
         margin-inline: 1.5rem;
-    }
+    } */
 
-    .main {
+    /* .main {
         padding-top: 5rem;
     } */
 

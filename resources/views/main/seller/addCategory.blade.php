@@ -15,18 +15,6 @@
 
                 <div class="pt-4 d-flex justify-content-center align-items-center">
                     <div class="col-lg-9">
-                        @if (session('success'))
-                        <div class="alert alert-primary" role="alert" onclick="location.reload();">
-                            {{ session('success') }}
-                        </div>
-                        @endif
-
-                        @if (session('error'))
-                        <div class="alert alert-danger" role="alert" onclick="location.reload();">
-                            {{ session('error') }}
-                        </div>
-                        @endif
-
                         @if(empty($categoryId))
                         <form method="POST" action="{{ route('add.category') }}">
                             @csrf
@@ -145,10 +133,43 @@
                             </tbody>
                         </table>
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@if(session('categoryAdded'))
+<script>
+    Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "{{ session('categoryAdded') }}",
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
+@endif
+
+@if(session('categoryDeleted'))
+<script>
+    Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "{{ session('categoryDeleted') }}",
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: "{{ session('error') }}",
+    });
+</script>
+@endif
 @endsection

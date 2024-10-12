@@ -1,7 +1,7 @@
 @extends('layouts.seller.sellerMaster')
 
 @section('content')
-<div class="container-dash">
+<div class="container-fluid">
     <main>
         <div>
             <table>
@@ -69,7 +69,7 @@
     <h2 class="pt-2">Analytics</h2>
     <!-- Start Pie and Bar Charts Side by Side -->
     <div class="row">
-        <div class="charts col-4">
+        <div class="charts col-lg-4 col-12">
             <div class="chart-container shadow pb-5">
                 <h3>Sold Items per Categories</h3>
                 <canvas id="myPieChart"></canvas>
@@ -77,7 +77,7 @@
             </div>
         </div>
 
-        <div class="charts col-8">
+        <div class="charts col-lg-8 col-12">
             <div class="chart-container shadow pb-5">
                 <h3>Most Sold Products</h3>
                 <canvas id="myBarChart"></canvas>

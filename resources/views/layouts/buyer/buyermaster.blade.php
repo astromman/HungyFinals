@@ -7,11 +7,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Hungry Falcons</title>
+    <title>Hungry FalCONs</title>
 
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -27,16 +27,21 @@
     <!-- Custom CSS -->
     <link href="{{ asset('css/buyer.css')}}" rel="stylesheet">
 
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
+
 </head>
 
 <body>
     @include('layouts.buyer.navbar')
 
-    <div class="main-content">
+    <div class="main-content pb-3">
         @yield('content')
     </div>
 
-    <!-- @include('layouts.buyer.footer') -->
+    @include('layouts.buyer.footer')
 
     <!-- Popper.js and Bootstrap JS -->
     <!-- <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> -->

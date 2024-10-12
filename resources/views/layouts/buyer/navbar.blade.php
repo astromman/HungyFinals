@@ -172,21 +172,77 @@ return redirect()->route('landing.page')->with([
 @include('main.buyer.review-modal')
 @endif
 
+<!-- Pusher -->
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+<!-- Pusher -->
+<script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        @if(session('success'))
-        var successModal = new bootstrap.Modal(document.getElementById('successModal'));
-        successModal.show();
-        @endif
+        let userId = {{ session()->get('loginId')}}; // Fetch logged-in buyer's ID
 
-        @if(session('error'))
-        var errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
-        errorModal.show();
-        @endif
+        var pusher = new Pusher('32acbce4969b2fe50044', {
+            cluster: 'mt1'
+        });
 
-        @if(session('orderCompleted'))
-        var reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
-        reviewModal.show();
-        @endif
+        var orderChannel = pusher.subscribe('orders.' + userId);
+
+        // Listen for order status updates
+        orderChannel.bind('order.status.updated', function(event) {
+            // Customize the message based on order status
+            let message = `Your order with reference ${event.order.order_reference} is now ${event.order.order_status}.`;
+
+            // If the order status is 'Preparing', add preparation message
+            if (event.order.order_status === 'Preparing') {
+                message = `Your order with reference ${event.order.order_reference} is being prepared in the kitchen.`;
+            }
+
+            // If the order status is 'Ready', add pick-up message
+            if (event.order.order_status === 'Ready') {
+                message += ' Please pick up your order.';
+            }
+
+            // If the order status is 'Completed', add thank you message and request for a rating
+            if (event.order.order_status === 'Completed') {
+                message += ` Thank you for ordering, please rate the product.`;
+            }
+
+            // Show a Toastr notification
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": 0,
+                "onclick": function() {
+                    // Redirect to the track order page when clicked
+                    window.location.href = `{{ url('/track-order') }}/${event.encryptedId}`;
+                }
+            };
+
+            toastr.info(message, 'Order Status Updated');
+        });
+
+        // Subscribe to the payment status update channel
+        var paymentChannel = pusher.subscribe('payment.' + userId);
+
+        // Listen for payment status updates
+        paymentChannel.bind('payment.status.updated', function(event) {
+            let message = `Your payment for order reference ${event.order.order_reference} is now ${event.paymentStatus}.`;
+
+            if (event.paymentStatus === 'Completed') {
+                message = `Your payment for order reference ${event.order.order_reference} has been confirmed.`;
+            } else if (event.paymentStatus === 'Rejected') {
+                message = `Your payment for order reference ${event.order.order_reference} has been rejected. Feedback: ${event.feedback}`;
+            }
+
+            // Show a Toastr notification
+            toastr.options = {
+                "closeButton": true,
+                "progressBar": true,
+                "positionClass": "toast-top-right",
+                "timeOut": 0,
+            };
+
+            toastr.info(message, 'Payment Status Updated');
+        });
     });
 </script>

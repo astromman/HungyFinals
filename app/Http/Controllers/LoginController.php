@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Middleware\CustomAuthMiddleware;
 use App\Models\Credential;
+use App\Models\Product;
+use App\Models\Shop;
 use App\Models\UserProfile;
 use Carbon\Carbon;
 use Exception;
@@ -26,7 +28,10 @@ class LoginController extends Controller
 {
     public function index()
     {
-        return view('main.buyer.guest');
+        $products = Product::all();
+        $shops = Shop::all();
+        
+        return view('main.buyer.guest', compact('products', 'shops'));
     }
 
     /**
@@ -222,7 +227,6 @@ class LoginController extends Controller
             // Redirect to OTP verification page
             return redirect()->route('show.otp.form')->with('success', 'Registration successful! Please verify your email using the OTP sent.');
         } catch (Exception $e) {
-            dd($e);
             DB::rollBack();
             return redirect()->route('login.form')->with('error', 'An error occured. Please try again.');
         }

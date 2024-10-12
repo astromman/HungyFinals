@@ -367,12 +367,12 @@
             font-size: 50px;
         }
 
-        .bi-envelope-paper-fill {
+        .bi-person-badge {
             color: #5479f7;
             font-size: 50px;
         }
 
-        .bi-shop {
+        .bi-person-circle {
             color: #5479f7;
             font-size: 50px;
         }

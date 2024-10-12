@@ -12,7 +12,20 @@
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" class="href">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.css">
+    <!--=============== CSS ===============-->
+    <link rel="stylesheet" href="assets/css/styles.css">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script scr="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js"></script>
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Bundle with Popper.js -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
@@ -39,97 +52,6 @@
 
         h2 {
             font-weight: bold;
-        }
-
-        .navbar-sidebar-container {
-            display: flex;
-        }
-
-        .btn-side {
-            padding: 10px 23px;
-            text-decoration: none;
-            color: white;
-            font-size: 20px;
-            display: block;
-            transition: 0.3s;
-            outline: none;
-            border: none;
-        }
-
-        .btn-side:hover {
-            color: #5479f7;
-        }
-
-        .btn-side:focus {
-            outline: none;
-            border: none;
-        }
-
-        .sidebar {
-            height: 100vh;
-            width: 250px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background-color: #050144;
-            overflow-x: hidden;
-            transition: 0.3s;
-            padding-top: 80px;
-            z-index: 1;
-        }
-
-        .sidebar a {
-            padding: 10px 15px;
-            text-decoration: none;
-            font-size: 20px;
-            color: white;
-            display: block;
-            transition: 0.3s;
-        }
-
-        .sidebar a:hover {
-            color: #f1f1f1;
-        }
-
-        .sidebar .closebtn {
-            position: absolute;
-            top: 0;
-            right: 25px;
-            font-size: 36px;
-            margin-left: 50px;
-        }
-
-        .navbar {
-            margin-left: 250px;
-            width: calc(100% - 250px);
-            background-color: #050144;
-            padding: 10px 20px;
-            z-index: 1000;
-            position: fixed;
-            top: 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: margin-left 0.3s, width 0.3s;
-        }
-
-        .navbar .navbar-brand,
-        .navbar .navbar-nav .nav-link {
-            color: white;
-        }
-
-        .content-area {
-            margin-left: 250px;
-            padding: 80px 20px 20px 20px;
-            transition: margin-left 0.3s;
-        }
-
-        .hamburger {
-            font-size: 20px;
-            cursor: pointer;
-            color: white;
-            display: none;
-            margin-right: 15px;
         }
 
         @media screen and (max-width: 768px) {

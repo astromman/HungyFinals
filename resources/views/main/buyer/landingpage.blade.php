@@ -26,8 +26,8 @@
                         <img src="{{asset('images/bg/default_shop_image.png')}}" class="d-block w-100" alt="Image 1">
                     </div>
                     @foreach($products as $product)
-                    <div class="carousel-item">
-                        <img src="{{ asset('storage/products/' . $product->image) }}" class="d-block w-100" title="{{ $product->product_name }}" alt="{{ $product->product_name }}">
+                    <div class="carousel-item" style="height: 370px;">
+                    <img src="{{ asset('storage/products/' . $product->image) }}" class="d-block w-100" style="object-fit: cover; height: 100%;" title="{{ $product->product_name }}" alt="{{ $product->product_name }}">
                     </div>
                     @endforeach
                 </div>
@@ -91,8 +91,8 @@
 
                 <!-- Card Body -->
                 <a href="{{ route('visit.canteen', ['id' => $canteen->id, 'building_name' => Str::slug($canteen->building_name)]) }}" class="text-dark stretched-link" style="text-decoration: none;">
-                    <div class="card-body d-flex flex-column justify-content-between" style="height: 100px;">
-                        <p class="card-text mb-1">Mon - Fri</p>
+                    <div class="card-body d-flex flex-column justify-content-between" style="height: 100px; ">
+                        <p class="card-text mb-1">Available Shops: {{ $canteen->shops->where('status', 'Verified')->count() }}</p>
                         <small>{{ $canteen->building_description }}</small>
                     </div>
                 </a>
@@ -194,6 +194,12 @@
 
     .stretched-link:hover {
         text-decoration: underline;
+    }
+
+    .carousel-image {
+        height: 400px; /* Set a fixed height */
+        width: 100%; /* Make the width fill the carousel */
+        object-fit: cover; /* Ensure the image covers the area, cropping if necessary */
     }
 </style>
 

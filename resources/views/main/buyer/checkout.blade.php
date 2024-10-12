@@ -181,14 +181,17 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <img src="{{ asset('storage/shop/' . $shop->shop_qr) }}" alt="QR Code" class="img-fluid">
-                <p class="mt-3">Scan the code to pay using your preferred QR app.</p>
-
+                <a href="{{ asset('storage/shop/' . $shop->shop_qr) }}" target="_blank" download rel="noopener noreferrer">
+                    <img src="{{ asset('storage/shop/' . $shop->shop_qr) }}" alt="QR Code" class="img-fluid">
+                </a>
+                <small class="mt-0 text-muted">Click the image to download.</small>
+                <p class="mt-3 text-muted">You can scan or download and upload this QR code with your preferred E-Wallet.</p>
+                <h3 class="text-primary">Total: <strong>{{ '₱ ' . number_format($shopTotal, 2) }}</strong></h3>
                 <!-- Upload screenshot of payment -->
                 <form id="screenshotForm" action="{{ route('submit.payment.screenshot', Crypt::encrypt($shop->id)) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-3">
-                        <label for="paymentScreenshot" class="form-label">Upload Payment Screenshot</label>
+                        <label for="paymentScreenshot" class="form-label text-muted">Upload Payment Screenshot</label>
                         <input class="form-control" type="file" id="paymentScreenshot" name="payment_screenshot" accept="image/*" required>
                     </div>
                     <button type="submit" class="btn btn-primary w-100" id="submit-screenshot-btn">Submit Screenshot</button>
