@@ -120,24 +120,24 @@
 
     <p>This is to inform you:</p>
 
-    <p>Your shop application for <strong> $shop->shop_name </strong> has been <strong> $status </strong>.</p>
+    <p>Your shop application for <strong>{{ $shop->shop_name }}</strong> has been <strong>{{ $status }}</strong>.</p>
 
-if ($status == 'Rejected' && $feedback)
-    <p>Reason for rejection:  $feedback </p>
+    @if ($status == 'Rejected' && $feedback)
+    <p>Reason for rejection: {{ $feedback }}</p>
     <!-- Properly handle the array of rejected files -->
     <p>Rejected File(s):</p>
     <ul>
-        foreach($files as $file)
-        <li> $file </li>
-        endforeach
+        @foreach($files as $file)
+        <li>{{ $file }}</li>
+        @endforeach
     </ul>
-else
+    @else
     <p>You can now access your online shop as you login.</p>
-endif
+    @endif
 
     <p>Thank you for using Hungry FalCONs!</p>
 
-    <a href="https://hungryfalcons.shop/login">click to login ---> Hungry FalCONs</a>
+    <a href="https://hungryfalcons.shop/login">Hungry FalCONs</a>
 
     <p>Best regards,</p>
     <p>The Hungry FalCONs Team</p>
