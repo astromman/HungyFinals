@@ -37,6 +37,7 @@
                 <h1>{{ $shopDetails->shop_name }}</h1>
                 <p><strong>Contact:</strong> <span>{{ $shopDetails->contact_num }}</span></p>
                 <p class="highlight-text">{{ $shopDetails->shop_bio }}</p>
+                <p class="text-white"> Rating: <span class="text-warning">({{ $totalNoRating }}) {{ $shopDetails->rating }}</span><i class="bi bi-star-fill text-warning ps-1"></i> </p>
             </div>
         </div>
     </div>

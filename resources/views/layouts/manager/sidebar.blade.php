@@ -15,6 +15,11 @@
 <!--=============== SIDEBAR ===============-->
 @php
 $userId = session()->get('loginId');
+
+if(!$userId) {
+    return redirect()->route('user.logout');
+}
+
 $user = App\Models\UserProfile::where('id', $userId)->first();
 $userType = App\Models\UserType::where('id', $user->user_type_id)->first()->type_name;
 $designatedCanteen = App\Models\Building::where('id', $user->manager_building_id)->first()->building_name;
@@ -39,7 +44,7 @@ $designatedCanteen = App\Models\Building::where('id', $user->manager_building_id
                     </a>
 
                     <a href="{{ route('manager.audit.logs') }}" class="sidebar__link {{ Route::currentRouteName() == 'manager.audit.logs' ? 'active-link' : '' }}">
-                        <i class="ri-wallet-3-fill"></i>
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
                         <span>Audit Trail</span>
                     </a>
 

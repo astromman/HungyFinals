@@ -68,7 +68,7 @@
                         <h5 class=" card-title">{{ $shop->shop_name }}</h5>
                         <div class="p-1 d-flex justify-content-between align-items-center">
                             <small class="card-text text-muted"><i class="bi bi-clock-fill text-primary-emphasis"></i> Prep time: <span class="text-primary-emphasis">{{ $shop->preparation_time }} {{ $shop->preparation_time > 1 ? 'mins' : 'min' }}</span></small>
-                            <small class="card-text text-muted text-left"> Rating: <span class="text-warning">5.4</span><i class="bi bi-star-fill text-warning ps-1"></i> </small>
+                            <small class="card-text text-muted text-left"> Rating: <span class="text-warning">{{ $shop->rating }}</span><i class="bi bi-star-fill text-warning ps-1"></i> </small>
                         </div>
                     </div>
                 </a>

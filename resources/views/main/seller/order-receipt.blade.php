@@ -113,7 +113,7 @@
 
 <body>
     <div class="title">
-        <h1>Hungry Falcons</h1>
+        <h1>Hungry FalCONs</h1>
         <p class="subtitle">Online Ordering Platform</p>
     </div>
 
@@ -127,7 +127,7 @@
             <br>
             <span>Payment Method:
                 <span class="text-uppercase">
-                    {{ $orderDetails->first()->payment_method }}
+                    {{ $orderDetails->first()->payment_type }}
                 </span>
             </span>
             <br>

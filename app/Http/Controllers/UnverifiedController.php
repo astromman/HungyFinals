@@ -72,8 +72,8 @@ class UnverifiedController extends Controller
             $validator = Validator::make(request()->all(), [
                 'shop_name' => 'required|unique:shops,shop_name',
                 'contact_num' => 'required|numeric|digits:11|starts_with:09|unique:user_profiles,contact_num',
-                'qr_image' => 'required|image|mimes:jpeg,png|max:51200',
-                'mayors' => 'required|file|mimes:jpeg,png,pdf|max:51200',
+                'qr_image' => 'required|image|mimes:jpeg,png,webp|max:51200',
+                'mayors' => 'required|file|mimes:jpeg,png,pdf,webp|max:51200',
                 'bir' => 'required|file|mimes:jpeg,png,pdf,webp|max:51200',
                 'dti' => 'required|file|mimes:jpeg,png,pdf,webp|max:51200',
                 'contract' => 'required|file|mimes:jpeg,png,pdf,webp|max:51200',
@@ -112,11 +112,10 @@ class UnverifiedController extends Controller
             ]);
 
             if ($validator->fails()) {
-                dd($request->file('sanitary'));
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 
-            $qrImage = 'qr-payment_' . time() . '_' . $request->qr_iamge . '_' . $request->qr_image->getClientOriginalName();
+            $qrImage = 'qr-payment_' . time() . '_' . $request->shop_name . '_' . $request->qr_image->getClientOriginalName();
             $request->file('qr_image')->storeAs('shop', $qrImage, 'public');
 
             $mayorFile = 'mayors-permit_' . time() . '_' . $request->shop_name . '_' . $request->mayors->getClientOriginalName();
@@ -218,31 +217,31 @@ class UnverifiedController extends Controller
 
             // Only apply "required" to the files that were rejected
             if (in_array('mayors', $rejectedFiles)) {
-                $validationRules['mayors'] = 'required|file|mimes:jpeg,png,pdf|max:51200';
+                $validationRules['mayors'] = 'required|file|mimes:jpeg,png,pdf,webp|max:51200';
             } else {
                 $validationRules['mayors'] = 'nullable';
             }
 
             if (in_array('bir', $rejectedFiles)) {
-                $validationRules['bir'] = 'required|file|mimes:jpeg,png,pdf|max:51200';
+                $validationRules['bir'] = 'required|file|mimes:jpeg,png,pdf,webp|max:51200';
             } else {
                 $validationRules['bir'] = 'nullable';
             }
 
             if (in_array('dti', $rejectedFiles)) {
-                $validationRules['dti'] = 'required|file|mimes:jpeg,png,pdf|max:51200';
+                $validationRules['dti'] = 'required|file|mimes:jpeg,png,pdf,webp|max:51200';
             } else {
                 $validationRules['dti'] = 'nullable';
             }
 
             if (in_array('contract', $rejectedFiles)) {
-                $validationRules['contract'] = 'required|file|mimes:jpeg,png,pdf|max:51200';
+                $validationRules['contract'] = 'required|file|mimes:jpeg,png,pdf,webp|max:51200';
             } else {
                 $validationRules['contract'] = 'nullable';
             }
 
             if (in_array('sanitary', $rejectedFiles)) {
-                $validationRules['sanitary'] = 'required|file|mimes:jpeg,png,pdf|max:51200';
+                $validationRules['sanitary'] = 'required|file|mimes:jpeg,png,pdf,webp|max:51200';
             } else {
                 $validationRules['sanitary'] = 'nullable';
             }

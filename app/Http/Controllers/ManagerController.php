@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Audit;
 use App\Models\Building;
 use App\Models\Credential;
 use App\Models\Permit;
@@ -98,9 +99,17 @@ class ManagerController extends Controller
         return view('main.manager.manager',  compact('applications', 'verifiedShops', 'ordersPerShop', 'salesPerShop'));
     }
 
-    public function audit_logs()
+    public function audit_logs(Request $request)
     {
-        return view('main.manager.auditlogs');
+        $userId = $request->session()->get('loginId');
+
+        $manager = UserProfile::where('id', $userId)->first();
+
+        $logs = Audit::join('user_profiles', 'audits.user_id', 'user_profiles.id')
+            ->where('user_profiles.seller_building_id', $manager->manager_building_id)
+            ->get();
+
+        return view('main.manager.auditlogs', compact('logs'));
     }
 
     // My profile and change password
@@ -264,6 +273,7 @@ class ManagerController extends Controller
 
     public function post_concessionaires_account(Request $request)
     {
+        $userId = $request->session()->get('loginId');
         $managerBuilding = $request->session()->get('user');
 
         $managerBuildingId = $managerBuilding->manager_building_id;
@@ -294,8 +304,9 @@ class ManagerController extends Controller
             $user->username = str_replace(' ', '', $request->username);
             $user->default_pass = $generatedPassword;
             $user->contact_num = 'Not Available';
-            $user->created_at = date('Y-m-d H:i:s');
-            $user->updated_at = date('Y-m-d H:i:s');
+            $user->email_verified_at = now();
+            $user->created_at = now();
+            $user->updated_at = now();
             $user->seller_building_id = $managerBuildingId;
             $user->save();
 
@@ -324,6 +335,11 @@ class ManagerController extends Controller
 
             // Send email with credentials
             $this->sendConcessionaireCredentials($user, $generatedPassword, $canteen);
+
+            $description = "";
+            $description .= "a new concessionaire account for " . $canteen;
+            $commonUtility = new CommonUtilityController();
+            $commonUtility->addAuditTrail($userId, 1, $managerBuilding->first_name . ' ' . $managerBuilding->last_name . ' Added ' . $description);
 
             return redirect()->route('concessionaires.account')->with('success', 'Concessionaire account created.');
         } catch (Exception $e) {
@@ -464,6 +480,15 @@ class ManagerController extends Controller
 
     public function approve_shops_application(Request $request, $id)
     {
+        $userId = $request->session()->get('loginId');
+
+        if(!$userId) {
+            return redirect()->route('user.logout');
+        }
+
+        $manager = UserProfile::where('id', $userId)->first();
+        $canteen = Building::where('id', $manager->manager_building_id)->first()->building_name;
+
         try {
             DB::beginTransaction();
 
@@ -495,6 +520,11 @@ class ManagerController extends Controller
 
                     DB::commit();
 
+                    $description = "";
+                    $description .= "a concessionaire's account for " . $canteen;
+                    $commonUtility = new CommonUtilityController();
+                    $commonUtility->addAuditTrail($userId, 2, $manager->first_name . ' ' . $manager->last_name . ' Verifies ' . $description);        
+
                     return redirect()->route('shops.applications')->with('success', 'Application approved successfully.');
                 } else {
                     return redirect()->route('shops.applications')->with('error', 'Shop not found.');
@@ -514,6 +544,15 @@ class ManagerController extends Controller
 
     public function reject_shops_application(Request $request, $id)
     {
+        $userId = $request->session()->get('loginId');
+
+        if(!$userId) {
+            return redirect()->route('user.logout');
+        }
+
+        $manager = UserProfile::where('id', $userId)->first();
+        $canteen = Building::where('id', $manager->manager_building_id)->first()->building_name;
+
         try {
             // Validate the feedback input
             $request->validate([
@@ -545,10 +584,16 @@ class ManagerController extends Controller
 
                     // Send email notification
                     $user = UserProfile::where('id', $shop->user_id)->first();
-                    // dd($user->email);
-                    $this->sendApplicationStatus($user, $shop, 'Rejected', $request->feedback);
+
+                    $this->sendApplicationStatus($user, $shop, 'Rejected', $request->feedback, $rejectedFiles);
 
                     DB::commit();
+
+                    $description = "";
+                    $description .= "a concessionaire's application ";
+                    $commonUtility = new CommonUtilityController();
+                    $commonUtility->addAuditTrail($userId, 2, $manager->first_name . ' ' . $manager->last_name . ' Rejects ' . $description);
+
                     return redirect()->route('shops.applications')->with('success', 'Application rejected successfully.');
                 } else {
                     return redirect()->route('shops.applications')->with('error', 'Shop not found.');
@@ -563,13 +608,14 @@ class ManagerController extends Controller
         }
     }
 
-    private function sendApplicationStatus($user, $shop, $status, $feedback = null)
+    private function sendApplicationStatus($user, $shop, $status, $feedback = null, $rejectedFiles = null)
     {
         $data = [
             'user' => $user,
             'shop' => $shop,
             'status' => $status,
-            'feedback' => $feedback
+            'feedback' => $feedback,
+            'files' => $rejectedFiles
         ];
 
         Mail::send('main.manager.application_status_email', $data, function ($message) use ($user, $status) {
@@ -578,7 +624,6 @@ class ManagerController extends Controller
             $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
         });
     }
-
 
     public function applications_history(Request $request)
     {

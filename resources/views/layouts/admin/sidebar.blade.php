@@ -43,7 +43,7 @@ $userType = App\Models\UserType::where('id', $user->user_type_id)->first()->type
                     </a>
 
                     <a href="{{ route('admin.audit.logs') }}" class="sidebar__link {{ Route::currentRouteName() == 'admin.audit.logs' ? 'active-link' : '' }}">
-                        <i class="bi bi-list-ul"></i>
+                        <i class="bi bi-file-earmark-spreadsheet"></i>
                         <span>Audit Trail</span>
                     </a>
 
@@ -58,7 +58,7 @@ $userType = App\Models\UserType::where('id', $user->user_type_id)->first()->type
                     </a>
 
                     <a href="{{ route('buyers.account') }}" class="sidebar__link {{ Route::currentRouteName() == 'buyers.account' ? 'active-link' : '' }}">
-                        <i class="ri-bar-chart-box-fill"></i>
+                        <i class="bi bi-person-check"></i>
                         <span>Buyer's Account</span>
                     </a>
                 </div>

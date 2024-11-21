@@ -45,7 +45,7 @@
                     <div class="mb-3">
                         <label for="productReview" class="form-label">Product review</label>
                         <textarea class="form-control" id="productReview" name="review_text" rows="3"
-                            placeholder="Example: Since I bought this a month ago, it has been used a lot..." required></textarea>
+                            placeholder="Send a feedback." required></textarea>
                     </div>
 
                     <!-- Terms and Conditions -->

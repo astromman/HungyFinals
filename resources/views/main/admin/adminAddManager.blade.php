@@ -10,7 +10,7 @@
         {{ session('error') }}
     </div>
     @endif
-    <div class="row pt-3 justify-content-center">
+    <div class="row pt-3">
         <!-- Manager Form Card -->
         <div class="col-lg-4">
             <div class="card shadow-lg rounded-4 mb-4">
@@ -71,7 +71,7 @@
 
                             <!-- Submit button -->
                             <div class="mb-4 text-center">
-                                <button type="submit" class="btn btn-primary btn-rounded w-100 mb-3">Add</button>
+                                <button type="submit" class="btn btn-primary btn-rounded w-50 mb-3">Add</button>
                             </div>
                         </form>
                         @elseif($userData)
@@ -112,22 +112,6 @@
                                 @enderror
                             </div>
 
-                            <!-- Current Password Display -->
-                            <div class="pb-3 mb-2">
-                                <label for="current_password" class="form-label">Current Generated Password</label>
-                                <input name="current_password" class="form-control" type="text" id="current_password" value="{{ $userData->default_pass }}" readonly>
-                            </div>
-
-                            <!-- Regenerate Password -->
-                            <div class="pb-3 mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="regenerate_password" name="regenerate_password">
-                                    <label class="form-check-label" for="regenerate_password">
-                                        Regenerate Password
-                                    </label>
-                                </div>
-                            </div>
-
                             <!-- Submit button -->
                             <div class="mb-4 row text-center">
                                 <div class="col-lg-6">
@@ -159,34 +143,36 @@
                                     <th scope="col">Email / Username</th>
                                     <th scope="col">Canteen</th>
                                     <th scope="col">Date Created</th>
-                                    <th scope="col">Date Updated</th>
                                     <th scope="col">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="borderless">
-                                @foreach ($user as $manager)
+                                @forelse ($user as $manager)
                                 <tr class="text-center">
                                     <td>{{ $manager->first_name . ' ' . $manager->last_name}}</td>
                                     <td>{{ $manager->username }}</td>
                                     <td>{{ $manager->building_name }}</td>
-                                    <td>{{ $manager->user_date_created }}</td>
-                                    <td>{{ $manager->user_date_updated }}</td>
+                                    <td>{{ $manager->created_at->format('M d, Y') }}</td>
                                     <td>
                                         <div class="d-flex justify-content-center">
-                                            <a href="{{ route('edit.button.manager.account', $manager->user_id) }}" class="btn btn-sm btn-primary me-1" title="Edit">
+                                            <a href="{{ route('edit.button.manager.account', $manager->user_id) }}" class="btn btn-sm me-1" title="Edit">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
                                             <form action="{{ route('delete.manager', $manager->user_id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this manager?')">
+                                                <button type="submit" class="btn btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this manager?')">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>
                                         </div>
                                     </td>
                                 </tr>
-                                @endforeach
+                                @empty
+                                <tr class="text-center">
+                                    <td colspan="6">No managers found.</td>
+                                </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

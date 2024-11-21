@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Middleware\CustomAuthMiddleware;
+use App\Models\Building;
 use App\Models\Credential;
 use App\Models\Product;
 use App\Models\Shop;
@@ -29,9 +30,9 @@ class LoginController extends Controller
     public function index()
     {
         $products = Product::all();
-        $shops = Shop::all();
-        
-        return view('main.buyer.guest', compact('products', 'shops'));
+        $canteens = Building::all();
+
+        return view('main.buyer.guest', compact('products', 'canteens'));
     }
 
     /**
@@ -70,70 +71,42 @@ class LoginController extends Controller
             }
         }
 
-        return view('main.account.home2');
+        return view('main.account.login');
     }
 
     public function login_post(Request $request)
     {
         try {
             $middleware = new CustomAuthMiddleware();
+            $response = $middleware->handle($request, function ($request) {
+                $username = $request->session()->get('username'); // username of the user who logged in
+                $loginId = $request->session()->get('loginId');
 
-            $username = $request->username;
+                $userType = UserProfile::where('username', $username)
+                    ->where('id', $loginId)
+                    ->value('user_type_id');
 
-            $user = UserProfile::where('username', $username)->first();
-
-            if ($user && !$user->email_verified_at) {
-                // Generate the OTP and set its expiry
-                $otpCode = rand(100000, 999999); // 6-digit random OTP
-                $user->otp_code = $otpCode;
-                $user->otp_expires_at = Carbon::now()->addMinutes(5); // OTP expires in 10 minutes
-
-                $user->save();
-
-                // Send OTP email
-                Mail::send('main.buyer.otp', ['user' => $user, 'otp' => $otpCode], function ($message) use ($user) {
-                    $message->to($user->email)
-                        ->subject('Verify your email address with OTP');
-                });
-
-                session()->put('loginId', $user->id);
-
-                return redirect()->route('show.otp.form')->with('error', 'Please verify your email before logging in.');
-            }
-
-            if ($user && $user->email_verified_at) {
-                $response = $middleware->handle($request, function ($request) {
-                    $username = $request->session()->get('username'); // username of the user who logged in
-                    $loginId = $request->session()->get('loginId');
-
-                    $userType = UserProfile::where('username', $username)
-                        ->where('id', $loginId)
-                        ->value('user_type_id');
-
-                    switch ($userType) {
-                        case 1: // Buyer
-                            return redirect()->route('landing.page');
-                            break;
-                        case 2: // Unverified
-                            return redirect()->route('resubmission.form');
-                            break;
-                        case 3: // Seller
-                            return redirect()->route('seller.dashboard');
-                            break;
-                        case 4: // Admin
-                            return redirect()->route('admin.dashboard');
-                            break;
-                        case 5: // Manager
-                            return redirect()->route('manager.dashboard');
-                            break;
-                        default:
-                            return redirect()->route('login.form')->with('error', 'Unauthorized Access!');
-                            break;
-                    }
-                });
-            } else {
-                return redirect()->route('login.form')->with('error', 'Unauthorized Access!');
-            }
+                switch ($userType) {
+                    case 1: // Buyer
+                        return redirect()->route('landing.page');
+                        break;
+                    case 2: // Unverified
+                        return redirect()->route('resubmission.form');
+                        break;
+                    case 3: // Seller
+                        return redirect()->route('seller.dashboard');
+                        break;
+                    case 4: // Admin
+                        return redirect()->route('admin.dashboard');
+                        break;
+                    case 5: // Manager
+                        return redirect()->route('manager.dashboard');
+                        break;
+                    default:
+                        return redirect()->route('login.form')->with('error', 'Unauthorized Access!');
+                        break;
+                }
+            });
 
             return $response;
         } catch (\Exception $e) {
@@ -141,10 +114,10 @@ class LoginController extends Controller
         }
     }
 
-    // public function register_form()
-    // {
-    //     return view('main.account.home2');
-    // }
+    public function register_form()
+    {
+        return view('main.account.register');
+    }
 
     public function register_post(Request $request)
     {
@@ -152,7 +125,7 @@ class LoginController extends Controller
             $validator = Validator::make($request->all(), [
                 'first_name' => 'required',
                 'last_name' => 'required',
-                'email' => 'required|email|unique:user_profiles,email,NULL,id',
+                'email' => 'required|email|ends_with:adamson.edu.ph|unique:user_profiles,email,NULL,id',
                 'contact_num' => 'required|numeric|digits:11|starts_with:09|unique:user_profiles,contact_num,NULL,id',
                 'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Z])(?=.*[\W_]).+$/'],
                 'confirm_password' => 'required|same:password',
@@ -164,6 +137,7 @@ class LoginController extends Controller
                 'username.unique' => 'Username is already taken.',
                 'email.required' => 'Email is required.',
                 'email.email' => 'Invalid email.',
+                'email.ends_with' => 'Use Adamson Email only.',
                 'email.unique' => 'Email already exists.',
                 'contact_num.required' => 'Contact Number is required.',
                 'contact_num.min' => 'Use valid phone number only.',
@@ -228,6 +202,7 @@ class LoginController extends Controller
             return redirect()->route('show.otp.form')->with('success', 'Registration successful! Please verify your email using the OTP sent.');
         } catch (Exception $e) {
             DB::rollBack();
+            dd($e);
             return redirect()->route('login.form')->with('error', 'An error occured. Please try again.');
         }
     }
@@ -240,36 +215,29 @@ class LoginController extends Controller
     public function showOtpForm()
     {
         try {
-            // Get the logged-in user from session
             $userId = session()->get('loginId');
-
-            // Check if userId exists in session
             if (!$userId) {
                 return redirect()->route('login.form')->with('error', 'Session expired. Please log in again.');
             }
 
-            // Fetch the user from the database
             $user = UserProfile::where('id', $userId)->first();
-
-            // Check if user exists
             if (!$user) {
                 return redirect()->route('login.form')->with('error', 'User not found. Please try again.');
             }
 
-            // Extract the email parts
-            $email = $user->email;
-            $emailParts = explode('@', $email);
-            $namePart = substr($emailParts[0], 0, 3); // First 3 characters of the name
-            $domainPart = '@' . $emailParts[1]; // Domain part of the email
+            if (!$user->email_verified_at) {
+                $email = $user->email;
+                $emailParts = explode('@', $email);
+                $namePart = substr($emailParts[0], 0, 3);
+                $domainPart = '@' . $emailParts[1];
+                $censoredEmail = $namePart . 'xxxxx' . $domainPart;
 
-            // Concatenate censored email with 5 'x'
-            $censoredEmail = $namePart . 'xxxxx' . $domainPart;
-
-            return view('main.buyer.otp-form', compact('user', 'censoredEmail'));
+                return view('main.buyer.otp-form', compact('user', 'censoredEmail'));
+            } else {
+                return redirect()->intended(); // Redirect to the intended route
+            }
         } catch (Exception $e) {
             DB::rollBack();
-            // Redirect to the login page with an error message
-            dd($e);
             return redirect()->route('login.form')->with('error', 'Something went wrong. Please try again later.');
         }
     }

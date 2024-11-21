@@ -94,14 +94,14 @@
         @foreach($orders as $order)
         @php $shopTotal += $order->total; @endphp
         <div class="border rounded p-3 my-3 bg-white" style="border: 1px solid #ccc; border-radius: 5px;">
-            <div class="row mb-3">
-                <div class="col-1 d-flex justify-content-center align-items-center p-3 bg-secondary-subtle">
-                    <span class="mx-2">{{ $order->quantity . 'x' }}</span>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="col-1 d-flex justify-content-center align-items-center ">
+                    <span class="">{{ $order->quantity . 'x' }}</span>
                 </div>
                 <div class="col-3">
-                    <img src="{{ asset('storage/products/' . $order->image) }}" alt="{{ $order->name }}" class="img-fluid rounded bg-secondary-subtle" style="height: 100px; width: 100px; object-fit: contain; margin-right: 20px;">
+                    <img src="{{ asset('storage/products/' . $order->image) }}" alt="{{ $order->name }}" class="img-fluid rounded" style="height: 100px; width: 100px; object-fit: contain;">
                 </div>
-                <div class="col-6 d-flex align-items-center text-uppercase">
+                <div class="col-5 mx-1 d-flex align-items-center text-uppercase">
                     <div class="row">
                         <span class="mb-0">
                             {{ $order->product_name }}
@@ -112,7 +112,7 @@
 
                     </div>
                 </div>
-                <div class="col-2 d-flex align-items-center justify-content-end">
+                <div class="col-3 d-flex align-items-center justify-content-end">
                     {{ '₱ ' . number_format($order->price, 2) }}
                 </div>
             </div>
@@ -191,7 +191,7 @@
                 <form id="screenshotForm" action="{{ route('submit.payment.screenshot', Crypt::encrypt($shop->id)) }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <div class="mb-3">
-                        <label for="paymentScreenshot" class="form-label text-muted">Upload Payment Screenshot</label>
+                        <label for="paymentScreenshot" class="form-label text-muted">Upload Proof of Payment</label>
                         <input class="form-control" type="file" id="paymentScreenshot" name="payment_screenshot" accept="image/*" required>
                     </div>
                     <button type="submit" class="btn btn-primary w-100" id="submit-screenshot-btn">Submit Screenshot</button>

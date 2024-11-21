@@ -14,7 +14,7 @@
         <button type="submit">Continue</button>
     </form>
 
-    <p style="font-size: 12px; margin-top: 23px;">Didn't receive the email? <a href="#" style="color: #007bff;">Click here</strong></p>
+    <p style="font-size: 12px; margin-top: 23px;">Didn't receive the email? <a href="{{ route('resend.otp') }}" style="color: #007bff;">Click here</strong></p>
 
     <div class="back-to-login">
         <a href="{{ route('login.form') }}"> ← Back to login</a>

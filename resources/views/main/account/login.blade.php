@@ -1,83 +1,401 @@
-@extends('layouts.account.loginMaster')
+<!DOCTYPE html>
+<html>
 
-@section('content')
-<!-- FORM PART -->
-<div class="col-lg-6 col-md-12 px-4">
-    <div class="mb-3 pt-3" style="color:white; font-family: arial, sans-serif;">
-        <p style="margin-bottom: 5px; margin-top: -5px; font-weight: bold;">START NOW TO ORDER</p>
-        <h1 style="margin-top: -10; font-size: 55px; font-weight: bold;">Log-in your account</h1>
+<head>
+    <title>Hungry FalCONs</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:600&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a81368914c.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        .wave {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            width: 100vw;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-gap: 7rem;
+            padding: 0 2rem;
+        }
+
+        .img {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .login-content {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            text-align: center;
+        }
+
+        .img img {
+            width: 500px;
+        }
+
+        form {
+            width: 360px;
+        }
+
+        .login-content img {
+            height: 100px;
+        }
+
+        .login-content h2 {
+            margin: 15px 0;
+            color: #333;
+            text-transform: uppercase;
+            font-size: 2.9rem;
+        }
+
+        .login-content .input-div {
+            position: relative;
+            display: grid;
+            grid-template-columns: 7% 93%;
+            margin: 25px 0;
+            padding: 5px 0;
+            border-bottom: 2px solid #d9d9d9;
+        }
+
+        .login-content .input-div.one {
+            margin-top: 0;
+        }
+
+        .i {
+            color: #d9d9d9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .i i {
+            transition: .3s;
+        }
+
+        .input-div>div {
+            position: relative;
+            height: 45px;
+        }
+
+        .input-div>div>h5 {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 18px;
+            transition: .3s;
+        }
+
+        .input-div:before,
+        .input-div:after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            width: 0%;
+            height: 2px;
+            background-color: #5DA9E2;
+            transition: .4s;
+        }
+
+        .input-div:before {
+            right: 50%;
+        }
+
+        .input-div:after {
+            left: 50%;
+        }
+
+        .input-div.focus:before,
+        .input-div.focus:after {
+            width: 50%;
+        }
+
+        .input-div.focus>div>h5 {
+            top: -5px;
+            font-size: 15px;
+        }
+
+        .input-div.focus>.i>i {
+            color: #5DA9E2;
+        }
+
+        .input-div>div>input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            background: none;
+            padding: 0.5rem 0.7rem;
+            font-size: 1.2rem;
+            color: #555;
+            font-family: 'poppins', sans-serif;
+        }
+
+        .input-div.pass {
+            margin-bottom: 4px;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #999;
+            font-size: 0.9rem;
+            transition: .3s;
+        }
+
+        a:hover {
+            color: #5DA9E2;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            height: 50px;
+            border-radius: 25px;
+            outline: none;
+            border: none;
+            background-color: #5DA9E2;
+            background-size: 200%;
+            font-size: 1.2rem;
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            text-transform: uppercase;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: .5s;
+        }
+
+        .btn:hover {
+            background-position: right;
+        }
+
+
+        @media screen and (max-width: 1050px) {
+            .container {
+                grid-gap: 5rem;
+            }
+        }
+
+        @media screen and (max-width: 1000px) {
+            form {
+                width: 290px;
+            }
+
+            .login-content h2 {
+                font-size: 2.4rem;
+                margin: 8px 0;
+            }
+
+            .img img {
+                width: 400px;
+            }
+        }
+
+        @media screen and (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .img {
+                display: none;
+            }
+
+            .wave {
+                display: none;
+            }
+
+            .login-content {
+                justify-content: center;
+            }
+        }
+
+
+        .social-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .social-container p {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .social-icons a {
+            font-size: 1.5rem;
+            color: white;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .social-icons a.facebook {
+            background-color: #3b5998;
+        }
+
+        .social-icons a.twitter {
+            background-color: #1da1f2;
+        }
+
+        .social-icons a.google {
+            background-color: #db4437;
+        }
+
+        .social-icons a:hover {
+            transform: scale(1.1);
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #d9d9d9;
+            margin: 20px 0 30px 0;
+            /* Adds 30px space below the line */
+            width: 100%;
+        }
+
+        .link-container {
+            display: flex;
+            justify-content: center;
+            /* Aligns links to left and right */
+            margin: 10px 0;
+        }
+
+        .signup-link,
+        .forgot-link {
+            text-decoration: none;
+            color: #999;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .signup-link:hover,
+        .forgot-link:hover {
+            color: #5DA9E2;
+        }
+
+        .validation-error {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <img class="wave" src="images/bg/wave2.png">
+    <div class="container">
+        <div class="img">
+            <img src="images/bg/login.svg">
+        </div>
+        <div class="login-content">
+            <form action="{{ route('login.post') }}" method="POST">
+                @csrf
+                <!-- <img src="img/avatar.svg"> -->
+                <h2 class="title">Login</h2>
+                <div class="validation-error">
+                    @if ($errors->has('error'))
+                    {{ $errors->first('error') }}
+                    @endif
+                </div>
+                <div class="input-div one">
+                    <div class="i">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="div">
+                        <h5>Email</h5>
+                        <input name="username" type="text" class="input">
+                    </div>
+                </div>
+                <div class="input-div pass">
+                    <div class="i">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div class="div">
+                        <h5>Password</h5>
+                        <input name="password" type="password" class="input">
+                    </div>
+                </div>
+
+                <div class="link-container">
+                    <a href="{{ route('forgot.pass.form') }}" class="forgot-link">Forgot Password?</a>
+                </div>
+
+                <input type="submit" class="btn" value="Login">
+
+                <!-- Horizontal line -->
+                <hr>
+
+                <div class="social-container">
+                    <a href="{{ route('register.form') }}" class="signup-link">Create a New Account</a>
+                    <p>Or Sign Up Using</p>
+                    <div class="social-icons">
+                        <a href="{{ route('google.redirect') }}" class="google"><i class="fab fa-google"></i></a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-    <form method="POST" action="{{ route('login.post') }}">
-        @csrf
-        <div class="mb-2">
-            <input name="username" type="text" placeholder="Username" class="form-control @error('error') is-invalid @enderror" id="email" style="font-size: 20px;">
-            @error('error')
-            <small class="invalid-feedback"> {{ $message }} </small>
-            @enderror
-        </div>
+</body>
 
-        <div class="pb-2">
-            <input name="password" type="password" placeholder="Password" class="form-control" id="password" style="font-size: 20px;">
-            @error('error')
-            <small class="text-danger"> {{ $message }} <a href="" class="text-danger">Forgot Password?</a> </small>
-            @enderror
-        </div>
+<script>
+    const inputs = document.querySelectorAll(".input");
 
-        <div class="mx-1 mb-3" style="font-size: 15px;">
-            <div class="row">
-                <div class="col-lg-6 px-2">
-                    <input type="checkbox" class="form-check-input" id="exampleCheck1">
-                    <label class="form-check-label pt-1" for="exampleCheck1" style="color:white;">Remember me</label>
-                </div>
-                <div class="col-lg-6 pt-1">
-                    <a href="" style="float:right;">Forgot Password?</a>
-                </div>
-            </div>
 
-        </div>
+    function addcl() {
+        let parent = this.parentNode.parentNode;
+        parent.classList.add("focus");
+    }
 
-        <!-- BUTTON PARTS -->
-        <div class="text-center">
-            <div class="col-lg-12 pb-3 pt-3 d-flex justify-content-center" style="color: white;">
-                <button type="submit" class="btn btn-login btn-rounded rounded-pill">Login</button>
+    function remcl() {
+        let parent = this.parentNode.parentNode;
+        if (this.value == "") {
+            parent.classList.remove("focus");
+        }
+    }
 
-            </div>
-            <div class="col-lg-12">
-                <p style="color: white;">Don't have an account yet, Klasmeyt? <a href="{{ route('register.form') }}">Sign-up here</a></p>
-            </div>
 
-            <!-- OR PART -->
-            <div class="container">
-                <div class="row justify-content-centers">
-                    <div class="col-lg-5">
-                        <hr style="border-color: white;">
-                    </div>
-                    <p class="col" style="color: white;">OR</p>
-                    <div class="col-lg-5">
-                        <hr style="border-color: white;">
-                    </div>
-                </div>
-            </div>
+    inputs.forEach(input => {
+        input.addEventListener("focus", addcl);
+        input.addEventListener("blur", remcl);
+    });
+</script>
 
-            <!-- O-Auth -->
-            <div class="mb-3">
-                <a href="" class="btn btn-rounded rounded-pill" style="width: 320px; height: 50px; font-size: large; background-color: white;">
-                    <div class="row">
-                        <div class="col-2">
-                            <img src="images/logo/google.png" alt="Google Logo" style="width: 100%; height: auto;">
-                        </div>
-                        <div class="col-10 pe-5">
-                            Login with Google
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </form>
-</div>
-
-<!-- LOGO PART -->
-<div class=" col-lg-6 col-md-12 px-4 d-flex justify-content-center align-items-center text-center">
-    <img class="logo" src="/images/logo/logohf1.png">
-</div>
-@endsection
+</html>

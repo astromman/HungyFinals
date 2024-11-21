@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Status Update</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,33 +77,22 @@
         }
 
         .details {
-            display: flex;
-            align-items: flex-start;
-            /* Ensures proper alignment of items */
-            justify-content: space-between;
-            /* Makes space between items */
             margin-top: 20px;
         }
 
+        .order-status {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+        }
+
         .order-details {
-            flex: 1;
+            margin-top: 20px;
         }
-
-        .total-amount {
-            text-align: right;
-            align-items: flex-end;
-            flex: 0;
-        }
-
-        .total-amount .amount {
-            color: #007bff;
-            font-size: 2rem;
-        }
-
-        .total-amount p {
-            margin: 0;
-        }
-
 
         .text-uppercase {
             text-transform: uppercase;
@@ -116,31 +106,46 @@
         <p class="subtitle">Online Ordering Platform</p>
     </div>
 
-    <h2>Good day, Concessionaire!</h2>
+    <h2>Order Status Update</h2>
 
-    <p>This is to inform you:</p>
+    <p>Hello {{ ucwords($buyer->first_name) }},</p>
+    <p>We wanted to let you know that the status of your order with reference <strong>{{ $order->order_reference }}</strong> has been updated. Below are the details of your order.</p>
 
-    <p>Your shop application for <strong> $shop->shop_name </strong> has been <strong> $status </strong>.</p>
+    <div class="order-status">
+        <strong>Current Status:
+            {{ $order->order_status === 'Ready' ? 'Ready to pick-up' : $order->order_status }}
+        </strong>
+    </div>
 
-if ($status == 'Rejected' && $feedback)
-    <p>Reason for rejection:  $feedback </p>
-    <!-- Properly handle the array of rejected files -->
-    <p>Rejected File(s):</p>
-    <ul>
-        foreach($files as $file)
-        <li> $file </li>
-        endforeach
-    </ul>
-else
-    <p>You can now access your online shop as you login.</p>
-endif
 
-    <p>Thank you for using Hungry FalCONs!</p>
+    <div class="order-details">
+        <h3>Order Summary</h3>
+        <div class="details">
+            <span><strong>Order Reference:</strong> {{ $order->order_reference }}</span>
+            <br>
+            <span><strong>Shop:</strong> {{ $order->product->shop->shop_name }}</span>
+            <br>
+            <span><strong>Order Date:</strong> {{ $order->created_at->format('D, M d Y, h:i A') }}</span>
+        </div>
+    </div>
 
-    <a href="https://hungryfalcons.shop/login">click to login ---> Hungry FalCONs</a>
-
-    <p>Best regards,</p>
-    <p>The Hungry FalCONs Team</p>
+    <h3>Order Breakdown</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($orderDetails as $orderDetail)
+            <tr>
+                <td class="text-uppercase">{{ $orderDetail->productOrder->product_name }}</td>
+                <td>{{ $orderDetail->quantity }}x</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
 </body>
 
 </html>

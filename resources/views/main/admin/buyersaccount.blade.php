@@ -2,9 +2,6 @@
 
 @section('content')
 <div class="container-fluid pt-5">
-    <div class="py-2 px-1 text-center">
-        <h2>Buyer's Account List</h2>
-    </div>
     <div class="row justify-content-center">
         <div class="col-lg-12">
             <!-- Box/Card Wrapper -->
@@ -22,7 +19,6 @@
                                     <th>Email</th>
                                     <th>Contact Number</th>
                                     <th>Registered At</th>
-                                    <th>Updated At</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -31,8 +27,7 @@
                                     <td>{{ $data->first_name . ' ' . $data->last_name }}</td>
                                     <td>{{ $data->email }}</td>
                                     <td>{{ $data->contact_num }}</td>
-                                    <td>{{ $data->created_at }}</td>
-                                    <td>{{ $data->updated_at }}</td>
+                                    <td>{{ date('M d, Y', strtotime($data->created_at )) }}</td>
                                 </tr>
                                 @empty
                                 <tr>

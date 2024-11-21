@@ -94,39 +94,48 @@
       margin-bottom: 10px;
     }
 
-    .input-field:not(.name-container .input-field) {
-      max-width: 380px;
-      width: 350px;
-      height: 50px;
-      margin-bottom: 10px;
-      background-color: #f0f0f0;
-      display: grid;
-      grid-template-columns: 15% 85%;
-      /* padding: 0.4rem; */
-      border-radius: 15px;
-      /* Makes the input field round */
+    .input-field {
+      display: flex;
+      align-items: center;
+      border-bottom: 2px solid #0077B6;
+      padding-bottom: 5px;
+      margin-bottom: 20px;
     }
 
     .input-field i {
-      text-align: center;
-      line-height: 55px;
-      color: #acacac;
-      font-size: 1.1rem;
+      font-size: 1.2rem;
+      color: #0077B6;
+      margin-right: 10px;
     }
 
     .input-field input {
-      background: none;
-      outline: none;
       border: none;
-      line-height: 1;
-      font-weight: 600;
-      font-size: 1.1rem;
+      outline: none;
+      font-size: 1rem;
+      font-weight: bold;
       color: #333;
+      width: 100%;
     }
 
     .input-field input::placeholder {
       color: #aaa;
-      font-weight: 500;
+    }
+
+    .forgot-password {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -10px;
+      color: #0077B6;
+      font-size: 0.9rem;
+    }
+
+    .forgot-password a {
+      text-decoration: none;
+      color: #0077B6;
+    }
+
+    .forgot-password a:hover {
+      text-decoration: underline;
     }
 
     .btn {
@@ -143,6 +152,7 @@
       margin: 10px 0;
       transition: 0.5s;
     }
+    
 
     .btn:hover {
       background-color: #8dc3f2;
@@ -663,6 +673,7 @@
             <p style="color: red; font-size: 9px; margin-top:5px">{{$message}}</p>
             @enderror
           </div>
+          <p><a href="{{ route('forgot.pass.form') }}">Forgot password?</a></p>
           <input type="submit" value="Login" class="btn solid">
 
           <p class="social-text"> Or Sign in with Google</p>
@@ -674,7 +685,7 @@
         </form>
 
         <!-- Signup Form -->
-        <form action="{{ route('register.post') }}" method="POST" class="sign-up-form" id="register-form-id">
+        <!-- <form action="{{ route('register.post') }}" method="POST" class="sign-up-form" id="register-form-id"> -->
           @csrf
           <h2 class="title">Register</h2>
 
@@ -783,8 +794,6 @@
           <p> Create one account now for exclusive benefits and features</p>
           <button class="btn transparent" id="sign-up-btn"> Sign up</button>
         </div>
-
-        <img src="{{ asset('') }}" class="image" alt="">
       </div>
       <div class="panel right-panel">
         <div class="content" id="sign-in-content">
@@ -792,8 +801,6 @@
           <p> Discover more deals with your existing account</p>
           <button class="btn transparent" id="sign-in-btn"> Sign in</button>
         </div>
-
-        <img src="{{ asset('images/2.png') }}" class="image" alt="">
       </div>
     </div>
   </div>

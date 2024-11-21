@@ -68,14 +68,14 @@
     </form> -->
 
     <div class="row">
-        <div class="charts col-4">
+        <div class="charts col-12 col-md-4">
             <div class="chart-container shadow pb-5">
                 <h3>Total orders per shop</h3>
                 <canvas id="myPieChart"></canvas>
             </div>
 
         </div>
-        <div class="charts col-8">
+        <div class="charts col-12 col-md-8">
             <div class="chart-container shadow pb-5">
                 <h3>Sales per shop</h3>
                 <canvas id="myLineChart"></canvas>

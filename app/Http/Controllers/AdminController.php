@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Audit;
 use App\Models\Building;
 use App\Models\Credential;
+use App\Models\Shop;
 use App\Models\UserProfile;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -20,6 +21,13 @@ class AdminController extends Controller
 {
     public function admin_dashboard()
     {
+        
+        $managers = UserProfile::where('user_type_id', 5)->count();
+
+        $buyers = UserProfile::where('user_type_id', 1)->count();
+
+        $shops = Shop::where('status', 'Verified')->count();
+
         // Query to get total completed orders per shop, grouped by building and counting unique order references
         $completedOrders = DB::table('orders')
             ->join('products', 'orders.product_id', 'products.id')
@@ -41,7 +49,7 @@ class AdminController extends Controller
             ->orderBy('order_date')
             ->get();
 
-        return view('main.admin.admin', compact('completedOrders', 'salesData'));
+        return view('main.admin.admin', compact('completedOrders', 'salesData', 'managers', 'buyers', 'shops'));
     }
 
     public function audit_logs()
@@ -370,6 +378,7 @@ class AdminController extends Controller
             $user->username = str_replace(' ', '', $request->username);
             $user->default_pass = $generatedPassword;
             $user->contact_num = 'Not Available';
+            $user->email_verified_at = now();
             $user->created_at = now();
             $user->updated_at = now();
             $user->manager_building_id = $request->building_id;
@@ -479,29 +488,6 @@ class AdminController extends Controller
             $user->last_name = ucfirst(strtolower($request->last_name));
             $user->manager_building_id = $request->building_id;
             $user->save();
-
-            // Check if a new password should be generated
-            if ($request->has('regenerate_password')) {
-                $generatedPassword = $this->generatePassword();
-                $user->default_pass = $generatedPassword;
-                $user->save();
-
-                // Replace the old password
-                $credentials = Credential::where('user_id', $user->id)
-                    ->where('is_deleted', false)
-                    ->first();
-                $credentials->is_deleted = true;
-                $credentials->save();
-
-                // Creating a new password
-                $credentials = new Credential();
-                $credentials->user_id = $user->id;
-                $credentials->password = Hash::make($generatedPassword);
-                $credentials->is_deleted = false;
-                $credentials->created_at = now();
-                $credentials->updated_at = now();
-                $credentials->save();
-            }
 
             DB::commit();
 

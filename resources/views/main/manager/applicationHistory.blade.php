@@ -10,33 +10,30 @@
         {{ session('error') }}
     </div>
     @endif
-    <div>
+    <div class="table-responsive">
         <table class="table table-hover table-bordered">
             <thead>
                 <tr class="text-center">
                     <th scope="col">Shop Name</th>
                     <th scope="col">Date Submitted</th>
-                    <th scope="col">Details</th>
+                    <th scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody class="borderless">
                 @forelse($shopApplication as $applicationData => $application)
                 <tr class="text-center align-middle">
                     <td>{{ $application->first()->shop_name }}</td>
-                    <td>{{ $application->first()->date_submitted }}</td>
+                    <td>{{ date('M d, Y', strtotime($application->first()->date_submitted)) }}</td>
                     <td>
-                        <!-- Button to toggle details view -->
-                        <button type="button" class="btn btn-primary py-1 w-100 rounded-pill" onclick="toggleDetails({{ $application->first()->id }})">
-                            View Details
+                        <button type="button" class="btn btn-primary btn-sm py-1 w-75 rounded-pill" onclick="toggleDetails({{ $application->first()->id }})">
+                            View
                         </button>
                     </td>
                 </tr>
 
-                <!-- Hidden row for the detailed info -->
                 <tr id="details-{{ $application->first()->id }}" class="details-row shadow-sm" style="display:none;">
                     <td colspan="3" class="p-0">
                         <div class="container p-3">
-                            <!-- Table for Status, Feedback, Date Updated -->
                             <table class="table details-table w-100 text-center">
                                 <thead>
                                     <tr class="text-center">
@@ -44,7 +41,7 @@
                                         <th>Rejected Files</th>
                                         <th>Feedback</th>
                                         <th>Date Updated</th>
-                                        <th>Documents</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -55,16 +52,13 @@
                                         </td>
                                         <td>{{ $applicationData->rejected_files }}</td>
                                         <td>{{ $applicationData->feedback }}</td>
-                                        <td>{{ $applicationData->date_updated }}</td>
+                                        <td>{{ date('M d, Y', strtotime($applicationData->date_updated)) }}</td>
                                         <td>
-                                            <!-- Button to trigger the modal -->
-                                            <button type="button" class="btn btn-primary py-1 w-100 rounded-pill" data-bs-toggle="modal" data-bs-target="#documentsModal-{{ $applicationData->id }}">
-                                                View Documents
+                                            <button type="button" class="btn btn-primary btn-sm py-1 w-75 rounded-pill" data-bs-toggle="modal" data-bs-target="#documentsModal-{{ $applicationData->id }}">
+                                                View
                                             </button>
                                         </td>
                                     </tr>
-
-
 
                                     <!-- Modal for displaying documents -->
                                     <div class="modal fade" id="documentsModal-{{ $applicationData->id }}" tabindex="-1" aria-labelledby="documentsModalLabel-{{ $applicationData->id }}" aria-hidden="true">
@@ -75,7 +69,7 @@
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <div class="row text-center g-3"> <!-- Added gutter spacing here -->
+                                                    <div class="row text-center g-3">
                                                         <!-- Mayor's Permit -->
                                                         <div class="col">
                                                             <strong>Mayor's Permit</strong>
@@ -143,7 +137,6 @@
             </tbody>
         </table>
     </div>
-
 </div>
 
 <script>
@@ -156,4 +149,42 @@
         }
     }
 </script>
+
+<!-- Inline CSS for Responsiveness -->
+<style>
+    @media (max-width: 768px) {
+        .btn {
+            font-size: 0.75rem;
+            /* Reduce button text size for smaller screens */
+        }
+
+        .table thead th,
+        .table tbody td {
+            font-size: 0.75rem;
+            /* Smaller text for mobile */
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            /* Enable horizontal scrolling for smaller screens */
+        }
+
+        .modal-dialog {
+            max-width: 90%;
+            /* Adjust modal size for mobile */
+        }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .btn {
+            font-size: 0.85rem;
+            /* Adjust button size for tablets */
+        }
+
+        .modal-dialog {
+            max-width: 80%;
+            /* Adjust modal size for tablets */
+        }
+    }
+</style>
 @endsection

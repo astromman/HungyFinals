@@ -7,7 +7,6 @@
         <!-- Text and Search Box Section -->
         <div class="col-lg-6 mb-4">
             <div>
-                <p class="highlight-text">100% Masarap</p>
                 <h1 class="custom-font">We provide a platform for your cravings</h1>
             </div>
             <div class="searchbox-wrap">
@@ -102,20 +101,6 @@
     </div>
 </div>
 
-<!-- <script>
-    // Enable pusher logging - don't include this in production
-    Pusher.logToConsole = true;
-
-    var pusher = new Pusher('2ff5cb15f12633d6b419', {
-        cluster: 'mt1'
-    });
-
-    var channel = pusher.subscribe('my-channel');
-    channel.bind('my-event', function(data) {
-        alert(JSON.stringify(data));
-    });
-</script> -->
-
 <!-- CSS for adjustments -->
 <style>
     .search-bar {
@@ -202,26 +187,5 @@
         object-fit: cover; /* Ensure the image covers the area, cropping if necessary */
     }
 </style>
-
-<!-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> Ensure jQuery is included -->
-
-<!-- <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Trigger the success modal if it exists
-        var successModal = document.getElementById('successModal');
-        if (successModal) {
-            var modal = new bootstrap.Modal(successModal);
-            modal.show();
-        }
-
-        // Trigger review modal if the order is completed (using Session::flash)
-        @if(session('orderCompleted'))
-        setTimeout(function() {
-            var reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
-            reviewModal.show();
-        }, 500); // Add delay to allow redirection and modal trigger
-        @endif
-    });
-</script> -->
 
 @endsection

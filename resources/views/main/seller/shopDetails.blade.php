@@ -71,7 +71,7 @@
                                 {{ $shopDetails->is_reopen ? 'disabled' : '' }}>
                         </div>
 
-                        <div class="mb-3 d-flex align-items-center">
+                        <!-- <div class="mb-3 d-flex align-items-center">
                             <div class="flex-grow-1 me-3">
                                 <label class="form-label">Shop Name</label>
                                 <input name="shop_name" class="form-control @error('shop_name') is-invalid @enderror" value="{{ old('first_name', $shopDetails->shop_name) }}" type="text">
@@ -79,10 +79,10 @@
                                 <span class="invalid-feedback">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="align-self-end"> <!-- Ensure the button is aligned with the field -->
+                            <div class="align-self-end">
                                 <button type="button" class="btn btn-outline-primary">Request Change</button>
                             </div>
-                        </div>
+                        </div> -->
 
                         <div class="col mb-3">
                             <label for="formFile" class="form-label">Shop Banner</label>

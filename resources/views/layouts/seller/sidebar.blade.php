@@ -274,8 +274,6 @@ $designatedCanteen = App\Models\Building::where('id', $user->seller_building_id)
     </div>
 </nav>
 
-
-
 <!--=============== MAIN JS ===============-->
 <script>
     function toggleStoreStatus(checkbox) {

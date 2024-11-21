@@ -179,7 +179,7 @@
                 borderColor: getRandomColor(),
                 tension: 0.1,
                 borderWidth: 2,
-                pointRadius: 1,
+                pointRadius: 5,
                 pointBackgroundColor: '#fff',
                 pointBorderWidth: 3
             }]

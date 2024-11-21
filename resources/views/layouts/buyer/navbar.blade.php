@@ -142,11 +142,6 @@ return redirect()->route('landing.page')->with([
         text: "{{ session('shopClosed') }}",
         showCancelButton: false,
         confirmButtonText: 'OK'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            // Redirect to the 'my.cart' route when OK is clicked
-            window.location.href = "{{ route('shop.cart') }}";
-        }
     });
 </script>
 @endif
@@ -170,6 +165,24 @@ return redirect()->route('landing.page')->with([
 
 @if(session('orderCompleted'))
 @include('main.buyer.review-modal')
+<script>
+    setTimeout(function() {
+        var reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+        reviewModal.show();
+    }, 500); // Add delay to allow redirection and modal trigger
+</script>
+@endif
+
+@if(session('reviewSubmitted'))
+<script>
+    Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "{{ session('reviewSubmitted') }}",
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
 @endif
 
 <!-- Pusher -->
@@ -178,7 +191,7 @@ return redirect()->route('landing.page')->with([
 <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        let userId = {{ session()->get('loginId')}}; // Fetch logged-in buyer's ID
+        let userId = {{ session()->get('loginId') }}; // Fetch logged-in buyer's ID
 
         var pusher = new Pusher('32acbce4969b2fe50044', {
             cluster: 'mt1'

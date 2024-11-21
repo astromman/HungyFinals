@@ -13,7 +13,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <title>Hungry Falcons</title>
+    <title>Hungry FalCONs</title>
 
     <style>
         /* * {
@@ -88,7 +88,7 @@
 
         .hero-text button:hover,
         .buttons button:hover {
-            background: linear-gradient(45deg, #ff924f, #ff6b35);
+            background: linear-gradient(45deg, #8DC3F2, #8DC3F2);
             box-shadow: 0px 7px 20px rgba(0, 0, 0, 0.3);
             transform: translateY(-3px);
         }
@@ -334,6 +334,77 @@
             padding: 10px;
             margin-top: 10px;
         }
+
+        /* Canteen Card Image Styles */
+        .canteen-image-container {
+            position: relative;
+            height: 180px;
+            background-size: cover;
+            background-position: center;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        /* Gradient Overlay */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        /* Card Title Styles */
+        .card-title {
+            font-size: 1.25rem;
+            color: #0077b6;
+            font-weight: bold;
+        }
+
+        /* Card Text Styles */
+        .card-text {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        /* Canteen Cards Layout */
+        .card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Canteen Card Body Alignment */
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .canteen-image-container {
+                height: 150px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .canteen-image-container {
+                height: 120px;
+            }
+
+            .card-title {
+                font-size: 1rem;
+            }
+
+            .card-text {
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 
@@ -343,58 +414,79 @@
 
     <section class="hero">
         <div class="mission-text">
-            <h2>OUR BEST <br><span>HEALTHY FOOD</span></h2>
+            <h2>Welcome to Hungry FalCONs!</h2>
             <p>Hungry FalCONs is the official online food marketplace of Adamson University, designed to bring the campus canteen experience right to your fingertips! No more long queues, no more hassle—order your favorite meals online and pick them up at your convenience.</p>
             <div class="buttons">
-                <button class="order-btn">Order Now</button>
+                <button class="order-btn" onclick="window.location.href='{{ route('user.logout') }}'">Order Now</button>
             </div>
         </div>
         <div class="mission-image">
-            <img src="{{ asset('images/WHY.png') }}" alt="Delicious food">
+            <img src="{{ asset('images/bg/default_shop_image.png') }}" alt="Delicious food">
         </div>
     </section>
 
     <section class="about-us">
-        <h2>Hungry Falcons</h2>
-        <p>Welcome to Hungry Falcons! We strive to provide the best food service experience for Adamson University students, ensuring a convenient, fast, and quality meal ordering system. Founded in 2024, we aim to bring efficiency and satisfaction to every student on campus.</p>
+        <h2>Getting Started!</h2>
+        <ul>
+            <li>1. Register using your Adamson Email.</li>
+            <li>1.2 Verify your account using the OTP sent in your AdU Mail.</li>
+            <li>2. Browse through our website and find the canteen you desire.</li>
+            <li>3. 
+            </li>
+        </ul>
     </section>
 
     <!-- Mission Section with Image and Text -->
     <section class="mission-section">
         <div class="mission-image">
-            <img src="{{ asset('images/try4.png') }}" alt="Mission Image">
+            <img src="{{ asset('images/bg/default_shop_image.png') }}" alt="Mission Image">
         </div>
         <div class="mission-text">
             <h2>Our Mission and Vision</h2>
-            <p>At Hungry Falcons, we strive to be the leading food service platform at Adamson University, revolutionizing campus dining by offering fast, convenient, and reliable meal solutions. Our mission is to simplify food ordering by connecting students with their favorite canteen meals efficiently, delivering high-quality food and an exceptional experience that fits seamlessly into their busy schedules, ensuring satisfaction in every bite.</p>
+            <p>At Hungry FalCONs, we strive to be the leading food service platform at Adamson University, revolutionizing campus dining by offering fast, convenient, and reliable meal solutions. Our mission is to simplify food ordering by connecting students with their favorite canteen meals efficiently, delivering high-quality food and an exceptional experience that fits seamlessly into their busy schedules, ensuring satisfaction in every bite.</p>
         </div>
     </section>
-
-    <!-- Product Section -->
-    <section class="product-section">
-    <h2>Our Products</h2>
-    <p>From premium ingredients to mouth-watering dishes, we have a wide variety of meals to suit your taste. Take your pick from our collection of top sellers and start your day the right way!</p>
-    <div class="products">
-        @foreach($products->take(3) as $product) <!-- Limits to the first 3 products -->
-        <div class="product-card">
-            <img src="{{ asset('storage/products/' . $product->image) }}" alt="{{ $product->product_name }}">
-            <h3>{{ $product->product_name }}</h3>
-            <p>{{ $product->description }}</p>
-            <p class="price">₱{{ $product->price }}</p>
-            <button>Add to Cart</button>
-        </div>
-        @endforeach
-    </div>
-</section>
 
     <section class="about-us">
-        <h2>Canteen Shops</h2>
-        <p>Welcome to Hungry Falcons! We offer a variety of affordable, delicious meals to suit every taste. With our easy online ordering, you can skip the lines and enjoy fresh food quickly. Experience fast service, great meals, and convenience with every order!</p>
+        <h2>Canteens are One Click Away!</h2>
+        <p>With Hungry FalCONs, our easy online food ordering system, you can skip the lines and enjoy fresh food quickly. Experience fast service, great meals, and convenience with every order! WE BRING THE CANTEENS CLOSER TO YOU!</p>
+
+        <div class="container mt-4">
+            <div class="row row-cols-1 row-cols-md-3 g-4">
+                @foreach($canteens as $canteen)
+                <div class="col">
+                    <div class="card h-100 shadow-sm border-0">
+                        <!-- Background Image Container -->
+                        @if(is_null($canteen->building_image))
+                        <div class="canteen-image-container" style="background-image: url('{{ asset('images/bg/default_shop_image.png') }}');">
+                            <!-- Gradient Overlay -->
+                            <div class="overlay"></div>
+                        </div>
+                        @else
+                        <div class="canteen-image-container" style="background-image: url('{{ asset('storage/canteen/' . $canteen->building_image) }}');">
+                            <!-- Gradient Overlay -->
+                            <div class="overlay"></div>
+                        </div>
+                        @endif
+
+                        <!-- Card Body -->
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <h5 class="card-title text-center text-dark">{{ $canteen->building_name }}</h5>
+                            <p class="card-text text-center">Available Shops: {{ $canteen->shops->where('status', 'Verified')->count() }}</p>
+                            <small class="text-muted text-center">{{ $canteen->building_description }}</small>
+                        </div>
+
+                        <!-- Button or Link to Canteen -->
+                        <a href="{{ route('user.logout') }}" class="stretched-link"></a>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
     </section>
 
-
     <footer>
-        <p>&copy; 2024 Hungry Falcons. All rights reserved.</p>
+        <p>&copy; 2024 Hungry FalCONs. All rights reserved.</p>
     </footer>
 
 </body>

@@ -8,14 +8,30 @@ import "chart.js"; // Import Chart.js
 
 // Initialize DataTables after DOM is ready
 $(document).ready(function () {
-    $("#auditTrailTable").DataTable({
+    $('#auditTrailTable').DataTable({
         paging: true,
         searching: true,
         ordering: true,
         info: true,
         responsive: true,
         autoWidth: false,
-        order: [[0, "desc"]], // Order by ID descending
+        order: [[0, 'desc']], // Order by Timestamp descending
+        columnDefs: [
+            { targets: '_all', defaultContent: '-' } // Fills missing content with '-'
+        ]
+    });
+
+    $('#auditTrailTableManager').DataTable({
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        responsive: true,
+        autoWidth: false,
+        order: [[0, 'desc']], // Order by Timestamp descending
+        columnDefs: [
+            { targets: '_all', defaultContent: '-' } // Fills missing content with '-'
+        ]
     });
 
     $("#buyerTable").DataTable({
@@ -26,6 +42,9 @@ $(document).ready(function () {
         responsive: true,
         autoWidth: false,
         order: [[0, "desc"]], // Order by ID descending
+        columnDefs: [
+            { targets: '_all', defaultContent: '-' } // Fills missing content with '-'
+        ]
     });
 });
 

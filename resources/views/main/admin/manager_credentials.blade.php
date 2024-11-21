@@ -32,8 +32,8 @@
     <h2>Hello, {{ $manager->first_name }} {{ $manager->last_name }}</h2>
     <p>Your account as <b>Manager</b> at <b>{{ $canteen }}</b> has been created. Below are your credentials:</p>
     <ul>
-        <li><strong>Username:</strong>{{ $manager->username }}</li>
-        <li><strong>Password:</strong>{{ $password }}</li>
+        <li><strong>Username: </strong>{{ $manager->username }}</li>
+        <li><strong>Password: </strong>{{ $password }}</li>
     </ul>
     <p>You can now login to the system using these credentials.</p>
     <p>Please change your password as soon as you login.</p>

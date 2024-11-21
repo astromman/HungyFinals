@@ -146,12 +146,11 @@ class BuyerController extends Controller
     //SEARCH FUNCTION (❁´◡`❁)
     public function searchItem(Request $request)
     {
-        $searchTerm = $request->input('query');  // User search term
-        $type = $request->input('type', 'all');  // Filter by type (shop or product)
-        $category = $request->input('category', 'all');  // Filter by category (category_id)
-        $price = $request->input('price', 'low_to_high');  // Price filter (low to high or high to low)
+        $searchTerm = $request->input('query');
+        $type = $request->input('type', 'all');
+        $category = $request->input('category', 'all');
+        $price = $request->input('price', 'low_to_high');
 
-        // Initialize empty collections for shops and products
         $shops = collect();
         $products = collect();
 
@@ -170,16 +169,37 @@ class BuyerController extends Controller
         // Filter for products
         if ($type == 'all' || $type == 'product') {
             $productsQuery = Product::join('categories', 'products.category_id', '=', 'categories.id')
-                ->select('products.*', 'categories.type_name as category_name')
-                // ->where('categories.type_name', 'LIKE', '%' . $searchTerm . '%')
-                ->where('products.product_name', 'LIKE', '%' . $searchTerm . '%');
+                ->join('shops', 'products.shop_id', '=', 'shops.id')
+                ->join('user_profiles', 'shops.user_id', 'user_profiles.id')
+                ->join('buildings', 'user_profiles.seller_building_id', 'buildings.id')
+                ->where('shops.is_reopen', true)
+                ->select(
+                    'products.*',
+                    'categories.type_name as category_name',
+                    'categories.id as category_id',
+                    'shops.shop_name',
+                    'shops.id as shop_id',
+                    'buildings.building_name as canteen'
+                );
 
-            // Filter by category (using the category_id)
-            if ($category !== 'all') {
-                $productsQuery->where('categories.id', '=', $category);  // Ensure filtering by category id
+            // Only apply search term filter if a search term exists
+            if (!empty($searchTerm)) {
+                $productsQuery->where(function ($query) use ($searchTerm) {
+                    $query->where('products.product_name', 'LIKE', '%' . $searchTerm . '%')
+                        ->orWhere('shops.shop_name', 'LIKE', '%' . $searchTerm . '%');
+                });
             }
 
-            // Filter by price (Low to High or High to Low)
+            // Filter by category
+            if ($category !== 'all') {
+                // Get the category name for the selected category ID
+                $selectedCategoryName = Category::where('id', $category)->value('type_name');
+
+                // Filter products by the category name to include all shops' categories
+                $productsQuery->where('categories.type_name', '=', $selectedCategoryName);
+            }
+
+            // Filter by price
             if ($price == 'low_to_high') {
                 $productsQuery->orderBy('products.price', 'asc');
             } elseif ($price == 'high_to_low') {
@@ -199,9 +219,17 @@ class BuyerController extends Controller
 
         // Render the normal search results page if not AJAX
         $groupedProducts = $products->groupBy('category_name');
-        $categories = Category::select('type_name', 'id')->groupBy('type_name')->get();
 
-        return view('main.buyer.search-results', compact('shops', 'groupedProducts', 'searchTerm', 'categories'));
+        // Get unique categories while preserving the first ID for each category name
+        $categories = Category::select('id', 'type_name')
+            ->orderBy('type_name')
+            ->get()
+            ->unique('type_name')
+            ->values();
+
+        $reviews = Review::all();
+
+        return view('main.buyer.search-results', compact('shops', 'groupedProducts', 'searchTerm', 'categories', 'reviews'));
     }
 
     public function my_profile(Request $request)
@@ -385,6 +413,10 @@ class BuyerController extends Controller
             ->where(DB::raw('LOWER(REPLACE(REPLACE(shop_name, "\'", ""), " ", "-"))'), strtolower($shop_name))
             ->firstOrFail();
 
+        if ($shops && !$shops->is_reopen) {
+            return redirect()->route('landing.page')->with('shopClosed', 'Shop suddenly closed. Making order is currently unavailable.');
+        }
+
         $products = Product::join('categories', 'products.category_id', '=', 'categories.id')
             ->select(
                 'products.*',
@@ -396,10 +428,14 @@ class BuyerController extends Controller
 
         $reviews = Review::all();
 
+        $totalNoRating = Review::join('products', 'reviews.product_id', '=', 'products.id')
+            ->where('products.shop_id', $id) // Filter by shop_id in products
+            ->count();
+
         // Group products by category
         $groupedProducts = $products->groupBy('category_name');
 
-        return view('main.buyer.shop-menu', compact('shops', 'products', 'groupedProducts', 'reviews'));
+        return view('main.buyer.shop-menu', compact('shops', 'products', 'groupedProducts', 'reviews', 'totalNoRating'));
     }
 
     // CART
@@ -563,6 +599,10 @@ class BuyerController extends Controller
         // Decrypt shopId
         $shopId = Crypt::decrypt($shopId);
 
+        if (!$shopId) {
+            // redirect to fallback
+        }
+
         // Fetch the shop and its canteen (building)
         $shop = Shop::where('id', $shopId)->first();
         $canteen = Building::where('id', $shop->building_id)->first();
@@ -630,7 +670,7 @@ class BuyerController extends Controller
 
         $shop = Shop::where('id', $shopId)->first();
         if ($shop && $shop->is_reopen == false) {
-            return redirect()->route('landing.page')->with('error', 'Shop suddenly closed. Making order is currently unavailable.');
+            return redirect()->route('landing.page')->with('shopClosed', 'Shop suddenly closed. Making order is currently unavailable.');
         }
 
         // Get the length of the shop name
@@ -697,11 +737,6 @@ class BuyerController extends Controller
             }
 
             $totalAmount = $orders->sum('total');
-            $totalAmountInCentavos = $totalAmount * 100; // For GCash and other payment gateways
-
-            if ($totalAmountInCentavos < 2000) {
-                return redirect()->back()->with('error', 'Minimum transaction amount is ₱20.00.');
-            }
 
             foreach ($orders as $order) {
                 $product = Product::where('id', $order->product_id)->first();
@@ -813,38 +848,6 @@ class BuyerController extends Controller
         return response()->json(['success' => false], 400);
     }
 
-    public function paymentSuccess(Request $request)
-    {
-        $provider = new PayPalClient;
-        $provider->setApiCredentials(config('paypal'));
-        $token = $provider->getAccessToken();
-        $provider->setAccessToken($token);
-
-        $response = $provider->capturePaymentOrder($request->input('token'));
-
-        if (isset($response['status']) && $response['status'] == 'COMPLETED') {
-            // Update the payment status to 'Completed'
-            $orderReference = Crypt::decrypt($request->input('orderRef'));
-            $payment = Payment::where('payment_id', $response['id'])->first();
-            $payment->payment_status = 'Completed';
-            $payment->updated_at = now();
-            $payment->save();
-
-            // Update order status to 'Completed'
-            Order::where('order_reference', $orderReference)->update(['order_status' => 'Pending']);
-
-            return redirect()->route('track.this.order', ['orderRef' => Crypt::encrypt($orderReference)])
-                ->with('success', 'Payment successful!');
-        }
-
-        return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
-    }
-
-    public function paymentFailed()
-    {
-        return redirect()->route('shop.cart')->with('error', 'Payment failed. Please try again.');
-    }
-
     public function track_this_order(Request $request, $orderRef)
     {
         $userId = $request->session()->get('loginId');
@@ -865,8 +868,10 @@ class BuyerController extends Controller
             ->first();  // We expect only one order per reference, so use first()
 
         // If payment status is 'Rejected', redirect to the cart page with a rejection message
-        if ($order && $order->payment_status == 'Rejected') {
-            return redirect()->route('shop.cart');
+        if (!$order) {
+            return redirect()->route('landing.page')->with([
+                'paymentRejected' => 'Submitted screen shot was rejected. Please checkout your order again with the correct screen shot.'
+            ]);
         }
 
         // Check if the order exists and handle the payment status
@@ -931,7 +936,6 @@ class BuyerController extends Controller
         $orders = Order::join('product_orders', 'orders.product_orders_id', 'product_orders.id')
             ->join('products', 'orders.product_id', '=', 'products.id')
             ->join('user_profiles', 'orders.user_id', '=', 'user_profiles.id')
-            ->join('payments', 'orders.payment_id', 'payments.id')
             ->join('shops', 'products.shop_id', 'shops.id')
             ->join('buildings', 'shops.building_id', 'buildings.id')
             ->select(
@@ -942,14 +946,12 @@ class BuyerController extends Controller
                 'orders.total',
                 'orders.quantity',
                 'orders.order_status',
+                'orders.payment_id',
                 'product_orders.product_name',
                 'product_orders.price',
                 'user_profiles.first_name',
                 'user_profiles.last_name',
                 'user_profiles.contact_num',
-                'payments.payment_id',
-                'payments.payment_status',
-                'payments.payment_type',
                 'shops.shop_name',
                 'buildings.building_name as designated_canteen'
             )
@@ -961,19 +963,15 @@ class BuyerController extends Controller
             ->groupBy('orders.order_reference') // Group by the unique order_reference
             ->get();
 
-        if ($orders->first() && $orders->first()->order_status == 'Completed') {
-            // Session::flash('orderCompleted', true);
-            return redirect()->route('landing.page')->with([
-                'orderCompleted' => true,
-                'orderReference' => $orderRef,
-            ]);
-        }
-
         if ($orders->isEmpty()) {
             return redirect()->route('landing.page')->with([
                 'orderCompleted' => true,
-                'orderReference' => $orderRef,
+                'orderReference' => $orderRef
             ]);
+        }
+
+        foreach ($orders as $order) {
+            $payment = Payment::where('id', $order->payment_id)->first();
         }
 
         foreach ($orders as $order) {
@@ -994,7 +992,7 @@ class BuyerController extends Controller
                 ->get();
         }
 
-        return view('main.buyer.trackorder', compact('orders', 'user', 'orderRef'));
+        return view('main.buyer.trackorder', compact('orders', 'user', 'orderRef', 'payment'));
     }
 
     public function order_history(Request $request)
@@ -1011,6 +1009,7 @@ class BuyerController extends Controller
                 'orders.total',
                 'orders.quantity',
                 'orders.order_status',
+                'shops.id as shop_id',
                 'shops.shop_name',
                 'buildings.building_name as designated_canteen'
             )
@@ -1018,7 +1017,7 @@ class BuyerController extends Controller
             ->where('orders.order_status', 'Completed')
             ->orderBy('orders.updated_at', 'desc')
             ->groupBy('orders.order_reference')
-            ->get();
+            ->paginate(10);
 
         foreach ($orders as $order) {
             // Fetch products for each order
@@ -1096,13 +1095,33 @@ class BuyerController extends Controller
                     $review->updated_at = now();
                     $review->save();
                 }
+
+                $productId = Product::where('id', $product->product_id)->first();
+                $shopId = Shop::where('id', $productId->shop_id)->first()->id;
+
+                $allRating = (int) Review::join('products', 'reviews.product_id', '=', 'products.id')
+                    ->where('products.shop_id', $shopId) // Filter by shop_id in products
+                    ->sum('reviews.rating');
+
+                $totalNoRating = Review::join('products', 'reviews.product_id', '=', 'products.id')
+                    ->where('products.shop_id', $shopId) // Filter by shop_id in products
+                    ->count();
+
+                $ratingOfShop = round($allRating / $totalNoRating, 1);
+                // dd($ratingOfShop);
+
             }
+
+            // Step 5: Update rating column in shops table
+            $shop = Shop::find($shopId);
+            $shop->rating = $ratingOfShop;
+            $shop->save();
 
             // Commit the transaction
             DB::commit();
 
             // Redirect with success message
-            return redirect()->route('landing.page')->with('success', 'Thank you for your review!');
+            return redirect()->route('landing.page')->with('reviewSubmitted', 'Thank you for your review!');
         } catch (\Exception $e) {
             // Rollback the transaction in case of any errors
             DB::rollBack();

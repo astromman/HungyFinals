@@ -1,8 +1,8 @@
 @extends('layouts.admin.adminMaster')
 
 @section('content')
-<div class="container-fluid pt-5">
-    <div class="py-2 px-5">
+<div class="">
+    <div class="px-1">
         <h2>Add New Category</h2>
     </div>
     @if (session('error'))
@@ -10,7 +10,7 @@
         {{ session('error') }}
     </div>
     @endif
-    <div class="row pt-3 justify-content-center">
+    <div class="row pt-3 pb-3 justify-content-center">
         <!-- Building Form Card -->
         <div class="col-lg-4">
             <div class="card shadow-lg rounded-4 mb-4">
@@ -139,16 +139,16 @@
                                         @endif
                                     </td>
                                     <td>{{ $building->building_description }}</td>
-                                    <td>{{ $building->created_at->format('Y-m-d') }}</td>
+                                    <td>{{ $building->created_at->format('M d, Y') }}</td>
                                     <td>
                                         <div class="d-flex justify-content-center">
-                                            <a href="{{ route('edit.button.building', ['id' => $building->id, 'building_name' => Str::slug($building->building_name)]) }}" class="btn btn-sm btn-warning me-2" title="Edit">
+                                            <a href="{{ route('edit.button.building', ['id' => $building->id, 'building_name' => Str::slug($building->building_name)]) }}" class="btn btn-sm me-2" title="Edit">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
                                             <form action="{{ route('delete.building', $building->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this canteen?')">
+                                                <button type="submit" class="btn btn-sm " title="Delete" onclick="return confirm('Are you sure you want to delete this canteen?')">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>

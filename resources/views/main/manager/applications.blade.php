@@ -32,7 +32,7 @@
                 <tr class="text-center">
                     <td>{{ $applicationData->shop_name }}</td>
                     <td>{{ $applicationData->application_status }}</td>
-                    <td>{{ $applicationData->date_submitted }}</td>
+                    <td>{{ date('M d, Y', strtotime($applicationData->date_submitted)) }}</td>
                     <td>
                         <button type="button" class="btn btn-primary py-1 w-50 rounded-pill" onclick="toggleDocuments({{ $applicationData->id }})">
                             View
@@ -42,35 +42,35 @@
                 <tr id="documents-{{ $applicationData->permit_id }}" class="documents-row" style="display:none;">
                     <td colspan="4">
                         <div class="row">
-                            <div class="col-lg-3 px-2 text-center">
+                            <div class="col px-2 text-center">
                                 Mayor's Permit
                                 <a href="{{ asset('storage/permits/' . $applicationData->mayors) }}" target="_blank">
                                     <embed src="{{ asset('storage/permits/' . $applicationData->mayors) }}" width="100%" height="400px" style="object-fit: contain;" />
                                 </a>
                                 <a href="{{ asset('storage/permits/' . $applicationData->mayors) }}" download class="btn btn-link">Download</a>
                             </div>
-                            <div class="col-lg-3 px-2 text-center">
+                            <div class="col px-2 text-center">
                                 BIR
                                 <a href="{{ asset('storage/permits/' . $applicationData->bir) }}" target="_blank">
                                     <embed src="{{ asset('storage/permits/' . $applicationData->bir) }}" width="100%" height="400px" style="object-fit: contain;" />
                                 </a>
                                 <a href="{{ asset('storage/permits/' . $applicationData->bir) }}" download class="btn btn-link">Download</a>
                             </div>
-                            <div class="col-lg-3 px-2 text-center">
+                            <div class="col px-2 text-center">
                                 DTI
                                 <a href="{{ asset('storage/permits/' . $applicationData->dti) }}" target="_blank">
                                     <embed src="{{ asset('storage/permits/' . $applicationData->dti) }}" width="100%" height="400px" style="object-fit: contain;" />
                                 </a>
                                 <a href="{{ asset('storage/permits/' . $applicationData->dti) }}" download class="btn btn-link">Download</a>
                             </div>
-                            <div class="col-lg-3 px-2 text-center">
+                            <div class="col px-2 text-center">
                                 AdU Contract
                                 <a href="{{ asset('storage/permits/' . $applicationData->contract) }}" target="_blank">
                                     <embed src="{{ asset('storage/permits/' . $applicationData->contract) }}" width="100%" height="400px" style="object-fit: contain;" />
                                 </a>
                                 <a href="{{ asset('storage/permits/' . $applicationData->contract) }}" download class="btn btn-link">Download</a>
                             </div>
-                            <div class="col-lg-3 px-2 text-center">
+                            <div class="col px-2 text-center">
                                 Sanitary Permit
                                 <a href="{{ asset('storage/permits/' . $applicationData->sanitary) }}" target="_blank">
                                     <embed src="{{ asset('storage/permits/' . $applicationData->sanitary) }}" width="100%" height="400px" style="object-fit: contain;" />
@@ -79,15 +79,15 @@
                             </div>
                         </div>
                         <div class="text-center mt-3 pe-5">
-                            <div class="d-flex justify-content-end align-items-end">
+                            <div class="d-flex justify-content-end align-items-end" style="gap: 10px;">
                                 <div class='pe-1'>
-                                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#feedbackModal" onclick="openFeedbackModal({{ $applicationData->id }})">Reject</button>
+                                    <button type="button" class="btn btn-danger w-70" data-bs-toggle="modal" data-bs-target="#feedbackModal" onclick="openFeedbackModal({{ $applicationData->id }})">Reject</button>
                                 </div>
 
                                 <form action="{{ route('approve.shops.application', $applicationData->permit_id) }}" method="POST" class="d-inline-block w-45">
                                     @csrf
                                     @method('PATCH')
-                                    <button type="submit" class="btn btn-success w-100">Approve</button>
+                                    <button type="submit" class="btn btn-success w-70" >Approve</button>
                                 </form>
                             </div>
                         </div>

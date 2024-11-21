@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container-fluid pt-3">
-    <div class="py-2 px-5">
+    <div class="py-2">
         <h2>Create Concessionaire's Accounts</h2>
     </div>
     @if (session('error'))
@@ -13,7 +13,7 @@
     <div class="row pt-3 justify-content-center">
         <!-- Manager Form Card -->
         <div class="col-lg-3">
-            <div class="card shadow-lg rounded-4 mb-4">
+            <div class="card shadow rounded-4 mb-4">
                 <div class="pt-3 text-center">
                     <h3>Enter Credentials</h3>
                 </div>
@@ -81,7 +81,7 @@
 
         <!-- Managers Table -->
         <div class="col-lg-9">
-            <div class="card shadow-lg rounded-4">
+            <div class="card shadow rounded-4">
                 <div class="pt-3 text-center">
                     <h3>Concessionaires List</h3>
                 </div>
@@ -116,7 +116,7 @@
                                             <form action="{{ route('delete.concessionaires.account', $concessionaire->id) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this manager?')">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this account?')">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>

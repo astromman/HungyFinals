@@ -55,10 +55,10 @@
                 </table>
                 <p class="text-white"><strong>Contact:</strong> <span>{{ $shops->contact_num }}</span></p>
                 <p class="highlight-text">{{ $shops->shop_bio }}</p>
+                <p class="text-white"> Rating: <span class="text-warning">({{ $totalNoRating }}) {{ $shops->rating }}</span><i class="bi bi-star-fill text-warning ps-1"></i> </p>
             </div>
         </div>
     </div>
-
 
     <!-- Product Listing -->
     @forelse($groupedProducts as $categoryName => $products)
@@ -73,8 +73,9 @@
             <!-- Product Card -->
             <div class="col-md-6 col-lg-3 mb-4">
                 <div class="product-wrapper">
-                    <div class="product-card position-relative border shadow" data-bs-toggle="modal"
-                        data-bs-target="#productModal" data-id="{{ $product->id }}"
+                    <div class="product-card position-relative border shadow"
+                        {{ !$product->is_deleted ? 'data-bs-toggle=modal data-bs-target=#productModal' : '' }}
+                        data-id="{{ $product->id }}"
                         data-name="{{ $product->product_name }}"
                         data-description="{{ $product->product_description }}"
                         data-price="{{ $product->price }}" data-category="{{ $product->category_name }}"

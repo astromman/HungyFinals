@@ -5,216 +5,277 @@
     <div class="py-2">
         <h2>My Orders</h2>
     </div>
-    <div class="order-table-container">
-        <div class="accordion" id="orderAccordion">
-            <table class="order-table">
-                <thead>
+    <div class="pt-3">
+        <legend>Legends</legend>
+        <div class="pt-2">
+            <table class="table table-responsive table-bordered">
+                <thead class="text-center">
                     <tr>
-                        <th class="text-center"></th>
-                        <th class="text-center">Reference</th>
-                        <th class="text-center">Customer</th>
-                        <th class="text-center">Created At</th>
-                        <th class="text-center">Payment Status</th>
-                        <th class="text-center">Mode</th>
-                        <th class="text-center">Payment Reference</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Action</th>
+                        <th>Color</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
-                <tbody id="orderTable">
-                    @forelse($orders as $order)
-                    <tr class="order-row">
-                        <td class="text-center accordion-toggle" data-bs-toggle="collapse" data-bs-target="#orderDetails{{ $order->id }}" aria-expanded="false" aria-controls="orderDetails{{ $order->id }}">
-                            <i class="bi bi-caret-down-fill font-bold" id="icon-{{ $order->id }}" style="font-size: 20px;"></i>
-                        </td>
-                        <td class="text-center accordion-toggle" data-bs-toggle="collapse" data-bs-target="#orderDetails{{ $order->id }}" aria-expanded="false" aria-controls="orderDetails{{ $order->id }}">
-                            {{ $order->order_reference }}
-                        </td>
-                        <td class="text-center text-uppercase accordion-toggle" data-bs-toggle="collapse" data-bs-target="#orderDetails{{ $order->id }}" aria-expanded="false" aria-controls="orderDetails{{ $order->id }}">
-                            {{ $order->first_name . ' ' . $order->last_name }}
-                        </td>
-                        <td class="text-center accordion-toggle" data-bs-toggle="collapse" data-bs-target="#orderDetails{{ $order->id }}" aria-expanded="false" aria-controls="orderDetails{{ $order->id }}">
-                            {{ $order->created_at->diffForHumans() }}
-                        </td>
-                        <td class="text-center accordion-toggle" data-bs-toggle="collapse" data-bs-target="#orderDetails{{ $order->id }}" aria-expanded="false" aria-controls="orderDetails{{ $order->id }}">
-                            {{ $order->payment_status }}
-                        </td>
-                        <td class="text-center text-uppercase accordion-toggle" data-bs-toggle="collapse" data-bs-target="#orderDetails{{ $order->id }}" aria-expanded="false" aria-controls="orderDetails{{ $order->id }}">
-                            {{ $order->payment_type }}
-                        </td>
-                        <td class="text-center">
-                            <button type="button" class="btn p-1 {{ $order->payment_status == 'Pending' ? 'bg-warning-subtle' : 'bg-success-subtle' }} w-100 rounded-pill"
+                <tbody class="text-center">
+                    <tr>
+                        <td class="bg-success-subtle text-success fw-bold">Green</td>
+                        <td>Ready or Completed</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-warning-subtle text-warning fw-bold">Yellow</td>
+                        <td>Pending</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-info-subtle text-info fw-bold">Cyan</td>
+                        <td>Preparing</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-primary-subtle text-primary fw-bold">Blue</td>
+                        <td>Enabled</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-secondary-subtle text-secondary fw-bold">Gray</td>
+                        <td>Disabled</td>
+                    </tr>
+                </tbody>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="py-3">
+        <div class="row">
+            @forelse($orders as $order)
+            <div class="col-12 col-md-6 col-lg-4 pb-3">
+                <div class="card" style="width: 21.5rem; height: 33rem;">
+                    <div class="card-body">
+                        <span>Customer: {{ $order->first_name . ' ' . $order->last_name }}</span>
+                        <div class="pb-3">
+                            <div>
+                                <span>Reference: {{ $order->order_reference }}</span>
+                            </div>
+                            <div>
+                                <span>Created At: {{ $order->created_at->diffForHumans() }}</span>
+                            </div>
+                        </div>
+
+                        <h5 class="card-title">Payment Reference</h5>
+                        <div class="pb-3">
+                            <button type="button"
+                                class="btn fw-bold rounded-pill w-100 p-1 
+                                {{ 
+                                    $order->payment_status == 'Pending' ? 'bg-warning-subtle text-warning' : 'bg-success-subtle text-success' 
+                                }}"
                                 data-bs-toggle="modal"
                                 data-bs-target="#viewPaymentModal"
                                 data-payment-image="{{ asset('storage/payments/' . $order->payment_id) }}"
                                 data-order-id="{{ $order->id }}"
                                 data-order-reference="{{ $order->order_reference }}"
-                                data-payment-status="{{ $order->payment_status }}">
-                                <strong class="{{ $order->payment_status == 'Pending' ? 'text-warning' : 'text-success' }} text-uppercase">
-                                    View
-                                </strong>
-                            </button>
-                        </td>
-                        <td class="text-center">
-                            <form id="orderStatusForm{{ $order->order_reference }}" method="POST" action="{{ route('update.order', $order->order_reference) }}">
+                                data-payment-status="{{ $order->payment_status }}"
+                                data-customer-name="{{ $order->first_name . ' ' . $order->last_name }}">View Payment</button>
+                        </div>
+
+                        <!-- ORDER STATUS -->
+                        <h5 class="card-title">Order Status</h5>
+                        <div class="pb-3">
+                            <form id="orderStatusForm{{ $order->order_reference }}" method="POST" action="{{ route('update.order', $order->order_reference) }}" onsubmit="return handleFormSubmit(event, '{{ $order->order_reference }}')">
                                 @csrf
-                                @if($order->order_status == 'Ready')
-                                <input name="order_status" type="hidden" value="Completed">
-                                @endif
-                                <select name="order_status" class="status-dropdown p-1 rounded-pill fw-bold 
-                                {{ ($order->payment_status != 'Completed' && $order->order_status == 'Pending') ? 'bg-secondary-subtle text-secondary' : '' }}
-                                {{ ($order->payment_status == 'Completed' && $order->order_status == 'Pending') ? 'bg-warning-subtle text-warning' : '' }}
-                                {{ $order->order_status == 'Ready' ? 'bg-success-subtle text-success' : '' }} 
-                                {{ $order->order_status == 'Preparing' ? 'bg-info-subtle text-info' : '' }}"
-                                    id="statusDropdown{{ $order->order_reference }}"
-                                    data-order-id="{{ $order->order_reference }}"
-                                    data-current-status="{{ $order->order_status }}"
-                                    {{ $order->order_status == 'Ready' || ($order->payment_type == 'qr' && $order->payment_status != 'Completed') ? 'disabled' : '' }}>
-                                    <option value="Pending" class="text-center"
-                                        {{ $order->order_status == 'Pending' ? 'selected' : '' }}
-                                        {{ $order->order_status == 'Preparing' ? 'disabled' : '' }}
-                                        {{ $order->order_status == 'Ready' ? 'disabled' : '' }}>Pending</option>
+                                <div class="d-flex justify-content-between align-items-center pb-3 card-status-btn">
+                                    <input class="order-status" type="hidden" value="{{$order->order_status }}" />
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <!-- Pending Radio Button -->
+                                        <div class="pending-status">
+                                            <input type="radio" class="btn-check " name="order_status" id="pendingRadio{{ $order->order_reference }}"
+                                                value="Pending"
+                                                autocomplete="off"
+                                                {{ $order->payment_status != 'Completed' ? 'disabled' : '' }}
+                                                {{ $order->order_status == 'Pending' && $order->payment_status == 'Completed' ? 'checked' : '' }}
+                                                {{ $order->order_status == 'Preparing' || $order->order_status == 'Ready' ? 'disabled' : '' }}>
 
-                                    <option value="Preparing" class="text-center"
-                                        {{ $order->order_status == 'Preparing' ? 'selected' : '' }}
-                                        {{ $order->order_status == 'Ready' ? 'disabled' : '' }}>Preparing</option>
+                                            <label class="btn fw-bold rounded-pill p-1 me-3
+                                                {{ $order->payment_status == 'Completed' ? 'bg-warning-subtle text-warning' : 'bg-secondary-subtle text-secondary' }}"
+                                                for="pendingRadio{{ $order->order_reference }}">
+                                                Pending
+                                            </label>
+                                        </div>
 
-                                    <option value="Ready" class="text-center"
-                                        {{ $order->order_status == 'Pending' ? 'disabled' : '' }}
-                                        {{ $order->order_status == 'Preparing' ? 'able' : '' }}
-                                        {{ $order->order_status == 'Ready' ? 'selected' : '' }}>Ready</option>
-                                </select>
+                                        <div class="pending-to-preparing me-3 fw-bold text-primary">
+                                            <i class="bi bi-chevron-double-right"></i>
+                                        </div>
+
+                                        <!-- Preparing Radio Button -->
+                                        <div class="preparing-status">
+                                            <input type="radio" class="btn-check preparing-status" name="order_status" id="preparingRadio{{ $order->order_reference }}"
+                                                value="Preparing"
+                                                autocomplete="off"
+                                                {{ $order->payment_status != 'Completed' ? 'disabled' : '' }}
+                                                {{ $order->order_status == 'Preparing' ? 'checked' : '' }}
+                                                {{ $order->order_status == 'Ready' ? 'disabled' : '' }}>
+
+                                            <label class="btn fw-bold rounded-pill p-1 me-3
+                                                {{ $order->payment_status == 'Completed' ? 'bg-info-subtle text-info' : 'bg-secondary-subtle text-secondary' }}"
+                                                for="preparingRadio{{ $order->order_reference }}">
+                                                Preparing
+                                            </label>
+                                        </div>
+
+                                        <div class="preparing-to-ready me-3 fw-bold text-primary">
+                                            <i class="bi bi-chevron-double-right"></i>
+                                        </div>
+
+                                        <!-- Ready Radio Button -->
+                                        <div class="ready-status">
+                                            <input type="radio" class="btn-check ready-status" name="order_status" id="readyRadio{{ $order->order_reference }}"
+                                                value="Ready"
+                                                autocomplete="off"
+                                                {{ $order->payment_status != 'Completed' ? 'disabled' : '' }}
+                                                {{ $order->order_status == 'Ready' ? 'checked' : '' }}>
+
+                                            <label class="btn fw-bold rounded-pill p-1 me-3 w-100 bg-success-subtle text-success"
+                                                for="readyRadio{{ $order->order_reference }}">
+                                                Ready
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Submit Button -->
+                                    <div class="d-flex align-items-end">
+                                        @if($order->order_status == 'Ready')
+                                        <input type="hidden" name="order_status" value="Completed">
+
+                                        <button type="submit"
+                                            class="btn border-0 bg-success-subtle text-success rounded-pill mx-2"
+                                            id="saveButton{{ $order->order_reference }}"
+                                            {{ $order->payment_status != 'Completed' ? 'disabled' : '' }}>
+                                            <i class="bi bi-check-all"></i>
+                                        </button>
+                                        @else
+                                        <button type="submit"
+                                            disabled
+                                            class="btn update-status-btn border-0 bg-secondary-subtle text-secondary rounded-pill mx-2"
+                                            id="saveButton{{ $order->order_reference }}"
+                                            {{ $order->payment_status != 'Completed' ? 'disabled' : '' }}>
+                                            <i class="bi bi-floppy"></i>
+                                        </button>
+                                        @endif
+                                    </div>
+                                </div>
                             </form>
-                        </td>
-                        <td class="text-center">
-                            @if($order->order_status == 'Ready')
-                            <button type="submit" class="action-button p-1 btn-success w-100 rounded-pill bg-success-subtle" form="orderStatusForm{{ $order->order_reference }}">
-                                <strong class="text-success text-uppercase">Complete</strong>
-                            </button>
-                            @else
-                            <button type="submit" id="updateButton{{ $order->order_reference }}" form="orderStatusForm{{ $order->order_reference }}" class="action-button p-1 bg-secondary-subtle w-100 rounded-pill" {{ $order->order_status == 'Pending' || ($order->payment_type == 'qr' && $order->payment_status != 'Completed') ? 'disabled' : '' }}>
-                                <strong id="updateButtonText{{ $order->order_reference }}" class="text-secondary text-uppercase">Update</strong>
-                            </button>
-                            @endif
-                        </td>
-                    </tr>
-                    <!-- Accordion row for products details -->
-                    <tr>
-                        <td colspan="9" class="p-0">
-                            <div id="orderDetails{{ $order->id }}" class="accordion-collapse collapse" data-bs-parent="#orderAccordion">
-                                <div class="accordion-body">
-                                    <table class="details-table w-100">
-                                        <thead>
-                                            <tr>
-                                                <th></th>
-                                                <th></th>
-                                                <th>Name</th>
-                                                <th>Category</th>
-                                                <th>Price</th>
-                                                <th>Qty</th>
-                                                <th>Sub Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
+                        </div>
+
+                        <h5 class="card-title">Order Details</h5>
+                        <div class="pb-3">
+                            <div class="table-responsive" style="max-height: 150px; overflow-y: auto;">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr class="text-center">
+                                            <th>Name</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Qty</th>
+                                            <th>Sub Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="text-center">
                                             @php $total = 0; @endphp
                                             @foreach($order->products as $product)
                                             @php $total += $product->total @endphp
-                                            <tr>
-                                                <td></td>
-                                                <td></td>
-                                                <td>{{ $product->product_name }}</td>
-                                                <td>{{ $product->category_name }}</td>
-                                                <td>₱ {{ number_format($product->price, 2) }}</td>
-                                                <td>{{ $product->quantity }}x</td>
-                                                <td>₱ {{ number_format($product->total,2) }}</td>
-                                            </tr>
-                                            @endforeach
-                                            <tr>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td></td>
-                                                <td><strong>Order Total</strong></td>
-                                                <td><strong>₱ {{ number_format($total,2) }}</strong></td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        <tr>
+                                            <td style="max-width: 100px">{{ $product->product_name }}</td>
+                                            <td>{{ $product->category_name }}</td>
+                                            <td>₱{{ number_format($product->price, 2) }}</td>
+                                            <td>{{ $product->quantity }}x</td>
+                                            <td>₱{{ number_format($product->total,2) }}</td>
+                                        </tr>
+                                        @endforeach
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-                        </td>
-                    </tr>
+                        </div>
 
-                    <!-- Payment View Modal -->
-                    <div class="modal fade" id="viewPaymentModal" tabindex="-1" aria-labelledby="viewPaymentModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="viewPaymentModalLabel">Payment Proof</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <!-- Make the image clickable to open in a new tab -->
-                                    <a id="paymentImageLink" href="" target="_blank">
-                                        <img id="paymentImage" src="" class="img-fluid" alt="Payment Image">
-                                    </a>
-                                    <!-- Hidden field to store the payment status -->
-                                    <input type="hidden" id="paymentStatus" value="">
-                                    <p class="text-center">Order Reference: <span id="orderReference"></span></p>
-                                    <p class="text-center">Customer: <span class="text-uppercase">{{ $order->first_name . ' ' . $order->last_name }}</span></p>
-                                </div>
-                                <div class="modal-footer">
-                                    <form id="confirmPaymentForm" method="POST" action="{{ route('confirm.payment') }}">
-                                        @csrf
-                                        <input type="hidden" name="order_id" id="orderId">
-                                        <button type="submit" id="confirmButton" class="btn btn-success">Confirm</button>
-                                    </form>
-                                    @if($orders->isNotEmpty())
-                                    <button type="button" id="rejectButton" class="btn btn-danger"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#rejectPaymentModal"
-                                        data-order-reference="">
-                                        Reject
-                                    </button>
-                                    @endif
-                                    <button type="button" id="closeButton" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                </div>
+                        <div class="pt-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Total: </span>
+                                <h4 class="text-primary">₱ {{ number_format($total,2) }}</h4>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Reject Payment Modal -->
-                    <div class="modal fade" id="rejectPaymentModal" tabindex="-1" aria-labelledby="rejectPaymentModalLabel" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="rejectPaymentModalLabel">Reject Payment</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form id="rejectPaymentForm" method="POST" action="{{ route('reject.payment') }}">
-                                        @csrf
-                                        <input type="hidden" name="order_reference" id="rejectOrderReference">
-                                        <div class="mb-3">
-                                            <label for="feedback" class="form-label">Reason for Rejection</label>
-                                            <textarea class="form-control" id="feedback" name="feedback" rows="3" required></textarea>
-                                        </div>
-                                        <button type="submit" class="btn btn-danger">Submit Rejection</button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
+                </div>
+            </div>
+            @empty
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-md-6 text-center">
+                        <img src="{{ asset('img/empty.png') }}" alt="empty" style="width: 100px;">
+                        <h5 class="text-muted">No orders found.</h5>
                     </div>
+                </div>
+            </div>
+            @endforelse
+        </div>
 
-                    @empty
-                    <tr>
-                        <td class="text-center" colspan="9">No orders found.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+    </div>
+
+    <!-- Payment View Modal -->
+    <div class="modal fade" id="viewPaymentModal" tabindex="-1" aria-labelledby="viewPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewPaymentModalLabel">Payment Proof</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <img id="paymentImage" src="" class="img-fluid" alt="Payment Image">
+                    </div>
+                    <p class="text-center">Order Reference: <span id="orderReference"></span></p>
+                    <p class="text-center">Customer: <span class="text-uppercase" id="customerName"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <form id="confirmPaymentForm" method="POST" action="{{ route('confirm.payment') }}">
+                        @csrf
+                        <input type="hidden" name="order_id" id="orderId">
+                        <button type="submit" id="confirmButton" class="btn btn-success">Confirm</button>
+                    </form>
+                    @if($orders->isNotEmpty())
+                    <button type="button" id="rejectButton" class="btn btn-danger"
+                        data-bs-toggle="modal"
+                        data-bs-target="#rejectPaymentModal"
+                        data-order-reference="">
+                        Reject
+                    </button>
+                    @endif
+                    <button type="button" id="closeButton" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- Reject Payment Modal -->
+    <div class="modal fade" id="rejectPaymentModal" tabindex="-1" aria-labelledby="rejectPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectPaymentModalLabel">Reject Payment</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="rejectPaymentForm" method="POST" action="{{ route('reject.payment') }}">
+                        @csrf
+                        <input type="hidden" name="order_reference" id="rejectOrderReference">
+                        <div class="mb-3">
+                            <label for="feedback" class="form-label">Reason for Rejection</label>
+                            <textarea class="form-control" id="feedback" name="feedback" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Submit Rejection</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @if(session('updateOrder'))
@@ -241,8 +302,77 @@
 </script>
 @endif
 
+@if(session('rejectPayment'))
 <script>
+    Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "{{ session('rejectPayment') }}",
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
+@endif
+
+<style>
+    button:disabled {
+        cursor: not-allowed;
+        pointer-events: all !important;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        updateStatusBTN();
+        btnDisablingBtn();
+    });
+
     document.addEventListener('DOMContentLoaded', function() {
+
+        // Loop through each dropdown in the table
+        // document.querySelectorAll('.status-dropdown').forEach(function(dropdown) {
+        //     const orderId = dropdown.getAttribute('data-order-id');
+        //     const updateButton = document.getElementById('updateButton' + orderId);
+        //     const updateButtonText = document.getElementById('updateButtonText' + orderId);
+        //     let currentStatus = dropdown.getAttribute('data-current-status'); // Get the initial current status
+
+        //     // Initially set the button to disabled if the status hasn't changed
+        //     if (dropdown.value === currentStatus) {
+        //         updateButton.setAttribute('disabled', true);
+        //         updateButton.classList.add('bg-secondary-subtle', 'text-secondary');
+        //         updateButton.classList.remove('bg-primary-subtle', 'text-primary');
+        //         updateButtonText.classList.add('text-secondary');
+        //         updateButtonText.classList.remove('text-primary');
+        //     } else {
+        //         updateButton.removeAttribute('disabled');
+        //         updateButton.classList.add('bg-primary-subtle', 'text-primary');
+        //         updateButton.classList.remove('bg-secondary-subtle', 'text-secondary');
+        //         updateButtonText.classList.add('text-primary');
+        //         updateButtonText.classList.remove('text-secondary');
+        //     }
+
+        //     // Event listener for dropdown change
+        //     dropdown.addEventListener('change', function() {
+        //         const selectedStatus = dropdown.value;
+
+        //         // If the selected status is different from the current status, enable the button
+        //         if (selectedStatus !== currentStatus) {
+        //             updateButton.removeAttribute('disabled');
+        //             updateButton.classList.remove('bg-secondary-subtle', 'text-secondary');
+        //             updateButton.classList.add('bg-primary-subtle', 'text-primary');
+        //             updateButtonText.classList.remove('text-secondary');
+        //             updateButtonText.classList.add('text-primary');
+        //         } else {
+        //             // If no change, disable the button
+        //             updateButton.setAttribute('disabled', true);
+        //             updateButton.classList.remove('bg-primary-subtle', 'text-primary');
+        //             updateButton.classList.add('bg-secondary-subtle', 'text-secondary');
+        //             updateButtonText.classList.remove('text-primary');
+        //             updateButtonText.classList.add('text-secondary');
+        //         }
+        //     });
+        // });
+
         let openRow = null; // Track the currently open row
 
         // Attach click event to each <tr> excluding select and button columns
@@ -295,6 +425,7 @@
             var orderId = button.data('order-id'); // Get the order id
             var orderReference = button.data('order-reference');
             var paymentStatus = button.data('payment-status');
+            var customerName = button.data('customer-name');
 
             var modal = $(this);
             modal.find('#paymentImage').attr('src', paymentImage); // Set the image in the modal
@@ -302,6 +433,7 @@
             modal.find('#orderId').val(orderId); // Set order ID for the confirm form
             modal.find('#orderReference').text(orderReference);
             modal.find('#paymentStatus').val(paymentStatus);
+            modal.find('#customerName').text(customerName);
 
             $('#rejectButton').on('click', function(event) {
                 var orderReference = $('#orderReference').text(); // Get the displayed order reference
@@ -331,44 +463,57 @@
             modal.find('#rejectOrderReference').val(orderReference); // Set the order reference in the hidden input
         });
 
-        // Loop through each dropdown in the table and maintain the color styling
-        document.querySelectorAll('.status-dropdown').forEach(function(dropdown) {
-            var orderId = dropdown.getAttribute('data-order-id');
-            var updateButton = document.getElementById('updateButton' + orderId);
-            var updateButtonText = document.getElementById('updateButtonText' + orderId);
-            var currentStatus = dropdown.getAttribute('data-current-status'); // Get the current status
+    });
 
-            // Initially check if the current status matches the dropdown value
-            if (dropdown.value === currentStatus) {
-                updateButton.setAttribute('disabled', true);
-                updateButton.classList.remove('bg-primary-subtle', 'text-primary');
-                updateButton.classList.add('bg-secondary-subtle', 'text-secondary');
-                updateButtonText.classList.add('text-secondary');
-                updateButtonText.classList.remove('text-primary');
+    function updateStatusBTN() {
+        $(".card-status-btn").each(function() {
+            var status = $(this).find('.order-status').val();
+
+            if (status == 'Pending') {
+                $(this).find(".pending-status").show();
+                $(this).find(".preparing-status").show();
+                $(this).find(".ready-status").hide();
+                $(this).find(".pending-to-preparing").show();
+                $(this).find(".preparing-to-ready").hide();
+            } else if (status == 'Preparing') {
+                $(this).find(".pending-status").hide();
+                $(this).find(".preparing-status").show();
+                $(this).find(".ready-status").show();
+                $(this).find(".pending-to-preparing").hide();
+                $(this).find(".preparing-to-ready").show();
+            } else if (status == 'Ready') {
+                $(this).find(".pending-status").hide();
+                $(this).find(".preparing-status").hide();
+                $(this).find(".ready-status").show();
+                $(this).find(".pending-to-preparing").hide();
+                $(this).find(".preparing-to-ready").hide();
             }
 
-            // Event listener for dropdown change
-            dropdown.addEventListener('change', function() {
-                var selectedStatus = dropdown.value;
+        });
+    }
 
-                // Enable or disable the button based on the selected status vs current status
-                if (selectedStatus === currentStatus) {
-                    updateButton.setAttribute('disabled', true);
-                    updateButton.classList.remove('bg-primary-subtle', 'text-primary');
-                    updateButton.classList.add('bg-secondary-subtle', 'text-secondary');
-                    updateButtonText.classList.remove('text-primary');
-                    updateButtonText.classList.add('text-secondary');
-                } else {
-                    updateButton.removeAttribute('disabled');
-                    updateButton.classList.remove('bg-secondary-subtle', 'text-secondary');
-                    updateButton.classList.add('bg-primary-subtle', 'text-primary');
-                    updateButtonText.classList.remove('text-secondary');
-                    updateButtonText.classList.add('text-primary');
-                }
-            });
+    function btnDisablingBtn() {
+
+        $(".card-status-btn input[type='radio']").on('change', function() {
+            $(this).find(".update-status-btn").addClass("bg-primary-subtle text-primary");
+
+            var currentStatus = $(this).parents(".card-status-btn").find('.order-status').val();
+            var statusSelected = $(this).val();
+
+            if (currentStatus != statusSelected) {
+                $(this).parents(".card-status-btn").find('.update-status-btn').prop('disabled', false);
+                $(this).parents(".card-status-btn").find('.update-status-btn').removeClass("bg-secondary-subtle text-secondary");
+                $(this).parents(".card-status-btn").find('.update-status-btn').addClass("bg-primary-subtle text-primary");
+            } else {
+                $(this).parents(".card-status-btn").find('.update-status-btn').prop('disabled', true);
+                $(this).parents(".card-status-btn").find('.update-status-btn').addClass("bg-secondary-subtle text-secondary");
+                $(this).parents(".card-status-btn").find('.update-status-btn').removeClass("bg-primary-subtle text-primary");
+            }
         });
 
-    });
+    }
 </script>
+
+
 
 @endsection

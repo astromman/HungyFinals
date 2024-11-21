@@ -1,20 +1,16 @@
 @extends('layouts.admin.adminMaster')
 
 @section('content')
-<div class="container-fluid pt-4">
-    <div class="py-2 px-1 text-center">
-        <h2>Audit Trail</h2>
-    </div>
-<div class="container">
+<div class="container-fluid pt-3">
     <!-- Card to wrap the table -->
-    <div class="card shadow-lg rounded-4 mt-4">
+    <div class="card shadow rounded-4 mt-4">
         <div class="card-header text-center">
-            <h2>Audit Table</h2>
+            <h2>Audit Logs</h2>
         </div>
         <div class="card-body">
             <!-- Make the table horizontally scrollable on mobile devices -->
             <div class="table-responsive">
-                <table id="auditTrailTable" class="table table-bordered table-striped table-hover">
+                <table id="auditTrailTable" class="table table-striped table-hover">
                     <thead>
                         <tr>
                             <th>Timestamp</th>
@@ -26,7 +22,7 @@
                     <tbody>
                         @forelse($logs as $log)
                         <tr>
-                            <td>{{ $log->logs_created }}</td>
+                            <td>{{ date('M d, Y', strtotime($log->logs_created)) }}</td>
                             <td class="text-uppercase">{{ $log->username }}</td>
                             <td>{{ $log->action }}</td>
                             <td class="text-start">{{ $log->description }}</td>

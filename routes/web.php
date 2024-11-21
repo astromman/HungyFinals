@@ -27,7 +27,7 @@ use Symfony\Component\Translation\Loader\CsvFileLoader;
 Route::get('/logout', [LoginController::class, 'logout'])->name('user.logout');
 
 Route::get('/test', function() {
-    return view('test.content');
+    return view('main.manager.application_status_email');
 });
 
 Route::group([
@@ -254,3 +254,7 @@ Route::group([
 Route::get('/foo', function () {
     Artisan::call('storage:link');
 });
+
+Route::fallback(function () {
+    return ('404 lods');
+})->name('notFound');

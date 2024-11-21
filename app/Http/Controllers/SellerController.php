@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductOrder;
+use App\Models\Review;
 use App\Models\Shop;
 use App\Models\UserProfile;
 use Carbon\Carbon;
@@ -78,10 +79,10 @@ class SellerController extends Controller
         // Query to get the sum of sold items for each category in the seller's shop
         $categoriesData = DB::table('categories')
             ->join('products', 'categories.id', '=', 'products.category_id')
-            ->join('orders', 'products.id', 'orders.product_id')
-            ->select('categories.type_name', DB::raw('SUM(orders.quantity) as total_sold'))
+            // ->join('orders', 'products.id', 'orders.product_id')
+            ->select('categories.type_name', DB::raw('SUM(products.sold) as total_sold'))
             ->where('products.shop_id', $shop->id)
-            ->where('orders.order_status', 'Completed')
+            // ->where('orders.order_status', 'Completed')
             ->groupBy('categories.type_name')
             ->pluck('total_sold', 'categories.type_name')
             ->toArray();
@@ -231,13 +232,16 @@ class SellerController extends Controller
                 'categories.type_name as category_name',
             )
             ->where('products.shop_id', $shopDetails->id)
-            ->where('products.status', 'Available')
             ->get();
 
         // Group products by category
         $groupedProducts = $products->groupBy('category_name');
 
-        return view('main.seller.viewShop', compact('userProfile', 'shopDetails', 'products', 'groupedProducts'));
+        $totalNoRating = Review::join('products', 'reviews.product_id', '=', 'products.id')
+                    ->where('products.shop_id', $shopDetails->id) // Filter by shop_id in products
+                    ->count();
+
+        return view('main.seller.viewShop', compact('userProfile', 'shopDetails', 'products', 'groupedProducts', 'totalNoRating'));
     }
 
     public function shop_update_details(Request $request)
@@ -361,7 +365,10 @@ class SellerController extends Controller
                 $shop->shop_qr = $image;
             }
 
-            $shop->shop_name = $request->shop_name;
+            if ($request->shop_name) {
+                $shop->shop_name = $request->shop_name;
+            }
+
             $shop->shop_bio = $request->shop_bio;
             $shop->updated_at = now();
             $shop->save();
@@ -488,7 +495,7 @@ class SellerController extends Controller
         $validator = Validator::make($request->all(), [
             'product_name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:5000',
-            'description' => 'required|string|max:1000',
+            'description' => 'nullable|string|max:1000',
             'price' => 'required|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'status' => 'nullable|string',
@@ -877,6 +884,7 @@ class SellerController extends Controller
 
             $orderReference = Order::where('order_reference', $orderRef)->groupBy('order_reference')->get();
             $orderStatus = $request->order_status;
+            // dd($orderStatus);
 
             foreach ($orderReference as $order) {
                 Order::where('order_reference', $order->order_reference)->update(['order_status' => $orderStatus, 'updated_at' => now()]);
@@ -891,6 +899,55 @@ class SellerController extends Controller
 
                 $productId = Order::where('order_reference', $orderRef)->first()->product_id;
                 $shopId = Product::where('id', $productId)->first()->shop_id;
+
+                // Fetch order details and buyer information
+                // $buyer = UserProfile::find($order->user_id);
+
+                // Send email based on order status
+                // if ($orderStatus == 'Completed') {
+                //     // Send receipt email when order is completed
+                //     $orderDetails = Order::with(['productOrder', 'product.shop'])
+                //         ->join('payments', 'orders.payment_id', 'payments.id')
+                //         ->select(
+                //             'orders.*',
+                //             'payments.payment_type'
+                //         )
+                //         ->where('order_reference', $orderRef)
+                //         ->get();
+
+                //     Mail::send('main.seller.order-receipt', [
+                //         'buyer' => $buyer,
+                //         'orderDetails' => $orderDetails
+                //     ], function ($message) use ($buyer, $order) {
+                //         $message->to($buyer->email)
+                //             ->subject('Your receipt for Order ' . $order->order_reference);
+                //     });
+                // } else {
+                //     // Send general status update email for other statuses
+                //     $order = Order::with(['productOrder', 'product.shop']) // Eager load related products and shop
+                //         ->join('payments', 'orders.payment_id', 'payments.id')
+                //         ->select(
+                //             'orders.*',
+                //             'payments.payment_type'
+                //         )
+                //         ->where('order_reference', $orderRef)
+                //         ->first(); // Get the first order
+
+                //     // Get all related product details
+                //     $orderDetails = Order::with(['productOrder', 'product.shop'])
+                //         ->where('order_reference', $orderRef)
+                //         ->get(); // Get all products related to this order reference
+
+                //     // Now $order contains the main order, and $orderDetails contains all related products
+                //     Mail::send('main.seller.order-status-update', [
+                //         'buyer' => $buyer,
+                //         'order' => $order,
+                //         'orderDetails' => $orderDetails // Pass the related products to the view
+                //     ], function ($message) use ($buyer, $order) {
+                //         $message->to($buyer->email)
+                //             ->subject('Order Status Updated: ' . $order->order_status . ' for Order ' . $order->order_reference);
+                //     });
+                // }
             }
 
             // After the order is updated, calculate the new average preparation time
@@ -903,39 +960,13 @@ class SellerController extends Controller
 
             DB::commit();
 
-            // Check if the order is marked as "Completed" and send the email
-            if ($order->order_status == 'Completed') {
-                try {
-                    // Fetch order details and buyer information
-                    $buyer = UserProfile::find($order->user_id);
-                    $orderDetails = Order::with(['productOrder', 'product.shop'])
-                        ->join('payments', 'orders.payment_id', 'payments.id')
-                        ->select(
-                            'orders.*',
-                            'payments.payment_type'
-                        )
-                        ->where('order_reference', $orderRef)
-                        ->get();
-
-                    // Send the email
-                    Mail::send('main.seller.order-receipt', ['buyer' => $buyer, 'orderDetails' => $orderDetails], function ($message) use ($buyer, $order) {
-                        $message->to($buyer->email)
-                            ->subject('Your reciept for Order ' . $order->order_reference . ' ');
-                    });
-                } catch (\Exception $e) {
-                    // Log the error or show it in the response
-                    // dd($e);
-                    return redirect()->back()->with('error', 'Order updated but failed to send email.');
-                }
-            }
-
             return redirect()->back()->with([
                 'updateOrder' => 'Order status updated.',
                 'orderStatus' => $order->order_status
             ]);
         } catch (Exception $e) {
             DB::rollBack();
-            // dd($e);
+            dd($e);
             return redirect()->back()->with('error', 'Something went wrong while updating the order.');
         }
     }
@@ -1011,6 +1042,19 @@ class SellerController extends Controller
         // Trigger Pusher event for payment confirmation
         event(new PaymentStatusUpdated($order, 'Completed'));
 
+        // Fetch order details and buyer information
+        $buyer = UserProfile::find($order->user_id);
+
+        // Send Payment Confirmation Email
+        // try {
+        //     Mail::send('main.seller.payment-confirmation', ['order' => $order, 'buyer' => $buyer], function ($message) use ($order, $buyer) {
+        //         $message->to($buyer->email)
+        //             ->subject('Your Payment Has Been Confirmed');
+        //     });
+        // } catch (\Exception $e) {
+        //     return redirect()->back()->with('error', 'Payment confirmed but failed to send email.');
+        // }
+
         return redirect()->back()->with('confirmPayment', 'Payment confirmed successfully.');
     }
 
@@ -1048,7 +1092,6 @@ class SellerController extends Controller
 
                 // Update the order status back to 'At Cart' and clear the order reference
                 $order->order_status = 'At Cart';
-                $order->order_reference = null;
                 $order->at_cart = true; // Mark as in cart
                 $order->updated_at = now();
                 $order->save();
@@ -1059,8 +1102,31 @@ class SellerController extends Controller
             // Trigger Pusher event for payment rejection
             event(new PaymentStatusUpdated($order, 'Rejected', $feedback));
 
+
+            // Fetch order details and buyer information
+            $buyer = UserProfile::find($order->user_id);
+
+            if ($buyer) {
+                // Send Payment Rejection Email
+                // try {
+                //     Mail::send(
+                //         'main.seller.payment-rejection',
+                //         ['order' => $order, 'feedback' => $feedback, 'buyer' => $buyer],
+                //         function ($message) use ($order, $buyer) {
+                //             $message->to($buyer->email)
+                //                 ->subject('Your Payment Has Been Rejected');
+                //         }
+                //     );
+                // } catch (\Exception $e) {
+                //     // Log the error instead of showing a detailed error message
+                //     Log::error('Payment rejection email failed to send: ' . $e->getMessage());
+                //     // Return with an error message, informing the user that email failed but payment rejection was successful
+                //     return redirect()->back()->with('rejectPayment', 'Payment rejected but failed to send email.');
+                // }
+            }
+
             // Redirect back with a success message
-            return redirect()->back()->with('success', 'Payment rejected successfully for the order reference: ' . $orderReference . '. Feedback: ' . $feedback);
+            return redirect()->back()->with('rejectPayment', 'Payment rejected successfully for the order reference: ' . $orderReference . '. Feedback: ' . $feedback);
         } catch (Exception $e) {
             DB::rollBack();  // Roll back the transaction in case of an error
             return redirect()->back()->with('error', 'Failed to reject payment: ' . $e->getMessage());

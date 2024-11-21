@@ -51,7 +51,7 @@ class CustomAuthMiddleware
                 $request->session()->put('username', $user->username);
                 $request->session()->put('email', $user->email);
             } else {
-                return redirect()->route('show.otp.form')->withErrors(['error' => 'Please verify your email first.']);
+                return redirect()->route('show.otp.form');
             }
 
             return $next($request);

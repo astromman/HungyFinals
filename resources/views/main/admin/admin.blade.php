@@ -11,7 +11,7 @@
                 <div class="middle">
                     <div class="left">
                         <h3>Managers</h3>
-                        <h1> 0 </h1>
+                        <h1> {{ $managers }} </h1>
                     </div>
                 </div>
                 <small>Last 24 Hours</small>
@@ -22,7 +22,7 @@
                 <div class="middle">
                     <div class="left">
                         <h3>Buyers</h3>
-                        <h1> 0 </h1>
+                        <h1> {{ $buyers }} </h1>
                     </div>
                 </div>
                 <small>Last 24 Hours</small>
@@ -33,7 +33,7 @@
                 <div class="middle">
                     <div class="left">
                         <h3>Verified Shops</h3>
-                        <h1> 0 </h1>
+                        <h1> {{ $shops }} </h1>
                     </div>
                 </div>
                 <small>All Time</small>
@@ -54,7 +54,7 @@
         </div>
         <div class="charts col-12 col-md-8">
             <div class="chart-container shadow pb-5">
-                <h3>Sales per shop</h3>
+                <h3>Sales per Canteen</h3>
                 <canvas id="myLineChart"></canvas>
             </div>
         </div>
@@ -127,7 +127,9 @@
                 data: sales,
                 fill: true,
                 borderColor: colors[colorIndex],
-                tension: 0.1
+                tension: 0.1,
+                borderWidth: 2,
+                pointRadius: 5,
             });
             colorIndex = (colorIndex + 1) % colors.length;
         });
@@ -152,9 +154,21 @@
                         }
                     },
                     x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            tooltipFormat: 'DD',
+                            displayFormats: {
+                                day: 'DD'
+                            }
+                        },
                         title: {
                             display: true,
                             text: 'Date'
+                        },
+                        ticks: {
+                            autoSkip: true,
+                            maxRotation: 0
                         }
                     }
                 }
